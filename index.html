@@ -8,14 +8,29 @@
 </head>
 <body>
 
-  <!-- COLUMNA CENTRAL / IZQUIERDA: ZONA ACTIVA (75%) -->
+  <!-- COLUMNA IZQUIERDA: Monitor de Producción y Recursos (~22%) -->
+  <aside id="sidebar-left">
+    <div class="season-header" id="season-display">Verano</div>
+    <p style="margin-bottom:15px; font-size:0.85rem;" id="flavor-text">
+      Líder del asentamiento local.
+    </p>
+    <div class="panel-title" style="margin-bottom: 10px; font-size: 1rem;">📦 Recursos y Producción</div>
+    <div id="sidebar-resources">
+      <!-- Aquí se renderizan los recursos y tasas netas por segundo -->
+    </div>
+    <footer>
+      <p style="font-size: 0.75rem; margin-top: 20px; color: #777;">Soberanía Local (file:///)</p>
+    </footer>
+  </aside>
+
+  <!-- COLUMNA CENTRAL: Zona Activa de Asentamiento y Pestañas (~53%) -->
   <main id="main-panel">
     <div class="panel-header">
       <span class="panel-title" id="current-tab-title">Gestión del Asentamiento</span>
-      <span style="font-size:0.8rem; color:var(--text-muted);">?</span>
+      <span style="font-size:0.8rem; color:var(--text-muted);">Simulador Estratégico</span>
     </div>
 
-    <!-- Navegación de las 5 Pestañas Modulares del GDD -->
+    <!-- Barra de Pestañas Modulares -->
     <nav class="tab-bar">
       <button class="tab-btn active" data-tab="resumen">📊 Resumen</button>
       <button class="tab-btn" data-tab="empleo">👷 Empleo</button>
@@ -26,13 +41,15 @@
 
     <!-- 1. Pestaña Resumen -->
     <section id="tab-resumen" class="tab-content">
+      <h3>Acciones Principales</h3>
       <div class="action-group">
         <button id="btn-harvest-food" class="btn-action">Reunir Comida</button>
         <button id="btn-harvest-wood" class="btn-action">Recolectar Madera</button>
         <button id="btn-attack-ai" class="btn-action btn-military">Atacar Campamento de IA</button>
       </div>
-      <h3>Registro Histórico (Game-Log)</h3>
-      <div id="game-log" class="scrollable-container log-container"></div>
+      <div class="scrollable-container" style="margin-top: 15px;">
+        <p>Bienvenido al simulador estratégico. Selecciona una pestaña superior para administrar tu asentamiento tecnológico.</p>
+      </div>
     </section>
 
     <!-- 2. Pestaña Empleo -->
@@ -50,7 +67,7 @@
         <button id="btn-build-shelter" class="btn-action">Construir Refugio</button>
         <button id="btn-build-farm" class="btn-action">Construir Granja</button>
       </div>
-      <div id="buildings-container" class="scrollable-container"></div>
+      <div id="buildings-container" class="scrollable-container" style="margin-top: 15px;"></div>
     </section>
 
     <!-- 4. Pestaña Ciencia e I+D -->
@@ -60,7 +77,7 @@
         <button id="btn-res-agriculture" class="btn-action">Investigar Agricultura</button>
         <button id="btn-res-bronze" class="btn-action">Investigar Metalurgia (Bronce)</button>
       </div>
-      <div id="techs-container"></div>
+      <div id="techs-container" style="margin-top: 15px;"></div>
     </section>
 
     <!-- 5. Pestaña Gobierno y Leyes -->
@@ -72,24 +89,17 @@
     </section>
   </main>
 
-  <!-- COLUMNA DERECHA: SIDEBAR FIJO (25% - Estilo Kittens Game) -->
+  <!-- COLUMNA DERECHA: Registro Histórico / Game-Log (~25%) -->
   <aside id="sidebar-right">
-    <div class="season-header" id="season-display">Verano</div>
-    
-    <p style="margin-bottom:10px; font-size:0.85rem;" id="flavor-text">
-      Líder del asentamiento local.
-    </p>
-
-    <!-- Contenedor dinámico controlado por ui.js para los recursos y población -->
-    <div id="sidebar-resources"></div>
-
-    <div class="log-controls" style="margin-top: 20px;">
-      <a id="btn-clear-log" style="cursor: pointer;">Vaciar registro</a> | <a id="btn-toggle-pause" style="cursor: pointer;">pausar</a>
+    <div class="panel-header" style="margin-bottom: 10px; padding-bottom: 5px;">
+      <span class="panel-title" style="font-size: 1rem;">📜 Registro Histórico</span>
+      <div class="log-controls">
+        <a id="btn-clear-log" style="cursor: pointer; font-size: 0.75rem;">Limpiar</a> | 
+        <a id="btn-toggle-pause" style="cursor: pointer; font-size: 0.75rem;">Pausar</a>
+      </div>
     </div>
-
-    <footer>
-      <p style="font-size: 0.75rem; margin-top: 15px; color: #777;">Soberanía Tecno-Local (file:///)</p>
-    </footer>
+    <!-- Game Log en tiempo real -->
+    <div id="game-log" class="scrollable-container log-container"></div>
   </aside>
 
   <!-- Punto de entrada principal modular -->

@@ -1,208 +1,161 @@
 :root {
-  --bg-color: #1b1b1b;
-  --panel-bg: #1e1e1e;
-  --border-color: #4a4135;
-  --border-light: #2a2a2a;
-  --text-color: #d3d3d3;
-  --text-muted: #888888;
-  --accent-color: #e2b13c;
-  --btn-bg: #262626;
-  --btn-hover: #333333;
-  --positive: #55bb55;
-  --negative: #ff5555;
+    --bg-color: #121212;
+    --panel-bg: #1e1e1e;
+    --text-color: #e0e0e0;
+    --text-muted: #888888;
+    --accent-color: #4CAF50;
+    --border-color: #333333;
 }
 
 * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: 'Times New Roman', Times, serif, Georgia;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 body {
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
-  font-size: 14px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: monospace, sans-serif;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
 }
 
-/* LAYOUT PRINCIPAL */
+/* 1. Columna Izquierda: Monitor de Recursos y Producción (~22%) */
 #sidebar-left {
-  width: 22%;
-  padding: 20px;
-  overflow-y: auto;
-  border-right: 1px solid var(--border-light);
+    flex: 0 0 22%;
+    height: 100vh;
+    background-color: var(--panel-bg);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    border-right: 1px solid var(--border-color);
 }
 
+/* 2. Columna Central: Zona Activa / Asentamiento (~53%) */
 #main-panel {
-  width: 48%;
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  border-right: 1px solid var(--border-light);
-  position: relative;
+    flex: 0 0 53%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    border-right: 1px solid var(--border-color);
+    overflow-y: auto;
 }
 
+/* 3. Columna Derecha: Registro Histórico / Game-Log (~25%) */
 #sidebar-right {
-  width: 30%;
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
+    flex: 0 0 25%;
+    height: 100vh;
+    background-color: var(--panel-bg);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
 }
 
-/* RECURSOS */
-.resource-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 0.95rem;
-}
-
-.resource-name { font-weight: bold; min-width: 80px; }
-.resource-val { flex: 1; text-align: right; font-weight: bold; color: #ffffff; }
-.resource-max { color: var(--text-muted); font-size: 0.8rem; width: 60px; text-align: right; }
-.resource-rate { color: var(--positive); font-size: 0.8rem; width: 65px; text-align: right; }
-.resource-rate.negative { color: var(--negative); }
-
-/* ENCABEZADOS Y NAVEGACIÓN */
 .panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 5px;
-  margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
 }
 
-.panel-title { font-size: 1.1rem; color: #ffffff; }
-
-.filter-tabs, nav.tab-bar {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
-  font-size: 0.85rem;
+.panel-title {
+    font-size: 1.1rem;
+    font-weight: bold;
 }
 
-.tab-link {
-  color: var(--text-muted);
-  cursor: pointer;
-  text-decoration: none;
-  border-bottom: 1px solid transparent;
+/* Barra de Pestañas */
+.tab-bar {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
 }
 
-.tab-link.active {
-  color: var(--text-color);
-  border-bottom-color: var(--accent-color);
+.tab-btn {
+    background-color: var(--panel-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.85rem;
 }
 
-.tab-link:hover { color: var(--text-color); }
+.tab-btn:hover {
+    background-color: #2a2a2a;
+}
 
-/* BOTONES */
+.tab-btn.active {
+    background-color: var(--accent-color);
+    color: #fff;
+    border-color: var(--accent-color);
+}
+
+.tab-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
 .action-group {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
-  flex-wrap: wrap;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .btn-action {
-  background: var(--btn-bg);
-  border: 1px solid var(--border-color);
-  color: var(--text-color);
-  padding: 8px 16px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  text-align: center;
-  flex: 1;
-  min-width: 140px;
+    background-color: var(--panel-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 10px 15px;
+    cursor: pointer;
+    font-family: inherit;
 }
 
-.btn-action:hover { background: var(--btn-hover); }
-.btn-action:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  border-color: #333;
+.btn-action:hover {
+    border-color: var(--accent-color);
 }
 
-/* TARJETAS DE CONSTRUCCIÓN */
-.scrollable-container { flex: 1; overflow-y: auto; }
-
-.tab-content {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+.btn-military {
+    border-color: #d32f2f;
 }
 
-.building-item {
-  border: 1px solid var(--border-color);
-  background: var(--panel-bg);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 12px;
-  margin-bottom: 8px;
-  cursor: help;
+.scrollable-container {
+    background-color: #171717;
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    overflow-y: auto;
 }
 
-.building-item:hover {
-  border-color: var(--accent-color);
-  background: #222222;
+.log-container {
+    font-size: 0.82rem;
+    color: #ccc;
+    flex: 1;
+    max-height: calc(100vh - 100px);
 }
 
-.building-info { flex: 1; }
-.building-name { font-weight: bold; color: var(--text-color); font-size: 0.9rem; }
-.building-cost { font-size: 0.75rem; color: var(--text-muted); }
-
-/* TOOLTIP / DESGLOSE */
-#tooltip-panel {
-  margin-top: auto;
-  border: 1px solid var(--border-color);
-  background: #151515;
-  padding: 10px;
-  font-size: 0.8rem;
-  color: var(--text-color);
-  min-height: 85px;
+.log-controls a {
+    color: var(--text-muted);
+    text-decoration: underline;
 }
 
-#tooltip-panel h4 { color: var(--accent-color); margin-bottom: 4px; font-size: 0.9rem; }
-#tooltip-panel p { color: var(--text-muted); margin-bottom: 4px; }
-#tooltip-panel .effect { color: var(--positive); font-style: italic; }
-
-/* REGISTRO Y DERECHA */
 .season-header {
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 5px;
-  margin-bottom: 10px;
-  font-size: 1.1rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: var(--accent-color);
 }
-
-.log-controls { font-size: 0.8rem; margin-bottom: 10px; color: var(--text-muted); }
-.log-controls a { color: var(--text-muted); text-decoration: underline; cursor: pointer; }
-
-#log-container {
-  flex: 1;
-  overflow-y: auto;
-  font-size: 0.85rem;
-  line-height: 1.4;
-  color: var(--text-muted);
-  border-top: 1px solid var(--border-light);
-  padding-top: 10px;
-}
-
-.log-entry { margin-bottom: 4px; }
-.log-entry.positive { color: var(--text-color); }
 
 footer {
-  margin-top: auto;
-  padding-top: 10px;
-  font-size: 0.8rem;
-  text-align: right;
-  color: var(--text-muted);
+    margin-top: auto;
+    border-top: 1px solid var(--border-color);
+    padding-top: 10px;
 }
-
-footer a { color: var(--text-muted); text-decoration: none; margin-left: 5px; }
-.hidden { display: none !important; }
