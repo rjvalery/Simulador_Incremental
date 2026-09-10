@@ -3,94 +3,96 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Asentamiento Incremental</title>
+  <title>Asentamiento Incremental - Simulador Estratégico</title>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
-  <!-- COLUMNA IZQUIERDA: RECURSOS -->
-  <aside id="sidebar-left">
-    <div id="resources-container"></div>
-  </aside>
-
-  <!-- COLUMNA CENTRAL: INTERFAZ Y CONSTRUCCIÓN -->
+  <!-- COLUMNA CENTRAL / IZQUIERDA: ZONA ACTIVA (75%) -->
   <main id="main-panel">
     <div class="panel-header">
-      <span class="panel-title" id="current-tab-title">Hoguera</span>
+      <span class="panel-title" id="current-tab-title">Gestión del Asentamiento</span>
       <span style="font-size:0.8rem; color:var(--text-muted);">?</span>
     </div>
 
-    <!-- Navegación de Pestañas -->
+    <!-- Navegación de las 5 Pestañas Modulares del GDD -->
     <nav class="tab-bar">
-      <span class="tab-link active" data-tab="hoguera">Hoguera</span>
-      <span class="tab-link" data-tab="empleo">Empleo</span>
-      <span class="tab-link" data-tab="ciencia">Ciencia</span>
-      <span class="tab-link hidden" id="tab-btn-mapa" data-tab="mapa">Provincias</span>
+      <button class="tab-btn active" data-tab="resumen">📊 Resumen</button>
+      <button class="tab-btn" data-tab="empleo">👷 Empleo</button>
+      <button class="tab-btn" data-tab="infraestructura">🏗️ Infraestructura</button>
+      <button class="tab-btn" data-tab="ciencia">🔬 Ciencia e I+D</button>
+      <button class="tab-btn" data-tab="gobierno">📜 Gobierno y Leyes</button>
     </nav>
 
-    <!-- Pestaña Hoguera / Infraestructura -->
-    <section id="tab-hoguera" class="tab-content">
-      <div class="filter-tabs">
-        <span class="tab-link active" data-filter="all">Todos</span>
-        <span class="tab-link" data-filter="available">Disponible</span>
-        <span class="tab-link" data-filter="enabled">Habilitado</span>
-      </div>
-
+    <!-- 1. Pestaña Resumen -->
+    <section id="tab-resumen" class="tab-content">
       <div class="action-group">
-        <button id="btn-harvest" class="btn-action">Reunir alimento</button>
-        <button id="btn-save" class="btn-action">Guardar partida</button>
+        <button id="btn-harvest-food" class="btn-action">Reunir Comida</button>
+        <button id="btn-harvest-wood" class="btn-action">Recolectar Madera</button>
+        <button id="btn-attack-ai" class="btn-action btn-military">Atacar Campamento de IA</button>
       </div>
+      <h3>Registro Histórico (Game-Log)</h3>
+      <div id="game-log" class="scrollable-container log-container"></div>
+    </section>
 
+    <!-- 2. Pestaña Empleo -->
+    <section id="tab-empleo" class="tab-content" style="display: none;">
+      <h3>Gestión Demográfica y Clases Sociales</h3>
+      <div id="jobs-container">
+        <p>Control de población unificada y asignación de trabajadores técnicos y obreros.</p>
+      </div>
+    </section>
+
+    <!-- 3. Pestaña Infraestructura -->
+    <section id="tab-infraestructura" class="tab-content" style="display: none;">
+      <h3>Catálogo de Obras y Edificaciones</h3>
+      <div class="action-group">
+        <button id="btn-build-shelter" class="btn-action">Construir Refugio</button>
+        <button id="btn-build-farm" class="btn-action">Construir Granja</button>
+      </div>
       <div id="buildings-container" class="scrollable-container"></div>
+    </section>
 
-      <!-- DESGLOSE DE INFORMACIÓN (TOOLTIP PANEL) -->
-      <div id="tooltip-panel">
-        <h4 id="tt-title">Desglose de Estructura</h4>
-        <p id="tt-desc">Pasa el cursor sobre un edificio o empleo para ver sus detalles, efectos y costos.</p>
-        <div id="tt-effect" class="effect"></div>
+    <!-- 4. Pestaña Ciencia e I+D -->
+    <section id="tab-ciencia" class="tab-content" style="display: none;">
+      <h3>Árbol Tecnológico por Eras</h3>
+      <div class="action-group">
+        <button id="btn-res-agriculture" class="btn-action">Investigar Agricultura</button>
+        <button id="btn-res-bronze" class="btn-action">Investigar Metalurgia (Bronce)</button>
       </div>
-    </section>
-
-    <!-- Pestaña Empleo -->
-    <section id="tab-empleo" class="tab-content hidden">
-      <div id="jobs-container"></div>
-    </section>
-
-    <!-- Pestaña Ciencia -->
-    <section id="tab-ciencia" class="tab-content hidden">
       <div id="techs-container"></div>
     </section>
 
-    <!-- Pestaña Provincias -->
-    <section id="tab-mapa" class="tab-content hidden">
-      <div id="map-container"></div>
+    <!-- 5. Pestaña Gobierno y Leyes -->
+    <section id="tab-gobierno" class="tab-content" style="display: none;">
+      <h3>Políticas, Decretos y Comercio</h3>
+      <div id="government-container">
+        <p>Módulo de leyes estatales y relaciones comerciales con provincias vecinas.</p>
+      </div>
     </section>
   </main>
 
-  <!-- COLUMNA DERECHA: REGISTRO Y ESTACIÓN -->
+  <!-- COLUMNA DERECHA: SIDEBAR FIJO (25% - Estilo Kittens Game) -->
   <aside id="sidebar-right">
     <div class="season-header" id="season-display">Verano</div>
     
-    <div class="log-controls">
-      <span>Registro</span> | <span>Cola</span> | <span>de registros</span>
-    </div>
-
     <p style="margin-bottom:10px; font-size:0.85rem;" id="flavor-text">
-      Eres el líder de un pequeño asentamiento en el bosque.
+      Líder del asentamiento local.
     </p>
 
-    <div class="log-controls">
-      <a id="btn-clear-log">Vaciar registro</a> | <a id="btn-toggle-pause">pausar</a>
+    <!-- Contenedor dinámico controlado por ui.js para los recursos y población -->
+    <div id="sidebar-resources"></div>
+
+    <div class="log-controls" style="margin-top: 20px;">
+      <a id="btn-clear-log" style="cursor: pointer;">Vaciar registro</a> | <a id="btn-toggle-pause" style="cursor: pointer;">pausar</a>
     </div>
 
-    <div id="log-container"></div>
-
     <footer>
-      <a href="#">Wiki</a> | <a href="#">Discord</a> | <a href="#">Créditos</a>
+      <p style="font-size: 0.75rem; margin-top: 15px; color: #777;">Soberanía Tecno-Local (file:///)</p>
     </footer>
   </aside>
 
-  <!-- Entry point JavaScript modular -->
+  <!-- Punto de entrada principal modular -->
   <script type="module" src="js/main.js"></script>
 </body>
 </html>

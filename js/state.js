@@ -1,86 +1,45 @@
-export const GameState = {
-  paused: false,
-  activeBuildingFilter: 'all', // Controla el filtro activo ('all', 'available', 'enabled')
-  resources: {
-    food: { name: "Alimento", val: 0, max: 100, rate: 0, discovered: true },
-    wood: { name: "Madera", val: 0, max: 100, rate: 0, discovered: false },
-    stone: { name: "Piedra", val: 0, max: 100, rate: 0, discovered: false },
-    money: { name: "Dinero", val: 0, max: 1000, rate: 0, discovered: false },
-    science: { name: "Ciencia", val: 0, max: 200, rate: 0, discovered: false },
-    popUnskilled: { 
-      name: "Habitantes", 
-      val: 0, 
-      max: 0, 
-      rate: 0,
-      assigned: { farm: 0, quarry: 0, woodcutter: 0 }, 
-      discovered: false,
-      desc: "Población libre y capacitada de tu asentamiento disponible para desempeñar labores.",
-      effect: "Permite asignar trabajadores a producción o mantener la mano de obra del pueblo."
+// state.js - Estado Global del Simulador Incremental
+export const gameState = {
+    resources: {
+        food: { value: 50, max: 200, production: 0, consumption: 0 },
+        wood: { value: 30, max: 150, production: 0, consumption: 0 },
+        stone: { value: 10, max: 100, production: 0, consumption: 0 },
+        money: { value: 0, max: 1000, production: 0, consumption: 0 },
+        science: { value: 0, max: 500, production: 0, consumption: 0 }
+    },
+    population: {
+        unskilled: 2,     // Población libre / desempleada disponible
+        workers: 0,       // Asignados a producción primaria
+        technicians: 0,   // Asignados a ciencia / industria avanzada
+        professionals: 0  // Profesionales / administración
+    },
+    buildings: {
+        shelter: { count: 1, baseCost: { wood: 15 }, costMultiplier: 1.15, housingCapacity: 5 },
+        farm: { count: 0, baseCost: { wood: 10, food: 5 }, costMultiplier: 1.15 },
+        woodcutter: { count: 0, baseCost: { wood: 20 }, costMultiplier: 1.15 },
+        quarry: { count: 0, baseCost: { wood: 50, stone: 20 }, costMultiplier: 1.15 }
+    },
+    techs: {},
+    settings: {
+        gameSpeed: 1
     }
-  },
-
-  buildings: {
-    housing: { 
-      name: "Viviendas", 
-      count: 0, 
-      maxLevel: 10, 
-      baseCost: { wood: 15, stone: 5 }, 
-      multiplier: 1.25, 
-      unlocked: false,
-      desc: "Proporciona cobijo para atraer nuevos habitantes a tu asentamiento.",
-      effect: "+2 a la capacidad máxima de población."
-    },
-    silo: { 
-      name: "Granero", 
-      count: 0, 
-      maxLevel: 10, 
-      baseCost: { wood: 40, stone: 20 }, 
-      multiplier: 1.25, 
-      unlocked: false,
-      desc: "Estructura de almacenamiento de alimentos a gran escala.",
-      effect: "+150 al límite máximo de Alimento almacenable."
-    },
-    farm: { 
-      name: "Granja", 
-      count: 0, 
-      maxLevel: 20, 
-      baseCost: { wood: 25, stone: 15 }, 
-      multiplier: 1.20, 
-      maxWorkers: 5, 
-      unlocked: false,
-      desc: "Permite asignar habitantes para cultivar campos de alimento.",
-      effect: "Habilita puestos de trabajo de Granjero (+0.40 Alimento/s por trabajador)."
-    },
-    woodcutter: { 
-      name: "Aserradero", 
-      count: 0, 
-      maxLevel: 20, 
-      baseCost: { wood: 20, stone: 30 }, 
-      multiplier: 1.20, 
-      maxWorkers: 5, 
-      unlocked: false,
-      desc: "Instalación para talar y procesar madera de forma organizada.",
-      effect: "Habilita puestos de trabajo de Leñador (+0.35 Madera/s por trabajador)."
-    },
-    quarry: { 
-      name: "Cantera", 
-      count: 0, 
-      maxLevel: 20, 
-      baseCost: { wood: 50, stone: 20 }, 
-      multiplier: 1.25, 
-      maxWorkers: 5, 
-      unlocked: false,
-      desc: "Zona de extracción de roca y piedra mineral.",
-      effect: "Habilita puestos de trabajo de Minero (+0.25 Piedra/s por trabajador)."
-    }
-  },
-
-  techs: {
-    basicScience: { 
-      name: "Investigación Básica", 
-      cost: { science: 20 }, 
-      unlocked: false, 
-      desc: "Desbloquea conocimientos científicos." 
-    }
-  }
 };
+
+// Función auxiliar para calcular la capacidad máxima de vivienda de forma dinámica
+export function calculateMaxHousing(state) {
+    let totalCapacity = 0;
+    for (const [key, building] of Object.entries(state.buildings)) {
+        if (building.housingCapacity) {
+            totalCapacity += building.count * building.housingCapacity;
+        }
+    }
+    return totalCapacity;
+}
+
+// Función para obtener la población total actual
+export function getTotalPopulation(state) {
+    return state.population.unskilled + 
+           state.population.workers + 
+           state.population.technicians + 
+           state.population.professionals;
+}

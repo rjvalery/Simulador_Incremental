@@ -1,97 +1,108 @@
-// Base de datos modular de tecnologías (Era 1: Civil y Militar)
-export const TECH_DATABASE = {
-  // RAMA CIVIL
-  agricultura_basica: {
-    id: 'agricultura_basica',
-    name: '🌾 Agricultura Básica',
-    branch: 'civil',
-    era: 1,
-    desc: 'Técnicas fundamentales de cultivo para asegurar el alimento del pueblo.',
-    effectDesc: '+10% producción de Alimento',
-    cost: { ciencia: 20, madera: 30 },
-    unlocked: false,
-    reqs: []
-  },
-  herramientas_piedra: {
-    id: 'herramientas_piedra',
-    name: '🪨 Herramientas de Piedra',
-    branch: 'civil',
-    era: 1,
-    desc: 'Mejora la recolección de materiales básicos.',
-    effectDesc: '+15% recolección de Madera y Piedra',
-    cost: { ciencia: 35, piedra: 40 },
-    unlocked: false,
-    reqs: ['agricultura_basica']
-  },
-  comercio_local: {
-    id: 'comercio_local',
-    name: '🪙 Comercio Local',
-    branch: 'civil',
-    era: 1,
-    desc: 'Establece mercados locales para generar los primeros ingresos pasivos.',
-    effectDesc: 'Desbloquea generación pasiva de Dinero',
-    cost: { ciencia: 50, alimento: 60 },
-    unlocked: false,
-    reqs: ['agricultura_basica']
-  },
+// techs.js - Árbol Tecnológico Unificado por Eras (Aldea y Evolución Militar)
 
-  // RAMA MILITAR
-  garrotes_y_lanzas: {
-    id: 'garrotes_y_lanzas',
-    name: '🗡️ Garrotes y Lanzas',
-    branch: 'militar',
-    era: 1,
-    desc: 'Organiza las primeras milicias para la defensa del asentamiento.',
-    effectDesc: '+5 Poder Militar',
-    cost: { ciencia: 25, madera: 50 },
-    unlocked: false,
-    reqs: []
-  },
-  empalizadas: {
-    id: 'empalizadas',
-    name: '🪵 Empalizadas de Madera',
-    branch: 'militar',
-    era: 1,
-    desc: 'Estructuras defensivas simples para proteger las reservas.',
-    effectDesc: '+10 Defensas de la Ciudad',
-    cost: { ciencia: 40, madera: 80 },
-    unlocked: false,
-    reqs: ['garrotes_y_lanzas']
-  },
-  tacticas_caza: {
-    id: 'tacticas_caza',
-    name: '🎯 Tácticas de Caza',
-    branch: 'militar',
-    era: 1,
-    desc: 'Aplica técnicas de rastreo tanto para suministro como para combate.',
-    effectDesc: '+10% Eficiencia Militar',
-    cost: { ciencia: 60, alimento: 100 },
-    unlocked: false,
-    reqs: ['garrotes_y_lanzas']
-  }
+export const TECHS_DATA = {
+    // --- ERA ANTIGUA ---
+    agriculture: {
+        id: "agriculture",
+        era: "Antigua",
+        name: "Agricultura Avanzada",
+        description: "Optimiza los cultivos y desbloquea el crecimiento básico de la aldea.",
+        cost: { science: 50 },
+        requires: [],
+        completed: false,
+        unlocks: { buildings: ["farm"], units: [] },
+        effect: (state) => {
+            state.resources.food.productionMultiplier = (state.resources.food.productionMultiplier || 1) + 0.25;
+        }
+    },
+    bronzeWorking: {
+        id: "bronzeWorking",
+        era: "Antigua",
+        name: "Metalurgia del Bronce",
+        description: "Permite el uso de herramientas de metal y el reclutamiento de milicias armadas.",
+        cost: { science: 120 },
+        requires: ["agriculture"],
+        completed: false,
+        unlocks: { buildings: ["quarry"], units: ["spearman"] },
+        effect: (state) => {
+            if (state.resources.stone) state.resources.stone.unlocked = true;
+        }
+    },
+
+    // --- ERA INDUSTRIAL ---
+    industrialization: {
+        id: "industrialization",
+        era: "Industrial",
+        name: "Industrialización",
+        description: "Mecanización de procesos productivos y refinerías de acero para la guerra moderna.",
+        cost: { science: 500 },
+        requires: ["bronzeWorking"],
+        completed: false,
+        unlocks: { buildings: ["factory"], units: ["infantry"] },
+        effect: (state) => {
+            state.resources.iron = { value: 0, max: 500, production: 0, unlocked: true };
+        }
+    },
+
+    // --- ERA MODERNA ---
+    mechanizedWarfare: {
+        id: "mechanizedWarfare",
+        era: "Moderna",
+        name: "Guerra Mecanizada",
+        description: "Tecnología de motores de combustión pesados para la fabricación de tanques y vehículos blindados.",
+        cost: { science: 1500 },
+        requires: ["industrialization"],
+        completed: false,
+        unlocks: { buildings: ["oilRefinery"], units: ["tank", "mechanizedInfantry"] },
+        effect: (state) => {
+            state.resources.oil = { value: 0, max: 1000, production: 0, unlocked: true };
+        }
+    }
 };
 
-// Función auxiliar para verificar si se puede pagar una tecnología
-export function canAfford(cost, resources) {
-  if (!resources) return false;
-  for (const [res, amount] of Object.entries(cost)) {
-    if ((resources[res] || 0) < amount) return false;
-  }
-  return true;
+// Validación centralizada de requisitos y costes científicos
+export function canResearch(state, techKey) {
+    const tech = TECHS_DATA[techKey];
+    if (!tech || tech.completed) return false;
+
+    for (const reqId of tech.requires) {
+        if (!TECHS_DATA[reqId] || !TECHS_DATA[reqId].completed) return false;
+    }
+
+    for (const [resKey, amount] of Object.entries(tech.cost)) {
+        if (!state.resources[resKey] || state.resources[resKey].value < amount) return false;
+    }
+
+    return true;
 }
 
-// Función pura para procesar la investigación
-export function researchTech(techId, gameState) {
-  const tech = gameState.techs?.[techId];
-  if (!tech || tech.unlocked) return false;
+// Ejecución de la investigación y aplicación automática de desbloqueos
+export function researchTech(state, techKey) {
+    if (!canResearch(state, techKey)) return false;
 
-  if (canAfford(tech.cost, gameState.resources)) {
-    // Descontar costo
-    for (const [res, amount] of Object.entries(tech.cost)) {
-      gameState.resources[res] -= amount;
+    const tech = TECHS_DATA[techKey];
+
+    for (const [resKey, amount] of Object.entries(tech.cost)) {
+        state.resources[resKey].value -= amount;
     }
-    tech.unlocked = true;
+
+    tech.completed = true;
+    
+    if (typeof tech.effect === "function") {
+        tech.effect(state);
+    }
+
+    state.unlockedTechs = state.unlockedTechs || {};
+    state.unlockedTechs[techKey] = true;
+
+    state.military = state.military || { unlockedUnits: [] };
+    if (tech.unlocks && tech.unlocks.units) {
+        tech.unlocks.units.forEach(unit => {
+            if (!state.military.unlockedUnits.includes(unit)) {
+                state.military.unlockedUnits.push(unit);
+            }
+        });
+    }
+
     return true;
-  }
-  return false;
 }

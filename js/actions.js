@@ -1,115 +1,101 @@
-import { GameState } from './state.js';
-import { eventBus } from './eventBus.js';
+// actions.js - Lógica de Negocio, Construcción, Empleo y Acciones Militares/IA
 
-export const Actions = {
-  getCost(building) {
-    const cost = {};
-    for (let resourceKey in building.baseCost) {
-      cost[resourceKey] = Math.floor(
-        building.baseCost[resourceKey] * Math.pow(building.multiplier, building.count)
-      );
+import { deductCost, canAfford } from './resources.js';
+import { BUILDINGS_DATA, calculateBuildingCost } from './buildings.js';
+import { researchTech, canResearch } from './techs.js';
+import { calculateMaxHousing, getTotalPopulation } from './state.js';
+
+// Recolección manual con probabilidad de descubrimiento de ciencia
+export function handleManualHarvest(state, resourceKey) {
+    if (!state.resources[resourceKey]) return;
+
+    const res = state.resources[resourceKey];
+    res.value = Math.min(res.max, res.value + 1);
+
+    // Probabilidad de descubrir ciencia de forma manual en fase inicial (ej. 10%)
+    if (Math.random() < 0.10 && state.resources.science) {
+        state.resources.science.value = Math.min(state.resources.science.max, state.resources.science.value + 1);
+        
+        const logEvent = new CustomEvent('log:add', { 
+            detail: { message: "¡Has descubierto un destello de conocimiento científico durante la recolección!", type: "success" } 
+        });
+        window.dispatchEvent(logEvent);
     }
-    return cost;
-  },
+}
 
-  canAfford(cost) {
-    for (let resourceKey in cost) {
-      if (!GameState.resources[resourceKey] || GameState.resources[resourceKey].val < cost[resourceKey]) {
-        return false;
-      }
-    }
-    return true;
-  },
+// Construcción de edificios con escalado exponencial 1.15^N
+export function buildStructure(state, buildingKey) {
+    const building = BUILDINGS_DATA[buildingKey];
+    if (!building) return false;
 
-  manualHarvest() {
-    const res = GameState.resources;
-    res.food.val = Math.min(res.food.max, res.food.val + 1);
+    const currentCount = state.buildings[buildingKey] ? state.buildings[buildingKey].count : 0;
+    const cost = calculateBuildingCost(buildingKey, currentCount);
 
-    if (Math.random() < 0.35) {
-      res.wood.val = Math.min(res.wood.max, res.wood.val + 1);
-      res.wood.discovered = true;
-    }
-
-    if (Math.random() < 0.20) {
-      res.stone.val = Math.min(res.stone.max, res.stone.val + 1);
-      res.stone.discovered = true;
-    }
-
-    // Pequeña probabilidad durante la recolección manual para obtener el primer punto de ciencia inicial
-    if (Math.random() < 0.05) {
-      res.science.val = Math.min(res.science.max, res.science.val + 1);
-      res.science.discovered = true;
-      eventBus.emit('log:add', "Has descubierto una idea brillante y obtenido 1 punto de Ciencia.");
-    }
-
-    if (!GameState.buildings.housing.unlocked && (res.wood.val >= 3 || res.stone.val >= 1)) {
-      GameState.buildings.housing.unlocked = true;
-      eventBus.emit('log:add', "Has descubierto materiales para construir Viviendas.");
-    }
-
-    // Desbloquear granero cuando se descubra la madera o se acumule lo suficiente
-    if (!GameState.buildings.silo.unlocked && res.wood.val >= 10) {
-      GameState.buildings.silo.unlocked = true;
-    }
-
-    eventBus.emit('state:updated');
-  },
-
-  buildBuilding(key) {
-    const building = GameState.buildings[key];
-    const cost = this.getCost(building);
-
-    if (this.canAfford(cost)) {
-      for (let resourceKey in cost) {
-        GameState.resources[resourceKey].val -= cost[resourceKey];
-      }
-      building.count++;
-      eventBus.emit('log:add', `Construido: ${building.name} (${building.count})`);
-
-      if (key === 'housing') {
-        GameState.resources.popUnskilled.max += 2;
-        GameState.resources.popUnskilled.discovered = true;
-        if (building.count === 1) {
-          GameState.resources.popUnskilled.val = 1;
-          eventBus.emit('log:add', "Un nuevo habitante ha llegado al asentamiento.");
-          GameState.buildings.farm.unlocked = true;
-          GameState.buildings.woodcutter.unlocked = true;
-          GameState.buildings.quarry.unlocked = true;
-          GameState.buildings.silo.unlocked = true; // Asegurar desbloqueo de granero
+    if (canAfford(state, cost)) {
+        deductCost(state, cost);
+        
+        if (!state.buildings[buildingKey]) {
+            state.buildings[buildingKey] = { count: 0 };
         }
-      }
+        state.buildings[buildingKey].count += 1;
 
-      if (key === 'silo') {
-        // Aumentar la capacidad máxima de alimento por cada granero construido (+150)
-        GameState.resources.food.max += 150;
-      }
-
-      eventBus.emit('state:updated');
+        // Emitir log de evento
+        const logEvent = new CustomEvent('log:add', { 
+            detail: { message: `Has construido un/a ${building.name}.`, type: "info" } 
+        });
+        window.dispatchEvent(logEvent);
+        return true;
     }
-  },
+    return false;
+}
 
-  assignJob(key, amount) {
-    const res = GameState.resources.popUnskilled;
-    const totalAssigned = res.assigned.farm + res.assigned.woodcutter + res.assigned.quarry;
+// Asignación y gestión de empleos (prevención de trabajadores fantasma)
+export function assignWorker(state, fromJob, toJob) {
+    if (state.population[fromJob] > 0) {
+        state.population[fromJob]--;
+        state.population[toJob]++;
+        return true;
+    }
+    return false;
+}
 
-    if (amount > 0 && res.val > totalAssigned) {
-      res.assigned[key]++;
-    } else if (amount < 0 && res.assigned[key] > 0) {
-      res.assigned[key]--;
+// Lanzamiento de incursión militar contra aldea o campamento de IA
+export function launchMilitaryAttack(state, targetDifficulty) {
+    state.military = state.military || { units: { spearman: 0, infantry: 0, tank: 0 } };
+    
+    // Cálculo básico de poder militar del jugador
+    const playerPower = (state.military.units.spearman || 0) * 5 + 
+                        (state.military.units.infantry || 0) * 15 + 
+                        (state.military.units.tank || 0) * 50;
+
+    const enemyPower = targetDifficulty * 20;
+
+    if (playerPower <= 0) {
+        const logEvent = new CustomEvent('log:add', { 
+            detail: { message: "No tienes tropas reclutadas para enviar a la batalla.", type: "warning" } 
+        });
+        window.dispatchEvent(logEvent);
+        return false;
     }
 
-    eventBus.emit('state:updated');
-  },
-
-  researchTech(key) {
-    const tech = GameState.techs[key];
-    if (this.canAfford(tech.cost)) {
-      for (let resourceKey in tech.cost) {
-        GameState.resources[resourceKey].val -= tech.cost[resourceKey];
-      }
-      tech.unlocked = true;
-      eventBus.emit('log:add', `Investigado: ${tech.name}`);
-      eventBus.emit('state:updated');
+    if (playerPower >= enemyPower) {
+        // Victoria: Botín de recursos
+        state.resources.gold = state.resources.gold || { value: 0, max: 2000 };
+        state.resources.gold.value = Math.min(state.resources.gold.max, state.resources.gold.value + (targetDifficulty * 50));
+        
+        const logEvent = new CustomEvent('log:add', { 
+            detail: { message: `¡Victoria aplastante contra el campamento de IA! Botín asegurado.`, type: "success" } 
+        });
+        window.dispatchEvent(logEvent);
+        return true;
+    } else {
+        // Derrota: Pérdida de tropas
+        if (state.military.units.spearman > 0) state.military.units.spearman = Math.max(0, state.military.units.spearman - 1);
+        
+        const logEvent = new CustomEvent('log:add', { 
+            detail: { message: `La incursión falló. Las defensas enemigas superaban a tus tropas.`, type: "danger" } 
+        });
+        window.dispatchEvent(logEvent);
+        return false;
     }
-  }
-};
+}
