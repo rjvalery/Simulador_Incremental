@@ -1,13 +1,21 @@
 export const GameState = {
   paused: false,
-  activeBuildingFilter: 'all', // Nuevo: Controla el filtro activo ('all', 'available', 'enabled')
+  activeBuildingFilter: 'all', // Controla el filtro activo ('all', 'available', 'enabled')
   resources: {
     food: { name: "Alimento", val: 0, max: 100, rate: 0, discovered: true },
     wood: { name: "Madera", val: 0, max: 100, rate: 0, discovered: false },
     stone: { name: "Piedra", val: 0, max: 100, rate: 0, discovered: false },
     money: { name: "Dinero", val: 0, max: 1000, rate: 0, discovered: false },
     science: { name: "Ciencia", val: 0, max: 200, rate: 0, discovered: false },
-    popUnskilled: { name: "Habitantes", val: 0, max: 0, assigned: { farm: 0, quarry: 0, woodcutter: 0 }, discovered: false }
+    popUnskilled: { 
+      name: "Habitantes", 
+      val: 0, 
+      max: 0, 
+      assigned: { farm: 0, quarry: 0, woodcutter: 0 }, 
+      discovered: false,
+      desc: "Población libre y capacitada de tu asentamiento disponible para desempeñar labores.",
+      effect: "Permite asignar trabajadores a producción o mantener la mano de obra del pueblo."
+    }
   },
 
   buildings: {
