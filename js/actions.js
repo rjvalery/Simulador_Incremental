@@ -35,9 +35,21 @@ export const Actions = {
       res.stone.discovered = true;
     }
 
+    // Pequeña probabilidad durante la recolección manual para obtener el primer punto de ciencia inicial
+    if (Math.random() < 0.05) {
+      res.science.val = Math.min(res.science.max, res.science.val + 1);
+      res.science.discovered = true;
+      eventBus.emit('log:add', "Has descubierto una idea brillante y obtenido 1 punto de Ciencia.");
+    }
+
     if (!GameState.buildings.housing.unlocked && (res.wood.val >= 3 || res.stone.val >= 1)) {
       GameState.buildings.housing.unlocked = true;
       eventBus.emit('log:add', "Has descubierto materiales para construir Viviendas.");
+    }
+
+    // Desbloquear granero cuando se descubra la madera o se acumule lo suficiente
+    if (!GameState.buildings.silo.unlocked && res.wood.val >= 10) {
+      GameState.buildings.silo.unlocked = true;
     }
 
     eventBus.emit('state:updated');
@@ -63,7 +75,13 @@ export const Actions = {
           GameState.buildings.farm.unlocked = true;
           GameState.buildings.woodcutter.unlocked = true;
           GameState.buildings.quarry.unlocked = true;
+          GameState.buildings.silo.unlocked = true; // Asegurar desbloqueo de granero
         }
+      }
+
+      if (key === 'silo') {
+        // Aumentar la capacidad máxima de alimento por cada granero construido (+150)
+        GameState.resources.food.max += 150;
       }
 
       eventBus.emit('state:updated');
