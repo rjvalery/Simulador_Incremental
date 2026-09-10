@@ -74,7 +74,7 @@
   <aside id="sidebar">
     <h2>🏛️ Asentamiento</h2>
     <div id="resources-container">
-      <!-- Los recursos se generan dinámicamente -->
+      <!-- Los recursos y la población se generan dinámicamente -->
     </div>
     
     <div style="margin-top: auto;">
@@ -165,7 +165,7 @@
 
   <script>
     /* ==========================================================================
-       1. ESTADO GLOBAL DEL JUEGO (REAJUSTADO PARA INICIO EN CERO)
+       1. ESTADO GLOBAL DEL JUEGO
        ========================================================================== */
     const GameState = {
       leaderChosen: false,
@@ -181,7 +181,7 @@
         money: { name: "Dinero", val: 0, max: 1000, rate: 0, discovered: false },
         science: { name: "Ciencia", val: 0, max: 200, rate: 0, discovered: false },
         
-        popUnskilled: { name: "Obreros", val: 0, max: 0, progress: 0, assigned: { farm: 0, quarry: 0, woodcutter: 0 } },
+        popUnskilled: { name: "Obreros", val: 0, max: 0, progress: 0, assigned: { farm: 0, quarry: 0, woodcutter: 0 }, discovered: false },
         popTech: { name: "Técnicos", val: 0, max: 0, progress: 0, assigned: { lab: 0, farmSupervision: 0 }, discovered: false }
       },
 
@@ -230,7 +230,6 @@
 
         const totalPop = res.popUnskilled.val + res.popTech.val;
         
-        // Solo consume comida si hay población
         if (totalPop > 0) {
           const foodConsumption = totalPop * 0.20;
           res.food.rate -= foodConsumption;
@@ -265,13 +264,12 @@
         const res = GameState.resources;
         const totalPop = res.popUnskilled.val + res.popTech.val;
 
-        // Requiere tener capacidad en Viviendas para crecer
         if (res.popUnskilled.max === 0) return;
 
-        const foodThreshold = res.food.max * 0.50;
+        const foodThreshold = res.food.max * 0.20;
 
         if (!GameState.isStarving && res.food.val >= foodThreshold && totalPop < res.popUnskilled.max) {
-          const growthSpeed = 0.03 / Math.pow(Math.max(1, totalPop), 1.1);
+          const growthSpeed = 0.08 / Math.pow(Math.max(1, totalPop), 1.1);
           res.popUnskilled.progress += growthSpeed;
 
           if (res.popUnskilled.progress >= 1.0) {
@@ -329,9 +327,26 @@
           const r = GameState.resources[key];
           if (!r.discovered) continue;
 
-          if (r.val !== undefined) {
-            const card = document.createElement('div');
-            card.className = 'resource-card';
+          const card = document.createElement('div');
+          card.className = 'resource-card';
+
+          // Renderizado especial para Obreros y Técnicos en el Sidebar
+          if (key === 'popUnskilled' || key === 'popTech') {
+            let assignedCount = 0;
+            if (key === 'popUnskilled') {
+              assignedCount = (r.assigned.farm || 0) + (r.assigned.woodcutter || 0) + (r.assigned.quarry || 0);
+            } else {
+              assignedCount = (r.assigned.lab || 0) + (r.assigned.farmSupervision || 0);
+            }
+            const unassigned = r.val - assignedCount;
+
+            card.innerHTML = `
+              <h4>${r.name}</h4>
+              <div class="resource-val">${r.val} / ${r.max} <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">(${unassigned} Libres)</span></div>
+            `;
+          } 
+          // Renderizado para recursos Estándar
+          else if (r.val !== undefined) {
             const rateClass = r.rate < 0 ? 'negative' : '';
             const rateText = r.rate !== undefined ? `<span class="resource-rate ${rateClass}">${r.rate >= 0 ? '+' : ''}${r.rate.toFixed(2)}/s</span>` : '';
             const maxText = r.max ? ` / ${r.max}` : '';
@@ -340,8 +355,9 @@
               <h4>${r.name}</h4>
               <div class="resource-val">${Math.floor(r.val)}${maxText} ${rateText}</div>
             `;
-            container.appendChild(card);
           }
+
+          container.appendChild(card);
         }
       },
 
@@ -520,6 +536,13 @@
           // Desbloqueos progresivos al construir
           if (key === 'housing') {
             GameState.resources.popUnskilled.max += 2;
+            GameState.resources.popUnskilled.discovered = true;
+
+            // Al construir la primera vivienda, regala 1 habitante al instante
+            if (b.count === 1 && GameState.resources.popUnskilled.val === 0) {
+              GameState.resources.popUnskilled.val = 1;
+              UI.log("🏠 ¡Tu primera Vivienda ha atraído a su primer habitante!", "positive");
+            }
             
             // Revelar nuevos edificios tras la primera vivienda
             if (!GameState.buildings.silo.unlocked) {
@@ -666,6 +689,7 @@
           try {
             const decoded = JSON.parse(atob(save));
             Object.assign(GameState, decoded);
+            if (GameState.buildings.housing.count > 0) GameState.resources.popUnskilled.discovered = true;
             if (GameState.leaderChosen) document.getElementById('tab-btn-gobierno').classList.remove('hidden');
             if (GameState.mapUnlocked) document.getElementById('tab-btn-mapa').classList.remove('hidden');
           } catch (e) {
