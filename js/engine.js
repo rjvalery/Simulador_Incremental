@@ -17,6 +17,7 @@ export const Engine = {
   tick() {
     if (GameState.paused) return;
     this.updateEconomy();
+    this.checkPopulationGrowth(); // Nueva verificación periódica
     eventBus.emit('state:updated');
   },
 
@@ -45,6 +46,19 @@ export const Engine = {
       if (res[k].val !== undefined && res[k].rate !== undefined) {
         res[k].val = Math.max(0, Math.min(res[k].max || Infinity, res[k].val + res[k].rate));
       }
+    }
+  },
+
+  checkPopulationGrowth() {
+    const pop = GameState.resources.popUnskilled;
+    
+    // Solo crecemos si ya se descubrió la población y hay espacio libre
+    if (!pop.discovered || pop.val >= pop.max) return;
+
+    // Probabilidad del 2.5% cada segundo de que llegue un habitante (siempre que la tasa de comida no sea muy negativa)
+    if (GameState.resources.food.val > 10 && Math.random() < 0.025) {
+      pop.val++;
+      eventBus.emit('log:add', "Un nuevo habitante ha llegado al asentamiento atraído por las condiciones.");
     }
   }
 };
