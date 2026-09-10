@@ -76,11 +76,12 @@ export const UI = {
 
       if (key === 'popUnskilled') {
         const assigned = res.assigned.farm + res.assigned.woodcutter + res.assigned.quarry;
+        const freePop = res.val - assigned;
         row.innerHTML = `
           <span class="resource-name">${res.name}</span>
           <span class="resource-val">${res.val}</span>
           <span class="resource-max">/${res.max}</span>
-          <span class="resource-rate">(${res.val - assigned} libres)</span>
+          <span class="resource-rate" style="font-size: 0.85em; opacity: 0.8;">(${freePop} libres)</span>
         `;
       } else {
         const rateClass = res.rate < 0 ? 'negative' : '';

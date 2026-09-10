@@ -11,6 +11,7 @@ export const GameState = {
       name: "Habitantes", 
       val: 0, 
       max: 0, 
+      rate: 0,
       assigned: { farm: 0, quarry: 0, woodcutter: 0 }, 
       discovered: false,
       desc: "Población libre y capacitada de tu asentamiento disponible para desempeñar labores.",
