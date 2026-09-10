@@ -1,6 +1,8 @@
 renderResources() {
-    const container = document.getElementById('resources-container');
-    container.innerHTML = '';
+    import { GameState } from './state.js';
+    import { Actions } from './actions.js';
+    import { Storage } from './storage.js';
+    import { eventBus } from './eventBus.js';
 
     for (let key in GameState.resources) {
       const res = GameState.resources[key];
