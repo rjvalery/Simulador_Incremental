@@ -4,96 +4,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Asentamiento Incremental</title>
-  <style>
-    :root {
-      --bg-color: #1b1b1b;
-      --panel-bg: #1e1e1e;
-      --border-color: #4a4135;
-      --border-light: #2a2a2a;
-      --text-color: #d3d3d3;
-      --text-muted: #888888;
-      --accent-color: #e2b13c;
-      --btn-bg: #262626;
-      --btn-hover: #333333;
-      --positive: #55bb55;
-      --negative: #ff5555;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Times New Roman', Times, serif, Georgia; }
-    body { background-color: var(--bg-color); color: var(--text-color); display: flex; height: 100vh; overflow: hidden; font-size: 14px; }
-
-    /* LAYOUT PRINCIPAL DE 3 COLUMNAS */
-    #sidebar-left { width: 22%; padding: 20px; overflow-y: auto; border-right: 1px solid var(--border-light); }
-    #main-panel { width: 48%; padding: 15px; display: flex; flex-direction: column; overflow-y: auto; border-right: 1px solid var(--border-light); }
-    #sidebar-right { width: 30%; padding: 15px; display: flex; flex-direction: column; }
-
-    /* RECURSOS ESTILO KITTENS GAME */
-    .resource-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; }
-    .resource-name { font-weight: bold; min-width: 80px; }
-    .resource-val { flex: 1; text-align: right; font-weight: bold; color: #ffffff; }
-    .resource-max { color: var(--text-muted); font-size: 0.8rem; width: 60px; text-align: right; }
-    .resource-rate { color: var(--positive); font-size: 0.8rem; width: 65px; text-align: right; }
-    .resource-rate.negative { color: var(--negative); }
-
-    /* PANEL CENTRAL (Borde Bronce) */
-    .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; margin-bottom: 10px; }
-    .panel-title { font-size: 1.1rem; color: #ffffff; }
-
-    /* FILTROS Y NAVEGACIÓN */
-    .filter-tabs, nav.tab-bar { display: flex; gap: 10px; margin-bottom: 15px; font-size: 0.85rem; }
-    .tab-link { color: var(--text-muted); cursor: pointer; text-decoration: none; border-bottom: 1px solid transparent; }
-    .tab-link.active { color: var(--text-color); border-bottom-color: var(--accent-color); }
-    .tab-link:hover { color: var(--text-color); }
-
-    /* BOTONES ESTILO ESTRICTO KITTENS */
-    .action-group { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-    .btn-action { background: var(--btn-bg); border: 1px solid var(--border-color); color: var(--text-color); padding: 8px 16px; cursor: pointer; font-size: 0.9rem; text-align: center; flex: 1; min-width: 140px; }
-    .btn-action:hover { background: var(--btn-hover); }
-    .btn-action:disabled { opacity: 0.4; cursor: not-allowed; border-color: #333; }
-
-    /* TARJETAS DE CONSTRUCCIÓN Y EMPLEO */
-    .building-item { border: 1px solid var(--border-color); background: var(--panel-bg); display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; margin-bottom: 8px; }
-    .building-info { flex: 1; }
-    .building-name { font-weight: bold; color: var(--text-color); font-size: 0.9rem; }
-    .building-cost { font-size: 0.75rem; color: var(--text-muted); }
-    .btn-sell { background: transparent; border: 1px solid #444; color: var(--text-muted); font-size: 0.7rem; padding: 2px 5px; margin-left: 8px; cursor: pointer; }
-
-    /* COLUMNA DERECHA (REGISTRO Y ESTACIÓN) */
-    .season-header { border-bottom: 1px solid var(--border-color); padding-bottom: 5px; margin-bottom: 10px; font-size: 1.1rem; }
-    .log-controls { font-size: 0.8rem; margin-bottom: 10px; color: var(--text-muted); }
-    .log-controls a { color: var(--text-muted); text-decoration: underline; cursor: pointer; }
-    #log-container { flex: 1; overflow-y: auto; font-size: 0.85rem; line-height: 1.4; color: var(--text-muted); border-top: 1px solid var(--border-light); padding-top: 10px; }
-    .log-entry { margin-bottom: 4px; }
-    .log-entry.positive { color: var(--text-color); }
-    
-    footer { margin-top: auto; padding-top: 10px; font-size: 0.8rem; text-align: right; color: var(--text-muted); }
-    footer a { color: var(--text-muted); text-decoration: none; margin-left: 5px; }
-
-    .hidden { display: none !important; }
-  </style>
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
   <!-- COLUMNA IZQUIERDA: RECURSOS -->
   <aside id="sidebar-left">
-    <div id="resources-container">
-      <!-- Generado dinámicamente -->
-    </div>
+    <div id="resources-container"></div>
   </aside>
 
-  <!-- COLUMNA CENTRAL: CONSTRUCCIÓN Y ACCIONES -->
+  <!-- COLUMNA CENTRAL: INTERFAZ Y CONSTRUCCIÓN -->
   <main id="main-panel">
     <div class="panel-header">
       <span class="panel-title" id="current-tab-title">Hoguera</span>
       <span style="font-size:0.8rem; color:var(--text-muted);">?</span>
     </div>
 
-    <!-- Pestañas de la Barra Superior -->
+    <!-- Navegación de Pestañas -->
     <nav class="tab-bar">
-      <span class="tab-link active" onclick="UI.switchTab('hoguera', event)">Hoguera</span>
-      <span class="tab-link" onclick="UI.switchTab('empleo', event)">Empleo</span>
-      <span class="tab-link" onclick="UI.switchTab('ciencia', event)">Ciencia</span>
-      <span class="tab-link hidden" id="tab-btn-mapa" onclick="UI.switchTab('mapa', event)">Provincias</span>
+      <span class="tab-link active" data-tab="hoguera">Hoguera</span>
+      <span class="tab-link" data-tab="empleo">Empleo</span>
+      <span class="tab-link" data-tab="ciencia">Ciencia</span>
+      <span class="tab-link hidden" id="tab-btn-mapa" data-tab="mapa">Provincias</span>
     </nav>
 
     <!-- Pestaña Hoguera / Infraestructura -->
@@ -105,11 +37,18 @@
       </div>
 
       <div class="action-group">
-        <button class="btn-action" onclick="Game.manualHarvest()">Reunir alimento</button>
-        <button class="btn-action" onclick="SaveSystem.saveLocal()">Guardar partida</button>
+        <button id="btn-harvest" class="btn-action">Reunir alimento</button>
+        <button id="btn-save" class="btn-action">Guardar partida</button>
       </div>
 
-      <div id="buildings-container"></div>
+      <div id="buildings-container" class="scrollable-container"></div>
+
+      <!-- DESGLOSE DE INFORMACIÓN (TOOLTIP PANEL) -->
+      <div id="tooltip-panel">
+        <h4 id="tt-title">Desglose de Estructura</h4>
+        <p id="tt-desc">Pasa el cursor sobre un edificio o empleo para ver sus detalles, efectos y costos.</p>
+        <div id="tt-effect" class="effect"></div>
+      </div>
     </section>
 
     <!-- Pestaña Empleo -->
@@ -136,10 +75,12 @@
       <span>Registro</span> | <span>Cola</span> | <span>de registros</span>
     </div>
 
-    <p style="margin-bottom:10px; font-size:0.85rem;" id="flavor-text">Eres el líder de un pequeño asentamiento en el bosque.</p>
+    <p style="margin-bottom:10px; font-size:0.85rem;" id="flavor-text">
+      Eres el líder de un pequeño asentamiento en el bosque.
+    </p>
 
     <div class="log-controls">
-      <a onclick="UI.clearLog()">Vaciar registro</a> | <a onclick="UI.togglePause()">pausar</a>
+      <a id="btn-clear-log">Vaciar registro</a> | <a id="btn-toggle-pause">pausar</a>
     </div>
 
     <div id="log-container"></div>
@@ -149,302 +90,7 @@
     </footer>
   </aside>
 
-  <script>
-    /* ==========================================================================
-       ESTADO DEL JUEGO Y LÓGICA PRINCIPAL
-       ========================================================================== */
-    const GameState = {
-      paused: false,
-      resources: {
-        food: { name: "Alimento", val: 0, max: 100, rate: 0, discovered: true },
-        wood: { name: "Madera", val: 0, max: 100, rate: 0, discovered: false },
-        stone: { name: "Piedra", val: 0, max: 100, rate: 0, discovered: false },
-        money: { name: "Dinero", val: 0, max: 1000, rate: 0, discovered: false },
-        science: { name: "Ciencia", val: 0, max: 200, rate: 0, discovered: false },
-        popUnskilled: { name: "Habitantes", val: 0, max: 0, assigned: { farm: 0, quarry: 0, woodcutter: 0 }, discovered: false }
-      },
-
-      buildings: {
-        housing: { name: "Viviendas", count: 0, maxLevel: 10, baseCost: { wood: 15, stone: 5 }, multiplier: 1.25, unlocked: false },
-        silo: { name: "Granero", count: 0, maxLevel: 10, baseCost: { wood: 40, stone: 20 }, multiplier: 1.25, unlocked: false },
-        farm: { name: "Granja", count: 0, maxLevel: 20, baseCost: { wood: 25, stone: 15 }, multiplier: 1.20, maxWorkers: 5, unlocked: false },
-        woodcutter: { name: "Aserradero", count: 0, maxLevel: 20, baseCost: { wood: 20, stone: 30 }, multiplier: 1.20, maxWorkers: 5, unlocked: false },
-        quarry: { name: "Cantera", count: 0, maxLevel: 20, baseCost: { wood: 50, stone: 20 }, multiplier: 1.25, maxWorkers: 5, unlocked: false }
-      },
-
-      techs: {
-        basicScience: { name: "Investigación Básica", cost: { science: 20 }, unlocked: false, desc: "Desbloquea conocimientos científicos." }
-      }
-    };
-
-    const Engine = {
-      tick() {
-        if (GameState.paused) return;
-        this.updateEconomy();
-        UI.render();
-      },
-
-      updateEconomy() {
-        const res = GameState.resources;
-        res.food.rate = 0; res.wood.rate = 0; res.stone.rate = 0; res.science.rate = 0;
-
-        const totalPop = res.popUnskilled.val;
-        if (totalPop > 0) res.food.rate -= totalPop * 0.20;
-
-        res.food.rate += res.popUnskilled.assigned.farm * 0.40;
-        res.wood.rate += res.popUnskilled.assigned.woodcutter * 0.35;
-        res.stone.rate += res.popUnskilled.assigned.quarry * 0.25;
-
-        for (let k in res) {
-          if (res[k].val !== undefined && res[k].rate !== undefined) {
-            res[k].val = Math.max(0, Math.min(res[k].max || Infinity, res[k].val + res[k].rate));
-          }
-        }
-      }
-    };
-
-    const UI = {
-      switchTab(tabId, evt) {
-        document.querySelectorAll('.tab-bar .tab-link').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-        
-        if (evt) evt.target.classList.add('active');
-        document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-        document.getElementById('current-tab-title').innerText = evt ? evt.target.innerText : 'Hoguera';
-      },
-
-      render() {
-        this.renderResources();
-        this.renderBuildings();
-        this.renderJobs();
-        this.renderTechs();
-      },
-
-      renderResources() {
-        const container = document.getElementById('resources-container');
-        container.innerHTML = '';
-
-        for (let k in GameState.resources) {
-          const r = GameState.resources[k];
-          if (!r.discovered) continue;
-
-          const row = document.createElement('div');
-          row.className = 'resource-row';
-
-          if (k === 'popUnskilled') {
-            const assigned = r.assigned.farm + r.assigned.woodcutter + r.assigned.quarry;
-            row.innerHTML = `
-              <span class="resource-name">${r.name}</span>
-              <span class="resource-val">${r.val}</span>
-              <span class="resource-max">/${r.max}</span>
-              <span class="resource-rate">(${r.val - assigned} libres)</span>
-            `;
-          } else {
-            const rateClass = r.rate < 0 ? 'negative' : '';
-            const rateStr = r.rate !== 0 ? `${r.rate >= 0 ? '+' : ''}${r.rate.toFixed(2)}/s` : '';
-            row.innerHTML = `
-              <span class="resource-name">${r.name}</span>
-              <span class="resource-val">${r.val.toFixed(2)}</span>
-              <span class="resource-max">/${r.max}</span>
-              <span class="resource-rate ${rateClass}">${rateStr}</span>
-            `;
-          }
-          container.appendChild(row);
-        }
-      },
-
-      renderBuildings() {
-        const container = document.getElementById('buildings-container');
-        container.innerHTML = '';
-
-        for (let k in GameState.buildings) {
-          const b = GameState.buildings[k];
-          if (!b.unlocked) continue;
-
-          const cost = this.getCost(b);
-          const canAfford = this.canAfford(cost);
-
-          const item = document.createElement('div');
-          item.className = 'building-item';
-          item.innerHTML = `
-            <div class="building-info">
-              <span class="building-name">${b.name} (${b.count})</span>
-              <div class="building-cost">${this.formatCost(cost)}</div>
-            </div>
-            <div>
-              <button class="btn-action" style="min-width:70px; padding:4px 8px;" ${!canAfford ? 'disabled' : ''} onclick="Buildings.build('${k}')">Construir</button>
-            </div>
-          `;
-          container.appendChild(item);
-        }
-      },
-
-      renderJobs() {
-        const container = document.getElementById('jobs-container');
-        container.innerHTML = '';
-        const res = GameState.resources.popUnskilled;
-        const free = res.val - (res.assigned.farm + res.assigned.woodcutter + res.assigned.quarry);
-
-        const jobs = [
-          { key: 'farm', name: 'Granjero', building: 'farm' },
-          { key: 'woodcutter', name: 'Leñador', building: 'woodcutter' },
-          { key: 'quarry', name: 'Minero', building: 'quarry' }
-        ];
-
-        jobs.forEach(j => {
-          if (GameState.buildings[j.building].count > 0) {
-            const div = document.createElement('div');
-            div.className = 'building-item';
-            div.innerHTML = `
-              <div class="building-info">
-                <span class="building-name">${j.name}</span>
-                <div class="building-cost">Asignados: ${res.assigned[j.key]}</div>
-              </div>
-              <div>
-                <button class="btn-action" style="min-width:30px; padding:2px 6px;" onclick="Jobs.assign('${j.key}', -1)">-</button>
-                <button class="btn-action" style="min-width:30px; padding:2px 6px;" ${free <= 0 ? 'disabled' : ''} onclick="Jobs.assign('${j.key}', 1)">+</button>
-              </div>
-            `;
-            container.appendChild(div);
-          }
-        });
-      },
-
-      renderTechs() {
-        const container = document.getElementById('techs-container');
-        container.innerHTML = '';
-        for (let k in GameState.techs) {
-          const t = GameState.techs[k];
-          if (t.unlocked) continue;
-
-          const item = document.createElement('div');
-          item.className = 'building-item';
-          item.innerHTML = `
-            <div class="building-info">
-              <span class="building-name">${t.name}</span>
-              <div class="building-cost">${t.desc} | Costo: ${this.formatCost(t.cost)}</div>
-            </div>
-            <button class="btn-action" style="min-width:80px; padding:4px;" ${!this.canAfford(t.cost) ? 'disabled' : ''} onclick="Techs.research('${k}')">Investigar</button>
-          `;
-          container.appendChild(item);
-        }
-      },
-
-      getCost(b) {
-        const cost = {};
-        for (let k in b.baseCost) cost[k] = Math.floor(b.baseCost[k] * Math.pow(b.multiplier, b.count));
-        return cost;
-      },
-
-      canAfford(cost) {
-        for (let k in cost) {
-          if (!GameState.resources[k] || GameState.resources[k].val < cost[k]) return false;
-        }
-        return true;
-      },
-
-      formatCost(cost) {
-        return Object.keys(cost).map(k => `${cost[k]} ${GameState.resources[k].name}`).join(', ');
-      },
-
-      log(msg) {
-        const box = document.getElementById('log-container');
-        const entry = document.createElement('div');
-        entry.className = 'log-entry positive';
-        entry.innerText = msg;
-        box.insertBefore(entry, box.firstChild);
-      },
-
-      clearLog() { document.getElementById('log-container').innerHTML = ''; },
-      togglePause() { GameState.paused = !GameState.paused; }
-    };
-
-    const Buildings = {
-      build(key) {
-        const b = GameState.buildings[key];
-        const cost = UI.getCost(b);
-        if (UI.canAfford(cost)) {
-          for (let k in cost) GameState.resources[k].val -= cost[k];
-          b.count++;
-          UI.log(`Construido: ${b.name} (${b.count})`);
-
-          if (key === 'housing') {
-            GameState.resources.popUnskilled.max += 2;
-            GameState.resources.popUnskilled.discovered = true;
-            if (b.count === 1) {
-              GameState.resources.popUnskilled.val = 1;
-              UI.log("Un nuevo habitante ha llegado al asentamiento.");
-              GameState.buildings.farm.unlocked = true;
-              GameState.buildings.woodcutter.unlocked = true;
-              GameState.buildings.quarry.unlocked = true;
-            }
-          }
-          UI.render();
-        }
-      }
-    };
-
-    const Jobs = {
-      assign(key, val) {
-        const res = GameState.resources.popUnskilled;
-        if (val > 0 && res.val > (res.assigned.farm + res.assigned.woodcutter + res.assigned.quarry)) {
-          res.assigned[key]++;
-        } else if (val < 0 && res.assigned[key] > 0) {
-          res.assigned[key]--;
-        }
-        UI.render();
-      }
-    };
-
-    const Techs = {
-      research(key) {
-        const t = GameState.techs[key];
-        if (UI.canAfford(t.cost)) {
-          for (let k in t.cost) GameState.resources[k].val -= t.cost[k];
-          t.unlocked = true;
-          UI.log(`Investigado: ${t.name}`);
-          UI.render();
-        }
-      }
-    };
-
-    const Game = {
-      manualHarvest() {
-        const res = GameState.resources;
-        res.food.val = Math.min(res.food.max, res.food.val + 1);
-        
-        if (Math.random() < 0.35) {
-          res.wood.val = Math.min(res.wood.max, res.wood.val + 1);
-          res.wood.discovered = true;
-        }
-        if (Math.random() < 0.20) {
-          res.stone.val = Math.min(res.stone.max, res.stone.val + 1);
-          res.stone.discovered = true;
-        }
-
-        if (!GameState.buildings.housing.unlocked && (res.wood.val >= 3 || res.stone.val >= 1)) {
-          GameState.buildings.housing.unlocked = true;
-          UI.log("Has descubierto materiales para construir Viviendas.");
-        }
-        UI.render();
-      },
-
-      init() {
-        setInterval(() => Engine.tick(), 1000);
-        UI.render();
-        UI.log("El asentamiento ha comenzado.");
-      }
-    };
-
-    const SaveSystem = {
-      key: "KITTENS_STYLE_SAVE",
-      saveLocal() {
-        localStorage.setItem(this.key, btoa(JSON.stringify(GameState)));
-        UI.log("Partida guardada.");
-      }
-    };
-
-    window.onload = () => Game.init();
-  </script>
+  <!-- Entry point JavaScript modular -->
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>
