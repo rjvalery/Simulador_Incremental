@@ -1,361 +1,605 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador Incremental</title>
-    <style>
-        :root {
-            --bg-dark: #0f1218;
-            --panel-bg: #1a202c;
-            --card-bg: #2d3748;
-            --text-main: #edf2f7;
-            --text-muted: #a0aec0;
-            --accent: #d97706;
-            --accent-hover: #b45309;
-            --success: #38a169;
-            --border: #4a5568;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Imperio Industrial - Incremental Strategy</title>
+  <style>
+    :root {
+      --bg-color: #121418;
+      --panel-bg: #1e222b;
+      --accent: #d97706;
+      --accent-hover: #b45309;
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --border: #374151;
+      --positive: #10b981;
+      --negative: #ef4444;
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
 
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            padding: 20px;
-        }
+    /* Layout Principal */
+    #sidebar { width: 300px; background-color: var(--panel-bg); border-right: 1px solid var(--border); padding: 15px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }
+    #main-content { flex: 1; display: flex; flex-direction: column; }
+    
+    /* Panel de Recursos (Sidebar) */
+    .resource-card { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 8px; }
+    .resource-card h4 { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; }
+    .resource-val { font-size: 1.2rem; font-weight: bold; color: var(--accent); }
+    .resource-rate { font-size: 0.75rem; float: right; color: var(--positive); }
+    .resource-rate.negative { color: var(--negative); }
 
-        /* Top Bar & Resources */
-        header {
-            background-color: var(--panel-bg);
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
+    /* Navegación por Pestañas */
+    nav { background-color: var(--panel-bg); border-bottom: 1px solid var(--border); display: flex; }
+    .tab-btn { background: none; border: none; color: var(--text-muted); padding: 15px 20px; cursor: pointer; font-weight: bold; border-bottom: 2px solid transparent; }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(255,255,255,0.02); }
+    
+    /* Vistas de Contenido */
+    .tab-content { display: none; padding: 20px; overflow-y: auto; flex: 1; }
+    .tab-content.active { display: block; }
 
-        .resource-container {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
+    /* Grid de Edificios y Tarjetas */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+    .card { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; justify-content: space-between; }
+    .card h3 { color: var(--text); font-size: 1.1rem; margin-bottom: 5px; }
+    .card p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px; }
+    
+    /* Botones y Controles */
+    button.btn { background: var(--accent); color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    button.btn:hover { background: var(--accent-hover); }
+    button.btn:disabled { background: var(--border); cursor: not-allowed; opacity: 0.6; }
+    
+    /* Cuadrícula del Mapa de Provincias */
+    .map-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-width: 800px; }
+    .province-card { border: 2px solid var(--border); padding: 15px; border-radius: 8px; background: rgba(0,0,0,0.3); text-align: center; }
+    .province-card.owned { border-color: var(--positive); }
 
-        .resource-badge {
-            background-color: var(--card-bg);
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            border: 1px solid var(--border);
-        }
-
-        .resource-badge span {
-            font-weight: bold;
-            color: var(--accent);
-        }
-
-        /* Navigation Tabs */
-        nav.main-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            border-bottom: 2px solid var(--border);
-            padding-bottom: 5px;
-        }
-
-        .tab-btn {
-            background-color: var(--panel-bg);
-            color: var(--text-muted);
-            border: 1px solid var(--border);
-            padding: 10px 20px;
-            border-radius: 6px 6px 0 0;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.2s;
-        }
-
-        .tab-btn:hover {
-            background-color: var(--card-bg);
-            color: var(--text-main);
-        }
-
-        .tab-btn.active {
-            background-color: var(--accent);
-            color: #fff;
-            border-color: var(--accent);
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        /* Content Sections */
-        .game-panel {
-            background-color: var(--panel-bg);
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            min-height: 400px;
-        }
-
-        /* Sub-pestañas I+D */
-        .subtab-container {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 8px;
-        }
-
-        .subtab-btn {
-            background-color: var(--card-bg);
-            color: var(--text-muted);
-            border: 1px solid var(--border);
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: bold;
-            transition: all 0.2s;
-        }
-
-        .subtab-btn:hover {
-            color: var(--text-main);
-        }
-
-        .subtab-btn.active {
-            background-color: var(--accent);
-            color: white;
-            border-color: var(--accent);
-        }
-
-        /* Tech Grid & Cards */
-        .tech-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 16px;
-        }
-
-        .tech-card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .tech-card.unlocked {
-            border-color: var(--success);
-            opacity: 0.65;
-        }
-
-        .tech-title {
-            font-size: 1.05rem;
-            font-weight: bold;
-            color: var(--text-main);
-            margin-bottom: 6px;
-        }
-
-        .tech-desc {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-        }
-
-        .tech-effect {
-            font-size: 0.85rem;
-            color: #48bb78;
-            font-weight: bold;
-            margin-bottom: 12px;
-        }
-
-        .tech-costs {
-            font-size: 0.8rem;
-            color: var(--text-main);
-            background-color: var(--bg-dark);
-            padding: 8px;
-            border-radius: 4px;
-            margin-bottom: 12px;
-        }
-
-        .btn-action {
-            background-color: var(--accent);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            font-weight: bold;
-            cursor: pointer;
-            width: 100%;
-        }
-
-        .btn-action:hover:not(:disabled) {
-            background-color: var(--accent-hover);
-        }
-
-        .btn-action:disabled {
-            background-color: var(--border);
-            cursor: not-allowed;
-        }
-    </style>
+    /* Modal / Eventos */
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-content { background: var(--panel-bg); padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; border: 1px solid var(--accent); }
+    .hidden { display: none !important; }
+    
+    /* Consola de Log */
+    #log-panel { height: 120px; background: #0a0b0d; border-top: 1px solid var(--border); padding: 10px; overflow-y: auto; font-family: monospace; font-size: 0.8rem; }
+    .log-entry { margin-bottom: 3px; color: var(--text-muted); }
+    .log-entry.positive { color: var(--positive); }
+    .log-entry.negative { color: var(--negative); }
+  </style>
 </head>
 <body>
 
-    <header>
-        <h1>🏛️ Simulador Incremental</h1>
-        <div class="resource-container">
-            <div class="resource-badge">🌾 Alimento: <span id="res-alimento">0</span></div>
-            <div class="resource-badge">🪵 Madera: <span id="res-madera">0</span></div>
-            <div class="resource-badge">🪨 Piedra: <span id="res-piedra">0</span></div>
-            <div class="resource-badge">💡 Ciencia: <span id="res-ciencia">0</span></div>
-            <div class="resource-badge">💵 Dinero: <span id="res-dinero">0</span></div>
-        </div>
-    </header>
+  <!-- SIDEBAR: RECURSOS Y POBLACIÓN -->
+  <aside id="sidebar">
+    <h2>🏛️ Asentamiento</h2>
+    <div id="resources-container">
+      <!-- Los recursos se generan dinámicamente -->
+    </div>
+    
+    <div style="margin-top: auto;">
+      <button class="btn" onclick="Game.manualHarvest()" style="width: 100%; margin-bottom: 5px;">🌾 Recolectar Silvestre (+1 Comida)</button>
+      <button class="btn" onclick="SaveSystem.saveLocal()" style="width: 100%; background: var(--border);">💾 Guardar Partida</button>
+    </div>
+  </aside>
 
-    <nav class="main-tabs">
-        <button class="tab-btn active" onclick="switchTab('recursos')">Recursos</button>
-        <button class="tab-btn" onclick="switchTab('ciencia')">Investigación</button>
-        <button id="tab-btn-gobierno" class="tab-btn hidden" onclick="switchTab('gobierno')">Gobierno</button>
-        <button id="tab-btn-mapa" class="tab-btn hidden" onclick="switchTab('mapa')">Mapa</button>
+  <!-- CONTENIDO PRINCIPAL -->
+  <main id="main-content">
+    <nav>
+      <button class="tab-btn active" onclick="UI.switchTab('infraestructura', event)">🏗️ Infraestructura</button>
+      <button class="tab-btn" onclick="UI.switchTab('empleo', event)">👥 Empleo</button>
+      <button class="tab-btn" onclick="UI.switchTab('ciencia', event)">🔬 Ciencia e I+D</button>
+      <button class="tab-btn hidden" id="tab-btn-gobierno" onclick="UI.switchTab('gobierno', event)">📜 Gobierno</button>
+      <button class="tab-btn hidden" id="tab-btn-mapa" onclick="UI.switchTab('mapa', event)">🗺️ Provincias</button>
     </nav>
 
-    <main>
-        <!-- Pestaña de Recursos -->
-        <section id="tab-recursos" class="game-panel">
-            <h2>Producción de Recursos</h2>
-            <p>Genera recursos para expandir tu civilización.</p>
-            <div style="margin-top: 15px;">
-                <button class="btn-action" onclick="Game.clickResource('alimento')" style="width: auto; margin-right: 10px;">Recolectar Alimento</button>
-                <button class="btn-action" onclick="Game.clickResource('madera')" style="width: auto; margin-right: 10px;">Talar Madera</button>
-                <button class="btn-action" onclick="Game.clickResource('piedra')" style="width: auto; margin-right: 10px;">Minar Piedra</button>
-                <button class="btn-action" onclick="Game.clickResource('ciencia')" style="width: auto;">Generar Ciencia</button>
+    <!-- PESTAÑA 1: INFRAESTRUCTURA -->
+    <section id="tab-infraestructura" class="tab-content active">
+      <h2>Edificios del Asentamiento</h2>
+      <p style="margin-bottom: 15px; color: var(--text-muted);">Los edificios amplían los límites de recursos y la capacidad laboral de tu población.</p>
+      <div id="buildings-grid" class="grid"></div>
+    </section>
+
+    <!-- PESTAÑA 2: EMPLEO -->
+    <section id="tab-empleo" class="tab-content">
+      <h2>Asignación de Mano de Obra</h2>
+      <p style="margin-bottom: 15px; color: var(--text-muted);">Asigna habitantes a tus edificios para activar la producción de recursos.</p>
+      <div id="jobs-container" class="grid"></div>
+    </section>
+
+    <!-- PESTAÑA 3: CIENCIA -->
+    <section id="tab-ciencia" class="tab-content">
+      <h2>Árbol Tecnológico</h2>
+      <p style="margin-bottom: 15px; color: var(--text-muted);">Invierte la Ciencia generada por tus Técnicos en avances industriales y militares.</p>
+      <div id="techs-grid" class="grid"></div>
+    </section>
+
+    <!-- PESTAÑA 4: GOBIERNO -->
+    <section id="tab-gobierno" class="tab-content">
+      <h2>Módulo de Gobierno y Leyes</h2>
+      <div id="government-panel">
+        <div class="card" style="margin-bottom: 15px;">
+          <h3>Líder Actual: <span id="leader-name">Ninguno</span></h3>
+          <p id="leader-desc">Gobernante electo del asentamiento.</p>
+        </div>
+        <h3>Leyes Vigentes</h3>
+        <div id="laws-grid" class="grid"></div>
+      </div>
+    </section>
+
+    <!-- PESTAÑA 5: MAPA PROVINCIAL -->
+    <section id="tab-mapa" class="tab-content">
+      <h2>Dominio Territorial</h2>
+      <div class="map-grid" id="map-grid"></div>
+    </section>
+
+    <!-- PANEL DE LOGS -->
+    <div id="log-panel"></div>
+  </main>
+
+  <!-- MODAL: ELECCIÓN DEL LÍDER -->
+  <div id="modal-leader" class="modal hidden">
+    <div class="modal-content">
+      <h2>Elección del Líder</h2>
+      <p style="margin-bottom: 15px;">La Casa Comunal se ha completado. Selecciona un líder para dirigir la administración y fundar el sistema económico:</p>
+      
+      <div class="card" style="margin-bottom: 10px;">
+        <h3>Capataz Agrícola</h3>
+        <p>Aumenta la producción de alimento un +15%.</p>
+        <button class="btn" onclick="Government.selectLeader('agri')">Elegir Capataz</button>
+      </div>
+      
+      <div class="card" style="margin-bottom: 10px;">
+        <h3>Comerciante Local</h3>
+        <p>Aumenta la recaudación de Impuestos un +20%.</p>
+        <button class="btn" onclick="Government.selectLeader('merchant')">Elegir Comerciante</button>
+      </div>
+
+      <div class="card">
+        <h3>Estratega Militar</h3>
+        <p>Reduce los costos de investigación militar un -10%.</p>
+        <button class="btn" onclick="Government.selectLeader('military')">Elegir Estratega</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       1. ESTADO GLOBAL DEL JUEGO
+       ========================================================================== */
+    const GameState = {
+      leaderChosen: false,
+      selectedLeader: null,
+      techSupervisionUnlocked: false,
+      mapUnlocked: false,
+      isStarving: false,
+      
+      resources: {
+        food: { name: "Alimento", val: 50, max: 100, rate: 0, discovered: true },
+        wood: { name: "Madera", val: 40, max: 100, rate: 0, discovered: true },
+        stone: { name: "Piedra", val: 20, max: 100, rate: 0, discovered: true },
+        money: { name: "Dinero", val: 0, max: 1000, rate: 0, discovered: false },
+        science: { name: "Ciencia", val: 0, max: 200, rate: 0, discovered: false },
+        
+        popUnskilled: { name: "Obreros", val: 2, max: 4, progress: 0, assigned: { farm: 0, quarry: 0, woodcutter: 0 } },
+        popTech: { name: "Técnicos", val: 0, max: 0, progress: 0, assigned: { lab: 0, farmSupervision: 0 }, discovered: false }
+      },
+
+      buildings: {
+        housing: { name: "Viviendas", count: 0, maxLevel: 10, baseCost: { wood: 30, stone: 15 }, multiplier: 1.25, unlocked: true },
+        silo: { name: "Granero", count: 0, maxLevel: 10, baseCost: { wood: 40, stone: 20 }, multiplier: 1.25, unlocked: true },
+        farm: { name: "Granja", count: 0, maxLevel: 20, baseCost: { wood: 25, stone: 15 }, multiplier: 1.20, maxWorkers: 5, unlocked: true },
+        woodcutter: { name: "Aserradero", count: 0, maxLevel: 20, baseCost: { wood: 20, stone: 30 }, multiplier: 1.20, maxWorkers: 5, unlocked: true },
+        quarry: { name: "Cantera", count: 0, maxLevel: 20, baseCost: { wood: 50, stone: 20 }, multiplier: 1.25, maxWorkers: 5, unlocked: true },
+        townHall: { name: "Casa Comunal", count: 0, maxLevel: 1, baseCost: { wood: 120, stone: 60 }, multiplier: 1.0, unlocked: true },
+        university: { name: "Universidad", count: 0, maxLevel: 10, baseCost: { wood: 150, stone: 100, money: 50 }, multiplier: 1.30, unlocked: false },
+        laboratory: { name: "Laboratorio de I+D", count: 0, maxLevel: 10, baseCost: { wood: 100, stone: 120, money: 80 }, multiplier: 1.25, maxWorkers: 3, unlocked: false }
+      },
+
+      techs: {
+        basicScience: { name: "Investigación Básica", cost: { science: 20 }, unlocked: false, req: null, desc: "Desbloquea la Universidad para formar Técnicos." },
+        industrialEngineering: { name: "Ingeniería Industrial", cost: { science: 80, money: 50 }, unlocked: false, req: "basicScience", desc: "Permite asignar Técnicos como supervisores en Granjas para aumentar un +50% su rendimiento." },
+        militaryStrategy: { name: "Estrategia Militar", cost: { science: 100, money: 100 }, unlocked: false, req: "basicScience", desc: "Permite explorar el Mapa de Provincias." }
+      },
+
+      provinces: {
+        1: { id: 1, name: "Capital (Provincia 1)", owned: true, terrain: "Llanura (+15% Comida)" },
+        2: { id: 2, name: "Provincia Norte", owned: false, terrain: "Montaña (+25% Piedra)", cost: { money: 200 } }
+      }
+    };
+
+    /* ==========================================================================
+       2. MOTOR Y LÓGICA DE JUEGO (Tick Loop)
+       ========================================================================== */
+    const Engine = {
+      tick() {
+        this.updateEconomy();
+        this.updatePopulationGrowth();
+        this.updateEducation();
+        UI.render();
+      },
+
+      updateEconomy() {
+        const res = GameState.resources;
+        
+        res.food.rate = 0;
+        res.wood.rate = 0;
+        res.stone.rate = 0;
+        res.science.rate = 0;
+        res.money.rate = 0;
+
+        const totalPop = res.popUnskilled.val + res.popTech.val;
+        const foodConsumption = totalPop * 0.20;
+        res.food.rate -= foodConsumption;
+
+        let farmProd = res.popUnskilled.assigned.farm * 0.40;
+        if (GameState.techSupervisionUnlocked && res.popTech.assigned.farmSupervision > 0) {
+          const boost = 1 + (Math.min(res.popTech.assigned.farmSupervision * 0.5, 1.5));
+          farmProd *= boost;
+        }
+        res.food.rate += farmProd;
+
+        res.wood.rate += res.popUnskilled.assigned.woodcutter * 0.35;
+        res.stone.rate += res.popUnskilled.assigned.quarry * 0.25;
+        res.science.rate += res.popTech.assigned.lab * 0.80;
+
+        if (GameState.leaderChosen) {
+          let taxMultiplier = GameState.selectedLeader === 'merchant' ? 0.24 : 0.20;
+          res.money.rate += totalPop * taxMultiplier;
+        }
+
+        for (let k in res) {
+          if (res[k].val !== undefined && res[k].rate !== undefined) {
+            res[k].val = Math.max(0, Math.min(res[k].max || Infinity, res[k].val + res[k].rate));
+          }
+        }
+
+        GameState.isStarving = (res.food.val <= 0 && res.food.rate < 0);
+      },
+
+      updatePopulationGrowth() {
+        const res = GameState.resources;
+        const totalPop = res.popUnskilled.val + res.popTech.val;
+        const foodThreshold = res.food.max * 0.75;
+
+        if (!GameState.isStarving && res.food.val >= foodThreshold && totalPop < res.popUnskilled.max) {
+          const growthSpeed = 0.02 / Math.pow(Math.max(1, totalPop), 1.2);
+          res.popUnskilled.progress += growthSpeed;
+
+          if (res.popUnskilled.progress >= 1.0) {
+            res.popUnskilled.val += 1;
+            res.popUnskilled.progress = 0;
+            UI.log("Un nuevo habitante ha llegado al asentamiento.", "positive");
+          }
+        }
+      },
+
+      updateEducation() {
+        const res = GameState.resources;
+        const b = GameState.buildings;
+        
+        res.popTech.max = b.university.count * 2;
+
+        if (b.university.count > 0 && res.popUnskilled.val > 0 && res.popTech.val < res.popTech.max) {
+          res.popTech.progress += 0.01 * b.university.count;
+          if (res.popTech.progress >= 1.0) {
+            res.popUnskilled.val -= 1;
+            res.popTech.val += 1;
+            res.popTech.progress = 0;
+            res.popTech.discovered = true;
+            UI.log("🎓 Un Obrero ha completado sus estudios y se ha graduado como Técnico.", "positive");
+          }
+        }
+      }
+    };
+
+    /* ==========================================================================
+       3. INTERFAZ DE USUARIO Y RENDERIZADO (UI)
+       ========================================================================== */
+    const UI = {
+      switchTab(tabId, evt) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        if (evt && evt.target) evt.target.classList.add('active');
+        document.getElementById(`tab-${tabId}`).classList.add('active');
+      },
+
+      render() {
+        this.renderResources();
+        this.renderBuildings();
+        this.renderJobs();
+        this.renderTechs();
+        this.renderMap();
+      },
+
+      renderResources() {
+        const container = document.getElementById('resources-container');
+        container.innerHTML = '';
+
+        for (let key in GameState.resources) {
+          const r = GameState.resources[key];
+          if (!r.discovered && r.val === 0 && !r.rate) continue;
+
+          if (r.val !== undefined) {
+            const card = document.createElement('div');
+            card.className = 'resource-card';
+            const rateClass = r.rate < 0 ? 'negative' : '';
+            const rateText = r.rate !== undefined ? `<span class="resource-rate ${rateClass}">${r.rate >= 0 ? '+' : ''}${r.rate.toFixed(2)}/s</span>` : '';
+            const maxText = r.max ? ` / ${r.max}` : '';
+            
+            card.innerHTML = `
+              <h4>${r.name}</h4>
+              <div class="resource-val">${Math.floor(r.val)}${maxText} ${rateText}</div>
+            `;
+            container.appendChild(card);
+          }
+        }
+      },
+
+      renderBuildings() {
+        const grid = document.getElementById('buildings-grid');
+        grid.innerHTML = '';
+
+        for (let key in GameState.buildings) {
+          const b = GameState.buildings[key];
+          if (!b.unlocked) continue;
+
+          const cost = this.getBuildingCost(b);
+          const canAfford = this.canAfford(cost);
+          const isMax = b.count >= b.maxLevel;
+
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <div>
+              <h3>${b.name} (Nivel ${b.count}/${b.maxLevel})</h3>
+              <p>Costo: ${this.formatCost(cost)}</p>
             </div>
-        </section>
+            <button class="btn" ${(!canAfford || isMax) ? 'disabled' : ''} onclick="Buildings.build('${key}')">
+              ${isMax ? 'Nivel Máximo' : 'Construir / Subir'}
+            </button>
+          `;
+          grid.appendChild(card);
+        }
+      },
 
-        <!-- Pestaña de Ciencia / I+D -->
-        <section id="tab-ciencia" class="game-panel hidden">
-            <h2>🔬 Centro de Investigación y Desarrollo</h2>
-            <p>Desbloquea avances científicos e innovaciones para modernizar el Estado.</p>
+      renderJobs() {
+        const container = document.getElementById('jobs-container');
+        container.innerHTML = '';
+        
+        const res = GameState.resources;
+        const unassignedObreros = res.popUnskilled.val - (res.popUnskilled.assigned.farm + res.popUnskilled.assigned.woodcutter + res.popUnskilled.assigned.quarry);
 
-            <!-- Sub-pestañas Civil vs Militar -->
-            <nav class="subtab-container">
-                <button id="btn-subtab-civil" class="subtab-btn active" onclick="switchTechBranch('civil')">
-                    🔬 Desarrollo Civil e Industrial
-                </button>
-                <button id="btn-subtab-militar" class="subtab-btn" onclick="switchTechBranch('militar')">
-                    🎖️ Mando Militar y Logística
-                </button>
-            </nav>
+        const maxFarmWorkers = GameState.buildings.farm.count * GameState.buildings.farm.maxWorkers;
+        container.appendChild(this.createJobCard('Obreros en Granjas', res.popUnskilled.assigned.farm, maxFarmWorkers, unassignedObreros > 0, 'popUnskilled', 'farm'));
 
-            <div id="tech-grid" class="tech-grid"></div>
-        </section>
+        const maxWoodWorkers = GameState.buildings.woodcutter.count * GameState.buildings.woodcutter.maxWorkers;
+        container.appendChild(this.createJobCard('Obreros en Aserraderos', res.popUnskilled.assigned.woodcutter, maxWoodWorkers, unassignedObreros > 0, 'popUnskilled', 'woodcutter'));
 
-        <!-- Pestaña de Gobierno -->
-        <section id="tab-gobierno" class="game-panel hidden">
-            <h2>Gestión del Estado</h2>
-            <p>Selecciona políticas y líderes para guiar a tu nación.</p>
-        </section>
+        if (GameState.buildings.laboratory.count > 0) {
+          const maxLabTechs = GameState.buildings.laboratory.count * GameState.buildings.laboratory.maxWorkers;
+          const unassignedTechs = res.popTech.val - (res.popTech.assigned.lab + res.popTech.assigned.farmSupervision);
+          container.appendChild(this.createJobCard('Técnicos en I+D', res.popTech.assigned.lab, maxLabTechs, unassignedTechs > 0, 'popTech', 'lab'));
+        }
+      },
 
-        <!-- Pestaña de Mapa -->
-        <section id="tab-mapa" class="game-panel hidden">
-            <h2>Mapa Territorial</h2>
-            <p>Explora y expande tus fronteras.</p>
-        </section>
-    </main>
+      createJobCard(title, current, max, canAdd, popType, jobKey) {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <h3>${title}</h3>
+          <p>Asignados: ${current} / ${max}</p>
+          <div>
+            <button class="btn" onclick="Jobs.assign('${popType}', '${jobKey}', -1)">-1</button>
+            <button class="btn" ${(!canAdd || current >= max) ? 'disabled' : ''} onclick="Jobs.assign('${popType}', '${jobKey}', 1)">+1</button>
+          </div>
+        `;
+        return card;
+      },
 
-    <!-- Estado y Lógica Global Base -->
-    <script>
-        window.GameState = {
-            era: 1,
-            resources: {
-                alimento: 100,
-                madera: 100,
-                piedra: 100,
-                ciencia: 50,
-                dinero: 0
-            },
-            leaderChosen: false,
-            mapUnlocked: false
-        };
+      renderTechs() {
+        const grid = document.getElementById('techs-grid');
+        grid.innerHTML = '';
 
-        window.Game = {
-            init() {
-                if (window.SaveSystem) window.SaveSystem.loadLocal();
-                this.updateUI();
-            },
+        for (let key in GameState.techs) {
+          const t = GameState.techs[key];
+          if (t.unlocked) continue;
+          if (t.req && !GameState.techs[t.req].unlocked) continue;
 
-            clickResource(type) {
-                if (window.GameState.resources[type] !== undefined) {
-                    window.GameState.resources[type] += 5;
-                    this.updateUI();
-                }
-            },
+          const canAfford = this.canAfford(t.cost);
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <div>
+              <h3>${t.name}</h3>
+              <p>${t.desc}</p>
+              <p>Costo: ${this.formatCost(t.cost)}</p>
+            </div>
+            <button class="btn" ${!canAfford ? 'disabled' : ''} onclick="Techs.research('${key}')">Investigar</button>
+          `;
+          grid.appendChild(card);
+        }
+      },
 
-            updateUI() {
-                for (let res in window.GameState.resources) {
-                    const el = document.getElementById(`res-${res}`);
-                    if (el) el.textContent = Math.floor(window.GameState.resources[res]);
-                }
-            }
-        };
+      renderMap() {
+        if (!GameState.mapUnlocked) return;
+        const grid = document.getElementById('map-grid');
+        grid.innerHTML = '';
 
-        window.switchTab = function(tabId) {
-            document.querySelectorAll('.game-panel').forEach(panel => panel.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        for (let id in GameState.provinces) {
+          const p = GameState.provinces[id];
+          const card = document.createElement('div');
+          card.className = `province-card ${p.owned ? 'owned' : ''}`;
+          card.innerHTML = `
+            <h3>${p.name}</h3>
+            <p>${p.terrain}</p>
+            ${p.owned ? '<p style="color:var(--positive);">Territorio Anexado</p>' : `<button class="btn" onclick="MapSystem.annex(${id})">Anexar (${this.formatCost(p.cost)})</button>`}
+          `;
+          grid.appendChild(card);
+        }
+      },
 
-            const selectedPanel = document.getElementById(`tab-${tabId}`);
-            if (selectedPanel) selectedPanel.classList.remove('hidden');
+      getBuildingCost(b) {
+        const cost = {};
+        for (let k in b.baseCost) {
+          cost[k] = Math.floor(b.baseCost[k] * Math.pow(b.multiplier, b.count));
+        }
+        return cost;
+      },
 
-            if (event && event.target) {
-                event.target.classList.add('active');
-            }
-        };
+      canAfford(cost) {
+        for (let k in cost) {
+          if (!GameState.resources[k] || GameState.resources[k].val < cost[k]) return false;
+        }
+        return true;
+      },
 
-        window.SaveSystem = {
-            key: 'simulador_incremental_save',
+      formatCost(cost) {
+        return Object.keys(cost).map(k => `${cost[k]} ${GameState.resources[k].name}`).join(', ');
+      },
 
-            saveLocal() {
-                const encoded = btoa(JSON.stringify(window.GameState));
-                localStorage.setItem(this.key, encoded);
-            },
+      log(msg, type = "") {
+        const panel = document.getElementById('log-panel');
+        const entry = document.createElement('div');
+        entry.className = `log-entry ${type}`;
+        entry.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        panel.appendChild(entry);
+        panel.scrollTop = panel.scrollHeight;
+      }
+    };
 
-            loadLocal() {
-                const save = localStorage.getItem(this.key);
-                if (save) {
-                    try {
-                        const decoded = JSON.parse(atob(save));
-                        Object.assign(window.GameState, decoded);
-                        if (window.GameState.leaderChosen) {
-                            const btn = document.getElementById('tab-btn-gobierno');
-                            if (btn) btn.classList.remove('hidden');
-                        }
-                        if (window.GameState.mapUnlocked) {
-                            const btn = document.getElementById('tab-btn-mapa');
-                            if (btn) btn.classList.remove('hidden');
-                        }
-                    } catch (e) {
-                        console.error("Error al cargar la partida guardada", e);
-                    }
-                }
-            }
-        };
+    /* ==========================================================================
+       4. ACCIONES DE JUEGO
+       ========================================================================== */
+    const Buildings = {
+      build(key) {
+        const b = GameState.buildings[key];
+        const cost = UI.getBuildingCost(b);
 
-        window.onload = () => window.Game.init();
-    </script>
+        if (UI.canAfford(cost) && b.count < b.maxLevel) {
+          for (let k in cost) GameState.resources[k].val -= cost[k];
+          b.count++;
+          UI.log(`Construido: ${b.name} (Nivel ${b.count})`, "positive");
 
-    <!-- Carga del Módulo Principal -->
-    <script type="module" src="js/main.js"></script>
+          if (key === 'housing') GameState.resources.popUnskilled.max += 2;
+          if (key === 'silo') GameState.resources.food.max += 150;
+          if (key === 'townHall' && !GameState.leaderChosen) {
+            document.getElementById('modal-leader').classList.remove('hidden');
+          }
+
+          UI.render();
+        }
+      }
+    };
+
+    const Jobs = {
+      assign(popType, jobKey, amount) {
+        const res = GameState.resources;
+        const currentAssigned = res[popType].assigned[jobKey] || 0;
+        
+        if (amount > 0) {
+          res[popType].assigned[jobKey] = currentAssigned + 1;
+        } else if (amount < 0 && currentAssigned > 0) {
+          res[popType].assigned[jobKey] = currentAssigned - 1;
+        }
+        UI.render();
+      }
+    };
+
+    const Government = {
+      selectLeader(type) {
+        GameState.leaderChosen = true;
+        GameState.selectedLeader = type;
+        GameState.resources.money.discovered = true;
+        
+        document.getElementById('modal-leader').classList.add('hidden');
+        document.getElementById('tab-btn-gobierno').classList.remove('hidden');
+        document.getElementById('leader-name').innerText = type.toUpperCase();
+        
+        UI.log("🏛️ ¡Se ha nombrado al Líder! Se han activado el Dinero y las Leyes de Gobierno.", "positive");
+        UI.render();
+      }
+    };
+
+    const Techs = {
+      research(key) {
+        const t = GameState.techs[key];
+        if (UI.canAfford(t.cost) && !t.unlocked) {
+          for (let k in t.cost) GameState.resources[k].val -= t.cost[k];
+          t.unlocked = true;
+          UI.log(`🔬 Investigación completada: ${t.name}`, "positive");
+
+          if (key === 'basicScience') {
+            GameState.buildings.university.unlocked = true;
+            GameState.buildings.laboratory.unlocked = true;
+          }
+          if (key === 'industrialEngineering') GameState.techSupervisionUnlocked = true;
+          if (key === 'militaryStrategy') {
+            GameState.mapUnlocked = true;
+            document.getElementById('tab-btn-mapa').classList.remove('hidden');
+          }
+
+          UI.render();
+        }
+      }
+    };
+
+    const MapSystem = {
+      annex(id) {
+        const p = GameState.provinces[id];
+        if (UI.canAfford(p.cost) && !p.owned) {
+          for (let k in p.cost) GameState.resources[k].val -= p.cost[k];
+          p.owned = true;
+          UI.log(`⚔️ ¡Has anexado la ${p.name}!`, "positive");
+          UI.render();
+        }
+      }
+    };
+
+    const Game = {
+      manualHarvest() {
+        GameState.resources.food.val = Math.min(GameState.resources.food.max, GameState.resources.food.val + 1);
+        UI.render();
+      },
+
+      init() {
+        SaveSystem.loadLocal();
+        setInterval(() => Engine.tick(), 1000);
+        UI.render();
+        UI.log("Juego iniciado. Comienza a recolectar y construir tu asentamiento.");
+      }
+    };
+
+    /* ==========================================================================
+       5. SISTEMA DE GUARDADO PERSISTENTE
+       ========================================================================== */
+    const SaveSystem = {
+      key: "INDUSTRIAL_EMPIRE_SAVE",
+      
+      saveLocal() {
+        const data = JSON.stringify(GameState);
+        const encoded = btoa(data);
+        localStorage.setItem(this.key, encoded);
+        UI.log("💾 Partida guardada correctamente.", "positive");
+      },
+
+      loadLocal() {
+        const save = localStorage.getItem(this.key);
+        if (save) {
+          try {
+            const decoded = JSON.parse(atob(save));
+            Object.assign(GameState, decoded);
+            if (GameState.leaderChosen) document.getElementById('tab-btn-gobierno').classList.remove('hidden');
+            if (GameState.mapUnlocked) document.getElementById('tab-btn-mapa').classList.remove('hidden');
+          } catch (e) {
+            console.error("Error al cargar la partida guardada", e);
+          }
+        }
+      }
+    };
+
+    window.onload = () => Game.init();
+  </script>
 </body>
 </html>
