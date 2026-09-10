@@ -1,8 +1,20 @@
-renderResources() {
-    import { GameState } from './state.js';
-    import { Actions } from './actions.js';
-    import { Storage } from './storage.js';
-    import { eventBus } from './eventBus.js';
+import { GameState } from './state.js';
+import { Actions } from './actions.js';
+import { Storage } from './storage.js';
+import { eventBus } from './eventBus.js';
+
+export const UI = {
+  init() {
+    this.bindEvents();
+    this.subscribeToBus();
+    this.render();
+  },
+  
+  // ... resto de tus métodos de UI ...
+  
+  renderResources() {
+    const container = document.getElementById('resources-container');
+    container.innerHTML = '';
 
     for (let key in GameState.resources) {
       const res = GameState.resources[key];
@@ -11,7 +23,6 @@ renderResources() {
       const row = document.createElement('div');
       row.className = 'resource-row';
 
-      // Añadir soporte de tooltip si el recurso cuenta con descripción
       if (res.desc && res.effect) {
         row.onmouseenter = () => this.showTooltip(res.name, res.desc, res.effect);
         row.onmouseleave = () => this.clearTooltip();
@@ -37,4 +48,5 @@ renderResources() {
       }
       container.appendChild(row);
     }
-  },
+  }
+};
