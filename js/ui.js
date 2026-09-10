@@ -21,6 +21,16 @@ export const UI = {
       btn.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab, e.target));
     });
 
+    // Subfiltros de la pestaña Hoguera (Todos, Disponible, Habilitado)
+    document.querySelectorAll('.filter-tabs .tab-link').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.filter-tabs .tab-link').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        GameState.activeBuildingFilter = e.target.dataset.filter;
+        this.renderBuildings();
+      });
+    });
+
     // Botones de acción fija
     document.getElementById('btn-harvest').addEventListener('click', () => Actions.manualHarvest());
     document.getElementById('btn-save').addEventListener('click', () => Storage.save());
@@ -94,6 +104,11 @@ export const UI = {
 
       const cost = Actions.getCost(b);
       const canAfford = Actions.canAfford(cost);
+      const filter = GameState.activeBuildingFilter;
+
+      // Aplicación de lógica según el subfiltro seleccionado
+      if (filter === 'available' && !canAfford) continue;
+      if (filter === 'enabled' && b.count === 0) continue;
 
       const item = document.createElement('div');
       item.className = 'building-item';

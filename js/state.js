@@ -1,5 +1,6 @@
 export const GameState = {
   paused: false,
+  activeBuildingFilter: 'all', // Nuevo: Controla el filtro activo ('all', 'available', 'enabled')
   resources: {
     food: { name: "Alimento", val: 0, max: 100, rate: 0, discovered: true },
     wood: { name: "Madera", val: 0, max: 100, rate: 0, discovered: false },
