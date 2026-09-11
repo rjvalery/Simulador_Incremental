@@ -2,6 +2,7 @@
 
 import { canAfford, deductCost } from './resources.js';
 import { calculateBuildingCost } from './buildings.js';
+import { calculateMaxHousing } from './state.js';
 
 function addLog(message, type = 'info') {
     if (typeof window !== 'undefined') {
@@ -31,7 +32,7 @@ export function handleManualHarvest(state) {
 
 export function buildStructure(state, buildingKey) {
     const building = state.buildings[buildingKey];
-    if (!building) return false;
+    if (!building || !building.unlocked) return false;
 
     const cost = calculateBuildingCost(buildingKey, building.count);
     if (!canAfford(state, cost)) {
@@ -49,8 +50,7 @@ export function modifyWorkerAllocation(state, amount) {
     // Asegurar estructura demográfica con pool de ciudadanos libres (desempleados)
     if (!state.population) state.population = { unskilled: 0, workers: 0, technicians: 0, professionals: 0 };
 
-    const maxPop = Object.values(state.buildings)
-        .reduce((capacity, building) => capacity + (building.count * (building.housingCapacity || 0)), 0);
+    const maxPop = calculateMaxHousing(state);
     const currentAssigned = state.population.workers + state.population.technicians;
     const totalPopulation = currentAssigned + (state.population.unskilled || 0);
 

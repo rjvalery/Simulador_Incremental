@@ -7,7 +7,8 @@ export const BUILDINGS_DATA = {
         description: "Aumenta la capacidad máxima de población de la aldea.",
         baseCost: { wood: 15, food: 10 },
         costMultiplier: 1.15,
-        housingProvided: 2
+        housingCapacity: 5,
+        production: {}
     },
     farm: {
         id: "farm",
@@ -28,10 +29,26 @@ export const BUILDINGS_DATA = {
     quarry: {
         id: "quarry",
         name: "Cantera",
-        description: "Permite la extracción activa de piedra para construcciones avanzadas.",
+        description: "Extrae piedra para construcciones avanzadas.",
         baseCost: { wood: 50, food: 30 },
         costMultiplier: 1.15,
         production: { stone: 0.5 }
+    },
+    factory: {
+        id: "factory",
+        name: "Fábrica",
+        description: "Convierte madera y piedra en producción industrial.",
+        baseCost: { wood: 180, stone: 100 },
+        costMultiplier: 1.18,
+        production: { science: 0.5 }
+    },
+    oilRefinery: {
+        id: "oilRefinery",
+        name: "Refinería de petróleo",
+        description: "Procesa petróleo para sostener la industria moderna.",
+        baseCost: { wood: 350, stone: 250, science: 100 },
+        costMultiplier: 1.2,
+        production: { power: 1 }
     }
 };
 

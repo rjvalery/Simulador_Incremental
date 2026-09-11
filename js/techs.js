@@ -1,108 +1,102 @@
-// techs.js - Árbol Tecnológico Unificado por Eras (Aldea y Evolución Militar)
+// techs.js - Arbol tecnologico persistente y basado en el estado de la partida
 
-export const TECHS_DATA = {
-    // --- ERA ANTIGUA ---
+export const TECHS_DATA = Object.freeze({
     agriculture: {
-        id: "agriculture",
-        era: "Antigua",
-        name: "Agricultura Avanzada",
-        description: "Optimiza los cultivos y desbloquea el crecimiento básico de la aldea.",
+        id: 'agriculture',
+        era: 'Antigua',
+        name: 'Agricultura avanzada',
+        description: 'Mejora la produccion de alimentos y formaliza la agricultura.',
         cost: { science: 50 },
         requires: [],
-        completed: false,
-        unlocks: { buildings: ["farm"], units: [] },
-        effect: (state) => {
-            state.resources.food.productionMultiplier = (state.resources.food.productionMultiplier || 1) + 0.25;
-        }
+        unlocks: { buildings: ['farm'] },
+        effects: { productionMultiplier: { food: 1.25 } }
     },
     bronzeWorking: {
-        id: "bronzeWorking",
-        era: "Antigua",
-        name: "Metalurgia del Bronce",
-        description: "Permite el uso de herramientas de metal y el reclutamiento de milicias armadas.",
+        id: 'bronzeWorking',
+        era: 'Antigua',
+        name: 'Metalurgia del bronce',
+        description: 'Permite extraer piedra y prepara la transicion industrial.',
         cost: { science: 120 },
-        requires: ["agriculture"],
-        completed: false,
-        unlocks: { buildings: ["quarry"], units: ["spearman"] },
-        effect: (state) => {
-            if (state.resources.stone) state.resources.stone.unlocked = true;
-        }
+        requires: ['agriculture'],
+        unlocks: { buildings: ['quarry'], units: ['spearman'] }
     },
-
-    // --- ERA INDUSTRIAL ---
     industrialization: {
-        id: "industrialization",
-        era: "Industrial",
-        name: "Industrialización",
-        description: "Mecanización de procesos productivos y refinerías de acero para la guerra moderna.",
+        id: 'industrialization',
+        era: 'Industrial',
+        name: 'Industrializacion',
+        description: 'Desbloquea la fabrica y genera ciencia mediante procesos industriales.',
         cost: { science: 500 },
-        requires: ["bronzeWorking"],
-        completed: false,
-        unlocks: { buildings: ["factory"], units: ["infantry"] },
-        effect: (state) => {
-            state.resources.iron = { value: 0, max: 500, production: 0, unlocked: true };
-        }
+        requires: ['bronzeWorking'],
+        unlocks: { buildings: ['factory'], resources: ['iron'], units: ['infantry'] }
     },
-
-    // --- ERA MODERNA ---
     mechanizedWarfare: {
-        id: "mechanizedWarfare",
-        era: "Moderna",
-        name: "Guerra Mecanizada",
-        description: "Tecnología de motores de combustión pesados para la fabricación de tanques y vehículos blindados.",
+        id: 'mechanizedWarfare',
+        era: 'Moderna',
+        name: 'Guerra mecanizada',
+        description: 'Desbloquea la refineria y el uso estrategico del petroleo.',
         cost: { science: 1500 },
-        requires: ["industrialization"],
-        completed: false,
-        unlocks: { buildings: ["oilRefinery"], units: ["tank", "mechanizedInfantry"] },
-        effect: (state) => {
-            state.resources.oil = { value: 0, max: 1000, production: 0, unlocked: true };
-        }
+        requires: ['industrialization'],
+        unlocks: { buildings: ['oilRefinery'], resources: ['oil'], units: ['tank', 'mechanizedInfantry'] }
     }
-};
+});
 
-// Validación centralizada de requisitos y costes científicos
-export function canResearch(state, techKey) {
-    const tech = TECHS_DATA[techKey];
-    if (!tech || tech.completed) return false;
-
-    for (const reqId of tech.requires) {
-        if (!TECHS_DATA[reqId] || !TECHS_DATA[reqId].completed) return false;
-    }
-
-    for (const [resKey, amount] of Object.entries(tech.cost)) {
-        if (!state.resources[resKey] || state.resources[resKey].value < amount) return false;
-    }
-
-    return true;
+function isCompleted(state, techKey) {
+    return state.techs?.[techKey]?.completed === true;
 }
 
-// Ejecución de la investigación y aplicación automática de desbloqueos
+function ensureResource(state, resourceKey) {
+    if (!state.resources[resourceKey]) {
+        state.resources[resourceKey] = {
+            name: resourceKey,
+            value: 0,
+            max: 500,
+            production: 0,
+            consumption: 0,
+            unlocked: true
+        };
+    }
+    state.resources[resourceKey].unlocked = true;
+}
+
+export function canResearch(state, techKey) {
+    const tech = TECHS_DATA[techKey];
+    if (!tech || isCompleted(state, techKey)) return false;
+    if (tech.requires.some(requirement => !isCompleted(state, requirement))) return false;
+
+    return Object.entries(tech.cost).every(([resourceKey, amount]) => {
+        return state.resources[resourceKey]?.value >= amount;
+    });
+}
+
 export function researchTech(state, techKey) {
     if (!canResearch(state, techKey)) return false;
 
     const tech = TECHS_DATA[techKey];
-
-    for (const [resKey, amount] of Object.entries(tech.cost)) {
-        state.resources[resKey].value -= amount;
-    }
-
-    tech.completed = true;
-    
-    if (typeof tech.effect === "function") {
-        tech.effect(state);
-    }
-
+    state.techs = state.techs || {};
     state.unlockedTechs = state.unlockedTechs || {};
+    state.military = state.military || { unlockedUnits: [] };
+    for (const [resourceKey, amount] of Object.entries(tech.cost)) {
+        state.resources[resourceKey].value -= amount;
+    }
+
+    state.techs[techKey] = { completed: true, researchedAt: Date.now() };
     state.unlockedTechs[techKey] = true;
 
-    state.military = state.military || { unlockedUnits: [] };
-    if (tech.unlocks && tech.unlocks.units) {
-        tech.unlocks.units.forEach(unit => {
-            if (!state.military.unlockedUnits.includes(unit)) {
-                state.military.unlockedUnits.push(unit);
-            }
-        });
+    for (const buildingKey of tech.unlocks?.buildings || []) {
+        if (state.buildings[buildingKey]) state.buildings[buildingKey].unlocked = true;
     }
+    for (const resourceKey of tech.unlocks?.resources || []) ensureResource(state, resourceKey);
+
+    if (tech.effects?.productionMultiplier) {
+        for (const [resourceKey, multiplier] of Object.entries(tech.effects.productionMultiplier)) {
+            const resource = state.resources[resourceKey];
+            if (resource) resource.productionMultiplier = multiplier;
+        }
+    }
+
+    state.military.unlockedUnits.push(...(tech.unlocks?.units || []).filter(unit => {
+        return !state.military.unlockedUnits.includes(unit);
+    }));
 
     return true;
 }

@@ -1,11 +1,13 @@
 // state.js - Estado Global del Simulador Incremental
+import { BUILDINGS_DATA } from './buildings.js';
+
 export const gameState = {
     resources: {
-        food: { value: 50, max: 200, production: 0, consumption: 0 },
-        wood: { value: 30, max: 150, production: 0, consumption: 0 },
-        stone: { value: 10, max: 100, production: 0, consumption: 0 },
-        money: { value: 0, max: 1000, production: 0, consumption: 0 },
-        science: { value: 0, max: 500, production: 0, consumption: 0 }
+        food: { name: "Alimentos", value: 50, max: 200, production: 0, consumption: 0 },
+        wood: { name: "Madera", value: 30, max: 150, production: 0, consumption: 0 },
+        stone: { name: "Piedra", value: 10, max: 100, production: 0, consumption: 0 },
+        money: { name: "Monedas", value: 0, max: 1000, production: 0, consumption: 0 },
+        science: { name: "Ciencia", value: 0, max: 500, production: 0, consumption: 0 }
     },
     population: {
         unskilled: 2,     // Población libre / desempleada disponible
@@ -14,12 +16,16 @@ export const gameState = {
         professionals: 0  // Profesionales / administración
     },
     buildings: {
-        shelter: { count: 1, baseCost: { wood: 15 }, costMultiplier: 1.15, housingCapacity: 5 },
-        farm: { count: 0, baseCost: { wood: 10, food: 5 }, costMultiplier: 1.15 },
-        woodcutter: { count: 0, baseCost: { wood: 20 }, costMultiplier: 1.15 },
-        quarry: { count: 0, baseCost: { wood: 50, stone: 20 }, costMultiplier: 1.15 }
+        shelter: { count: 1, unlocked: true },
+        farm: { count: 0, unlocked: true },
+        woodcutter: { count: 0, unlocked: true },
+        quarry: { count: 0, unlocked: false },
+        factory: { count: 0, unlocked: false },
+        oilRefinery: { count: 0, unlocked: false }
     },
     techs: {},
+    unlockedTechs: {},
+    military: { unlockedUnits: [] },
     settings: {
         gameSpeed: 1
     }
@@ -29,8 +35,9 @@ export const gameState = {
 export function calculateMaxHousing(state) {
     let totalCapacity = 0;
     for (const [key, building] of Object.entries(state.buildings)) {
-        if (building.housingCapacity) {
-            totalCapacity += building.count * building.housingCapacity;
+        const buildingInfo = BUILDINGS_DATA[key];
+        if (buildingInfo?.housingCapacity) {
+            totalCapacity += building.count * buildingInfo.housingCapacity;
         }
     }
     return totalCapacity;
@@ -38,8 +45,8 @@ export function calculateMaxHousing(state) {
 
 // Función para obtener la población total actual
 export function getTotalPopulation(state) {
-    return state.population.unskilled + 
-           state.population.workers + 
-           state.population.technicians + 
+    return state.population.unskilled +
+           state.population.workers +
+           state.population.technicians +
            state.population.professionals;
 }

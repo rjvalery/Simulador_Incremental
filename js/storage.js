@@ -1,5 +1,10 @@
 import { gameState } from './state.js';
-import { eventBus } from './eventBus.js';
+
+function emitLog(message) {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('log:add', { detail: { message, type: 'info' } }));
+  }
+}
 
 export const Storage = {
   key: "KITTENS_GAME_SAVE",
@@ -7,8 +12,9 @@ export const Storage = {
   save() {
     try {
       const data = JSON.stringify(gameState);
-      localStorage.setItem(this.key, btoa(data));
-      eventBus.emit('log:add', "Partida guardada correctamente.");
+      localStorage.setItem(this.key, btoa(encodeURIComponent(data)));
+      emitLog('Partida guardada correctamente.');
+      return true;
     } catch (err) {
       console.error("Error al guardar la partida:", err);
     }
@@ -19,10 +25,10 @@ export const Storage = {
     if (!saved) return false;
 
     try {
-      const parsed = JSON.parse(atob(saved));
+      const parsed = JSON.parse(decodeURIComponent(atob(saved)));
       Object.assign(gameState, parsed);
-      eventBus.emit('log:add', "Partida cargada exitosamente.");
-      eventBus.emit('state:updated');
+      emitLog('Partida cargada exitosamente.');
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('state:updated'));
       return true;
     } catch (err) {
       console.error("Error al cargar la partida guardada:", err);

@@ -9,7 +9,7 @@ export function renderSidebar(state) {
     if (!sidebarContainer) return;
 
     let html = '<h3>Monitor de Recursos</h3><ul class="resource-list">';
-    
+
     for (const [key, res] of Object.entries(state.resources)) {
         if (res.unlocked !== false) {
             html += `
@@ -20,7 +20,7 @@ export function renderSidebar(state) {
                 </li>`;
         }
     }
-    
+
     // Añadir resumen demográfico en el sidebar
     const maxHousing = calculateMaxHousing(state);
     const totalPop = getTotalPopulation(state);
@@ -54,7 +54,7 @@ export function addGameLog(message, type = "info") {
     const p = document.createElement('p');
     p.className = `log-item log-${type}`;
     p.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-    
+
     logContainer.prepend(p);
 
     // Limitar el historial a 50 líneas

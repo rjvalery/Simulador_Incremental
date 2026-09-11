@@ -1,73 +1,62 @@
-// engine.js - Motor de Juego (Game Loop y Migración)
-import { gameState, calculateMaxHousing, getTotalPopulation } from './state.js';
+// engine.js - Motor unico de produccion y crecimiento demografico
 
-let lastTickTime = performance.now();
-let migrationTimer = 0; // Temporizador para controlar el flujo de migración (ej. cada 5 segundos)
+import { calculateMaxHousing, getTotalPopulation } from './state.js';
+import { BUILDINGS_DATA } from './buildings.js';
 
-export function gameLoop(timestamp) {
-    const deltaTime = (timestamp - lastTickTime) / 1000;
-    lastTickTime = timestamp;
+let migrationTimer = 0;
 
-    if (deltaTime > 0) {
-        updateGameTick(deltaTime);
-    }
-
-    requestAnimationFrame(gameLoop);
-}
-
-function updateGameTick(dt) {
-    // 1. Procesar producción y consumo por segundo
-    processProduction(dt);
-
-    // 2. Gestionar la migración demográfica periódica
-    migrationTimer += dt;
-    if (migrationTimer >= 5.0) { // Cada 5 segundos evalúa la llegada de habitantes
-        handleMigration(gameState);
-        migrationTimer = 0;
-    }
-
-    // 3. Emitir evento de actualización para la UI
-    const updateEvent = new CustomEvent('state:updated', { detail: gameState });
-    window.dispatchEvent(updateEvent);
-}
-
-function handleMigration(state) {
-    const maxHousing = calculateMaxHousing(state);
-    const currentPop = getTotalPopulation(state);
-
-    // Si hay espacio en las viviendas, un nuevo habitante migra como mano de obra libre
-    if (currentPop < maxHousing) {
-        state.population.unskilled += 1;
-        
-        // Registrar en el log del sistema si está disponible
-        const logEvent = new CustomEvent('log:add', { 
-            detail: { message: "Un nuevo habitante ha migrado al asentamiento.", type: "info" } 
-        });
-        window.dispatchEvent(logEvent);
+function emitLog(message, type = 'info') {
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('log:add', { detail: { message, type } }));
     }
 }
 
-function processProduction(dt) {
-    // Cálculo básico de recursos según trabajadores asignados
-    // (Ajustado de manera limpia para respetar tasas netas /s)
-    const farmProd = gameState.buildings.farm.count * 1.0;
-    const woodProd = gameState.buildings.woodcutter.count * 0.8;
-    
-    // Producción de comida
-    gameState.resources.food.value = Math.min(
-        gameState.resources.food.max,
-        gameState.resources.food.value + (farmProd * dt)
-    );
-    gameState.resources.food.production = farmProd;
-
-    // Producción de madera
-    gameState.resources.wood.value = Math.min(
-        gameState.resources.wood.max,
-        gameState.resources.wood.value + (woodProd * dt)
-    );
-    gameState.resources.wood.production = woodProd;
+function addResource(resource, amount) {
+    if (!resource || amount <= 0) return 0;
+    const previousValue = resource.value;
+    resource.value = Math.min(resource.max, resource.value + amount);
+    return resource.value - previousValue;
 }
 
-export function startEngine() {
-    requestAnimationFrame(gameLoop);
+export function runGameTick(state, deltaTime = 1) {
+    for (const resource of Object.values(state.resources)) resource.production = 0;
+
+    for (const [buildingKey, buildingState] of Object.entries(state.buildings)) {
+        const buildingInfo = BUILDINGS_DATA[buildingKey];
+        const count = buildingState.count || 0;
+        if (!buildingInfo || !buildingState.unlocked || count <= 0) continue;
+
+        for (const [resourceKey, baseRate] of Object.entries(buildingInfo.production || {})) {
+            const resource = state.resources[resourceKey];
+            const multiplier = resource?.productionMultiplier || 1;
+            const rate = baseRate * count * multiplier;
+            if (!resource) continue;
+            resource.production += rate;
+            addResource(resource, rate * deltaTime);
+        }
+    }
+
+    migrationTimer += deltaTime;
+    if (migrationTimer >= 5) {
+        migrationTimer -= 5;
+        const totalPopulation = getTotalPopulation(state);
+        if (totalPopulation < calculateMaxHousing(state) && state.resources.food.value >= 10) {
+            state.population.unskilled += 1;
+            emitLog('Un nuevo habitante ha migrado al asentamiento.', 'info');
+        }
+    }
+}
+
+export function startEngine(state, onTick) {
+    let lastTick = performance.now();
+
+    function frame(timestamp) {
+        const deltaTime = Math.min((timestamp - lastTick) / 1000, 1);
+        lastTick = timestamp;
+        runGameTick(state, deltaTime);
+        onTick?.();
+        requestAnimationFrame(frame);
+    }
+
+    requestAnimationFrame(frame);
 }
