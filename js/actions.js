@@ -31,18 +31,28 @@ export function handleManualHarvest(state) {
 }
 
 export function buildStructure(state, buildingKey) {
-    const building = state.buildings[buildingKey];
-    if (!building || !building.unlocked) return false;
-
     const buildingInfo = BUILDINGS_DATA[buildingKey];
-    if (buildingInfo?.maxCount !== undefined && building.count >= buildingInfo.maxCount) {
+    const building = state.buildings?.[buildingKey];
+    if (!buildingInfo || !building || building.unlocked === false) {
+        addLog('Esta estructura todavía no está desbloqueada.', 'warning');
+        return false;
+    }
+
+    const currentCount = Number.isFinite(Number(building.count)) ? Number(building.count) : 0;
+    building.count = currentCount;
+
+    if (buildingInfo.maxCount !== undefined && currentCount >= buildingInfo.maxCount) {
         addLog(`${buildingInfo.name} solo puede construirse una vez.`, 'warning');
         return false;
     }
 
-    const cost = calculateBuildingCost(buildingKey, building.count);
+    const cost = calculateBuildingCost(buildingKey, currentCount);
     if (!canAfford(state, cost)) {
-        addLog('No hay recursos suficientes para construir esta estructura.', 'warning');
+        const missingResources = Object.entries(cost)
+            .filter(([resourceKey, amount]) => (state.resources[resourceKey]?.value || 0) < amount)
+            .map(([resourceKey]) => resourceKey)
+            .join(', ');
+        addLog(`No hay recursos suficientes: ${missingResources || 'datos inválidos'}.`, 'warning');
         return false;
     }
 
