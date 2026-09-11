@@ -1,5 +1,27 @@
 // resources.js - Utilidades de formato numérico y gestión de recursos
 
+import { BUILDINGS_DATA } from './buildings.js';
+
+const WAREHOUSE_CAPPED_RESOURCES = new Set(['food', 'wood', 'stone', 'science']);
+
+export function calculateResourceCap(state, resourceKey) {
+    const resource = state.resources[resourceKey];
+    if (!resource || !WAREHOUSE_CAPPED_RESOURCES.has(resourceKey)) return resource?.baseMax ?? resource?.max;
+
+    const warehouseCount = state.buildings.warehouse?.count || 0;
+    const warehouseBonus = (BUILDINGS_DATA.warehouse.storageCapacity || 0) * warehouseCount;
+    const baseMax = resource.baseMax ?? resource.max - warehouseBonus;
+    resource.baseMax = baseMax;
+    return baseMax + warehouseBonus;
+}
+
+export function refreshResourceCaps(state) {
+    for (const [resourceKey, resource] of Object.entries(state.resources)) {
+        const cap = calculateResourceCap(state, resourceKey);
+        if (cap !== undefined) resource.max = cap;
+    }
+}
+
 // Función de formato numérico limpio para la UI y el Sidebar
 export function formatNumber(value) {
     if (value === undefined || value === null) return "0";

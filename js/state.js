@@ -3,11 +3,11 @@ import { BUILDINGS_DATA } from './buildings.js';
 
 export const gameState = {
     resources: {
-        food: { name: "Alimentos", value: 50, max: 200, production: 0, consumption: 0 },
-        wood: { name: "Madera", value: 30, max: 150, production: 0, consumption: 0 },
-        stone: { name: "Piedra", value: 10, max: 100, production: 0, consumption: 0 },
-        money: { name: "Monedas", value: 0, max: 1000, production: 0, consumption: 0 },
-        science: { name: "Ciencia", value: 0, max: 500, production: 0, consumption: 0 }
+        food: { name: "Alimentos", value: 50, max: 200, baseMax: 200, production: 0, consumption: 0 },
+        wood: { name: "Madera", value: 30, max: 150, baseMax: 150, production: 0, consumption: 0 },
+        stone: { name: "Piedra", value: 10, max: 100, baseMax: 100, production: 0, consumption: 0 },
+        money: { name: "Monedas", value: 0, max: 1000, baseMax: 1000, production: 0, consumption: 0 },
+        science: { name: "Ciencia", value: 0, max: 500, baseMax: 500, production: 0, consumption: 0 }
     },
     population: {
         unskilled: 2,     // Población libre / desempleada disponible
@@ -19,13 +19,21 @@ export const gameState = {
         shelter: { count: 1, unlocked: true },
         farm: { count: 0, unlocked: true },
         woodcutter: { count: 0, unlocked: true },
-        quarry: { count: 0, unlocked: false },
+        quarry: { count: 0, unlocked: true },
+        warehouse: { count: 0, unlocked: true },
+        library: { count: 0, unlocked: true },
+        townHall: { count: 0, unlocked: true },
         factory: { count: 0, unlocked: false },
         oilRefinery: { count: 0, unlocked: false }
     },
     techs: {},
     unlockedTechs: {},
     military: { unlockedUnits: [] },
+    governance: {
+        unlocked: false,
+        leader: null,
+        policies: []
+    },
     settings: {
         gameSpeed: 1
     }

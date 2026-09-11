@@ -2,6 +2,7 @@
 
 import { calculateMaxHousing, getTotalPopulation } from './state.js';
 import { BUILDINGS_DATA } from './buildings.js';
+import { refreshResourceCaps } from './resources.js';
 
 let migrationTimer = 0;
 
@@ -19,6 +20,7 @@ function addResource(resource, amount) {
 }
 
 export function runGameTick(state, deltaTime = 1) {
+    refreshResourceCaps(state);
     for (const resource of Object.values(state.resources)) resource.production = 0;
 
     for (const [buildingKey, buildingState] of Object.entries(state.buildings)) {

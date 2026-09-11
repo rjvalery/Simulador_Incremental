@@ -34,6 +34,32 @@ export const BUILDINGS_DATA = {
         costMultiplier: 1.15,
         production: { stone: 0.5 }
     },
+    warehouse: {
+        id: "warehouse",
+        name: "Almacén",
+        description: "Aumenta la capacidad de almacenamiento de los recursos básicos.",
+        baseCost: { wood: 75, stone: 25 },
+        costMultiplier: 1.15,
+        storageCapacity: 100,
+        production: {}
+    },
+    library: {
+        id: "library",
+        name: "Biblioteca",
+        description: "Genera conocimiento y puntos de ciencia de forma pasiva.",
+        baseCost: { wood: 100, stone: 50 },
+        costMultiplier: 1.15,
+        production: { science: 0.25 }
+    },
+    townHall: {
+        id: "townHall",
+        name: "Casa Comunal",
+        description: "Desbloquea el liderazgo y las políticas de gobernanza.",
+        baseCost: { wood: 150, stone: 100, food: 75 },
+        costMultiplier: 1.15,
+        maxCount: 1,
+        production: {}
+    },
     factory: {
         id: "factory",
         name: "Fábrica",

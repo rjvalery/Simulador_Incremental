@@ -5,6 +5,7 @@ import { handleManualHarvest, buildStructure, modifyWorkerAllocation } from './a
 import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js';
 import { startEngine } from './engine.js';
 import { renderSidebar, addGameLog } from './ui.js';
+import { refreshResourceCaps } from './resources.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     setupTabs();
@@ -85,6 +86,7 @@ function renderEmploymentUI() {
 }
 
 function renderGame() {
+    refreshResourceCaps(gameState);
     renderSidebar(gameState);
     renderEmploymentUI();
     renderBuildingsUI();
@@ -113,16 +115,25 @@ function renderBuildingsUI() {
             .map(([res, amount]) => `${Math.round(amount)} ${res}`)
             .join(', ');
 
+        const productionString = Object.entries(buildingInfo.production || {})
+            .map(([resource, rate]) => `+${rate}/s ${resource}`)
+            .join(', ');
+        const limitString = buildingInfo.maxCount ? ` | Máximo: ${buildingInfo.maxCount}` : '';
+
         card.innerHTML = `
             <div>
-                <strong>${buildingInfo.name}</strong> (Poseídos: ${currentCount})<br>
+                <strong>${buildingInfo.name}</strong> (Poseídos: ${currentCount}${limitString})<br>
+                <small style="color: #aaa;">${buildingInfo.description}</small><br>
                 <small style="color: #aaa;">Costo: ${costString}</small>
+                ${productionString ? `<br><small style="color: #81c784;">Producción: ${productionString}</small>` : ''}
             </div>
         `;
 
         const btnBuild = document.createElement('button');
-        btnBuild.textContent = 'Construir';
+        const atLimit = buildingInfo.maxCount !== undefined && currentCount >= buildingInfo.maxCount;
+        btnBuild.textContent = atLimit ? 'Construido' : 'Construir';
         btnBuild.className = 'btn-action';
+        btnBuild.disabled = atLimit;
         btnBuild.addEventListener('click', () => {
             buildStructure(gameState, buildingKey);
             renderBuildingsUI();

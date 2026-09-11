@@ -1,7 +1,7 @@
 // actions.js - Acciones del jugador y gestión de población
 
-import { canAfford, deductCost } from './resources.js';
-import { calculateBuildingCost } from './buildings.js';
+import { canAfford, deductCost, refreshResourceCaps } from './resources.js';
+import { BUILDINGS_DATA, calculateBuildingCost } from './buildings.js';
 import { calculateMaxHousing } from './state.js';
 
 function addLog(message, type = 'info') {
@@ -34,6 +34,12 @@ export function buildStructure(state, buildingKey) {
     const building = state.buildings[buildingKey];
     if (!building || !building.unlocked) return false;
 
+    const buildingInfo = BUILDINGS_DATA[buildingKey];
+    if (buildingInfo?.maxCount !== undefined && building.count >= buildingInfo.maxCount) {
+        addLog(`${buildingInfo.name} solo puede construirse una vez.`, 'warning');
+        return false;
+    }
+
     const cost = calculateBuildingCost(buildingKey, building.count);
     if (!canAfford(state, cost)) {
         addLog('No hay recursos suficientes para construir esta estructura.', 'warning');
@@ -42,6 +48,14 @@ export function buildStructure(state, buildingKey) {
 
     deductCost(state, cost);
     building.count += 1;
+    refreshResourceCaps(state);
+
+    if (buildingKey === 'townHall') {
+        state.governance = state.governance || { unlocked: false, leader: null, policies: [] };
+        state.governance.unlocked = true;
+        addLog('La Casa Comunal desbloquea el liderazgo y las políticas de gobernanza.', 'success');
+    }
+
     addLog(`Construiste: ${buildingKey}.`, 'success');
     return true;
 }
