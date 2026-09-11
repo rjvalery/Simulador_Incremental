@@ -1,10 +1,11 @@
 // engine.js - Motor unico de produccion y crecimiento demografico
 
-import { calculateMaxHousing, ensurePopulationStates, getTotalPopulation } from './state.js?v=20260911-6';
-import { BUILDINGS_DATA } from './buildings.js?v=20260911-6';
-import { refreshResourceCaps } from './resources.js?v=20260911-6';
+import { calculateMaxHousing, ensurePopulationStates, getTotalPopulation } from './state.js?v=20260911-7';
+import { BUILDINGS_DATA } from './buildings.js?v=20260911-7';
+import { refreshResourceCaps } from './resources.js?v=20260911-7';
 
 let migrationTimer = 0;
+const FOOD_CONSUMPTION_PER_PERSON = 0.1;
 
 function emitLog(message, type = 'info') {
     if (typeof window !== 'undefined') {
@@ -53,10 +54,16 @@ export function runGameTick(state, deltaTime = 1) {
         addResource(treasury, rate * deltaTime);
     }
 
+    const totalPopulation = getTotalPopulation(state);
+    const food = state.resources.food;
+    if (food) {
+        food.consumption = totalPopulation * FOOD_CONSUMPTION_PER_PERSON;
+        food.value -= food.consumption * deltaTime;
+    }
+
     migrationTimer += deltaTime;
     if (migrationTimer >= 5) {
         migrationTimer -= 5;
-        const totalPopulation = getTotalPopulation(state);
         if (totalPopulation < calculateMaxHousing(state) && state.resources.food.value >= 10) {
             state.population.unskilled += 1;
             emitLog('Un nuevo habitante ha migrado al asentamiento.', 'info');

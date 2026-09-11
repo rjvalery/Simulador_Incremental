@@ -1,11 +1,11 @@
 // main.js - Punto de entrada principal y bucle del motor corregido
 
-import { ensureBuildingStates, ensurePopulationStates, ensureResourceStates, gameState } from './state.js?v=20260911-6';
-import { handleManualHarvest, buildStructure, modifyBuildingWorkers, modifyWorkerAllocation } from './actions.js?v=20260911-6';
-import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js?v=20260911-6';
-import { startEngine } from './engine.js?v=20260911-6';
-import { renderSidebar, addGameLog } from './ui.js?v=20260911-6';
-import { canAfford, refreshResourceCaps } from './resources.js?v=20260911-6';
+import { ensureBuildingStates, ensurePopulationStates, ensureResourceStates, gameState } from './state.js?v=20260911-7';
+import { handleManualHarvest, buildStructure, modifyBuildingWorkers, modifyWorkerAllocation } from './actions.js?v=20260911-7';
+import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js?v=20260911-7';
+import { startEngine } from './engine.js?v=20260911-7';
+import { renderSidebar, addGameLog } from './ui.js?v=20260911-8';
+import { canAfford, refreshResourceCaps } from './resources.js?v=20260911-7';
 
 document.addEventListener('DOMContentLoaded', () => {
     ensureResourceStates(gameState);

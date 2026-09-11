@@ -1,6 +1,6 @@
 // resources.js - Utilidades de formato numérico y gestión de recursos
 
-import { BUILDINGS_DATA } from './buildings.js?v=20260911-6';
+import { BUILDINGS_DATA } from './buildings.js?v=20260911-7';
 
 const WAREHOUSE_CAPPED_RESOURCES = new Set(['food', 'wood', 'stone', 'science']);
 
@@ -26,6 +26,7 @@ export function refreshResourceCaps(state) {
 export function formatNumber(value) {
     if (value === undefined || value === null) return "0";
     if (value === Infinity) return "∞";
+    if (Math.abs(value) < 1000 && !Number.isInteger(value)) return value.toFixed(2);
     if (value >= 1e6) {
         return (value / 1e6).toFixed(2) + "M";
     } else if (value >= 1e3) {

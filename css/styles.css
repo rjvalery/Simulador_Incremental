@@ -257,6 +257,33 @@ h2 {
     padding-top: 8px;
 }
 
+.resource-tooltip {
+    cursor: help;
+    position: relative;
+}
+
+.resource-tooltip::after {
+    background: #302821;
+    border: 1px solid #9b5f2b;
+    color: #ead8bf;
+    content: attr(data-tooltip);
+    font-size: 11px;
+    left: 0;
+    opacity: 0;
+    padding: 6px 8px;
+    pointer-events: none;
+    position: absolute;
+    top: calc(100% + 5px);
+    transition: opacity 120ms ease;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+.resource-tooltip:hover::after,
+.resource-tooltip:focus-visible::after {
+    opacity: 1;
+}
+
 .action-group {
     margin-bottom: 4px;
 }
