@@ -17,6 +17,14 @@ export const BUILDINGS_DATA = {
         costMultiplier: 1.15,
         production: { food: 1 }
     },
+    woodcutter: {
+        id: "woodcutter",
+        name: "Aserradero",
+        description: "Produce madera de manera constante.",
+        baseCost: { wood: 20 },
+        costMultiplier: 1.15,
+        production: { wood: 0.8 }
+    },
     quarry: {
         id: "quarry",
         name: "Cantera",

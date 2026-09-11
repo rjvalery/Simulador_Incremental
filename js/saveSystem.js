@@ -1,3 +1,5 @@
+import { gameState } from './state.js';
+
 const SaveSystem = {
   SAVE_KEY: "incremental_vzla_save_v1",
 
@@ -6,11 +8,7 @@ const SaveSystem = {
     return {
       version: "1.0.0",
       timestamp: Date.now(),
-      state: state,
-      resources: resources,
-      buildings: buildings,
-      techs: techs,
-      laws: laws
+      state: gameState
     };
   },
 
@@ -68,27 +66,7 @@ const SaveSystem = {
 
   // 6. Restaurar variables globales
   applyGameState(data) {
-    if (data.state) Object.assign(state, data.state);
-    
-    if (data.resources) {
-      for (let k in data.resources) {
-        if (resources[k]) Object.assign(resources[k], data.resources[k]);
-      }
-    }
-
-    if (data.buildings) {
-      for (let k in data.buildings) {
-        if (buildings[k]) Object.assign(buildings[k], data.buildings[k]);
-      }
-    }
-
-    if (data.techs) {
-      for (let k in data.techs) {
-        if (techs[k]) Object.assign(techs[k], data.techs[k]);
-      }
-    }
-
-    if (typeof render === "function") render();
+    if (data.state) Object.assign(gameState, data.state);
   },
 
   // 7. Reiniciar partida

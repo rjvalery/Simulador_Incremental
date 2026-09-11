@@ -1,12 +1,15 @@
 // main.js - Punto de entrada principal y bucle del motor corregido
 
-import { state } from './resources.js';
-import { handleManualHarvest, buildStructure, researchTech, launchMilitaryAttack, modifyWorkerAllocation } from './actions.js';
+import { gameState } from './state.js';
+import { handleManualHarvest, buildStructure, modifyWorkerAllocation } from './actions.js';
 import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     setupTabs();
     setupEventListeners();
+    renderResources();
+    renderEmploymentUI();
+    renderBuildingsUI();
     startGameLoop();
 });
 
@@ -35,7 +38,7 @@ function setupEventListeners() {
     const btnHarvestFood = document.getElementById('btn-harvest-food');
     if (btnHarvestFood) {
         btnHarvestFood.addEventListener('click', () => {
-            handleManualHarvest(state, 'food');
+            handleManualHarvest(gameState);
             renderResources();
         });
     }
@@ -44,7 +47,7 @@ function setupEventListeners() {
     const btnAssignWorker = document.getElementById('btn-assign-worker');
     if (btnAssignWorker) {
         btnAssignWorker.addEventListener('click', () => {
-            modifyWorkerAllocation(state, 1);
+            modifyWorkerAllocation(gameState, 1);
             renderEmploymentUI();
         });
     }
@@ -52,7 +55,7 @@ function setupEventListeners() {
     const btnUnassignWorker = document.getElementById('btn-unassign-worker');
     if (btnUnassignWorker) {
         btnUnassignWorker.addEventListener('click', () => {
-            modifyWorkerAllocation(state, -1);
+            modifyWorkerAllocation(gameState, -1);
             renderEmploymentUI();
         });
     }
@@ -75,13 +78,14 @@ function setupEventListeners() {
 // Lógica del motor ejecutada en cada tick por segundo (sin duplicados)
 function runGameTick(currentState) {
     // 1. Calcular producción pasiva por edificaciones
-    for (const [buildingKey, count] of Object.entries(currentState.buildings || {})) {
+    for (const [buildingKey, building] of Object.entries(currentState.buildings || {})) {
+        const count = building.count || 0;
         if (count > 0) {
             if (buildingKey === 'farm' && currentState.resources.food) {
-                currentState.resources.food.value += 2 * count;
+                currentState.resources.food.value = Math.min(currentState.resources.food.max, currentState.resources.food.value + 2 * count);
             }
             if (buildingKey === 'woodcutter' && currentState.resources.wood) {
-                currentState.resources.wood.value += 1.5 * count;
+                currentState.resources.wood.value = Math.min(currentState.resources.wood.max, currentState.resources.wood.value + 1.5 * count);
             }
         }
     }
@@ -91,9 +95,10 @@ function runGameTick(currentState) {
         currentState.population = { free: 0, workers: 0, technicians: 0 };
     }
 
-    const maxPopulation = (currentState.buildings.shelter || 0) * 5;
+    const maxPopulation = Object.values(currentState.buildings)
+        .reduce((capacity, building) => capacity + (building.count * (building.housingCapacity || 0)), 0);
     const currentAssigned = currentState.population.workers + currentState.population.technicians;
-    const totalPopulation = currentAssigned + currentState.population.free;
+    const totalPopulation = currentAssigned + currentState.population.unskilled;
 
     // Si hay espacio y comida suficiente, los ciudadanos libres aumentan gradualmente
     if (totalPopulation < maxPopulation && currentState.resources.food.value >= 10) {
@@ -102,7 +107,7 @@ function runGameTick(currentState) {
         currentState._popAccumulator += 0.05; // Goteo demográfico
         
         if (currentState._popAccumulator >= 1) {
-            currentState.population.free += 1;
+            currentState.population.unskilled += 1;
             currentState._popAccumulator = 0;
             window.dispatchEvent(new CustomEvent('log:add', {
                 detail: { message: `Un nuevo habitante ha llegado al asentamiento buscando refugio.`, type: 'success' }
@@ -130,7 +135,7 @@ function renderResources() {
     if (!container) return;
 
     container.innerHTML = '';
-    for (const [key, res] of Object.entries(state.resources)) {
+    for (const [key, res] of Object.entries(gameState.resources)) {
         const div = document.createElement('div');
         div.style.marginBottom = '8px';
         div.style.fontSize = '0.9rem';
@@ -141,14 +146,14 @@ function renderResources() {
 
 function renderEmploymentUI() {
     const workerCountSpan = document.getElementById('worker-count');
-    if (workerCountSpan && state.population) {
-        workerCountSpan.textContent = `Obreros: ${state.population.workers} | Libres: ${state.population.free || 0}`;
+    if (workerCountSpan && gameState.population) {
+        workerCountSpan.textContent = `Obreros: ${gameState.population.workers} | Libres: ${gameState.population.unskilled || 0}`;
     }
 }
 
 function startGameLoop() {
     setInterval(() => {
-        runGameTick(state);
+        runGameTick(gameState);
         renderResources();
         renderEmploymentUI();
         renderBuildingsUI();
@@ -162,7 +167,7 @@ function renderBuildingsUI() {
     container.innerHTML = '';
 
     for (const [buildingKey, buildingInfo] of Object.entries(BUILDINGS_DATA)) {
-        const currentCount = state.buildings[buildingKey] || 0;
+        const currentCount = gameState.buildings[buildingKey]?.count || 0;
         const currentCost = calculateBuildingCost(buildingKey, currentCount);
 
         const card = document.createElement('div');
@@ -188,7 +193,7 @@ function renderBuildingsUI() {
         btnBuild.textContent = 'Construir';
         btnBuild.className = 'btn-action';
         btnBuild.addEventListener('click', () => {
-            buildStructure(state, buildingKey);
+            buildStructure(gameState, buildingKey);
             renderBuildingsUI();
             renderResources();
         });
