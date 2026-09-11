@@ -37,6 +37,7 @@
         .game-log-panel {
             background-color: #1e1e1e;
             border-right: none;
+            min-height: 0;
         }
         h2, h3 {
             margin-bottom: 10px;
@@ -86,11 +87,16 @@
             border: 1px solid #333;
             padding: 10px;
             flex-grow: 1;
+            min-height: 0;
             overflow-y: auto;
             font-family: monospace;
             font-size: 0.85rem;
             border-radius: 4px;
             margin-bottom: 10px;
+        }
+        .btn-unaffordable {
+            background-color: #5b3030;
+            cursor: not-allowed;
         }
     </style>
 </head>

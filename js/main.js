@@ -5,7 +5,7 @@ import { handleManualHarvest, buildStructure, modifyWorkerAllocation } from './a
 import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js';
 import { startEngine } from './engine.js';
 import { renderSidebar, addGameLog } from './ui.js';
-import { refreshResourceCaps } from './resources.js';
+import { canAfford, refreshResourceCaps } from './resources.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     ensureResourceStates(gameState);
@@ -114,7 +114,7 @@ function renderBuildingsUI() {
         card.style.alignItems = 'center';
 
         let costString = Object.entries(currentCost)
-            .map(([res, amount]) => `${Math.round(amount)} ${res}`)
+            .map(([res, amount]) => `${Math.round(amount)} ${gameState.resources[res]?.name || res}`)
             .join(', ');
 
         const productionString = Object.entries(buildingInfo.production || {})
@@ -133,9 +133,12 @@ function renderBuildingsUI() {
 
         const btnBuild = document.createElement('button');
         const atLimit = buildingInfo.maxCount !== undefined && currentCount >= buildingInfo.maxCount;
-        btnBuild.textContent = atLimit ? 'Construido' : 'Construir';
+        const affordable = canAfford(gameState, currentCost);
+        btnBuild.textContent = atLimit ? 'Construido' : affordable ? 'Construir' : 'Faltan materiales';
         btnBuild.className = 'btn-action';
         btnBuild.disabled = atLimit;
+        if (!affordable && !atLimit) btnBuild.classList.add('btn-unaffordable');
+        btnBuild.title = atLimit ? 'Límite de construcción alcanzado' : affordable ? 'Construir edificio' : 'No tienes todos los materiales necesarios';
         btnBuild.addEventListener('click', () => {
             buildStructure(gameState, buildingKey);
             renderBuildingsUI();

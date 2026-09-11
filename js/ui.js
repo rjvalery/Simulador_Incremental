@@ -55,10 +55,12 @@ export function addGameLog(message, type = "info") {
     p.className = `log-item log-${type}`;
     p.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
 
-    logContainer.prepend(p);
+    logContainer.appendChild(p);
 
     // Limitar el historial a 50 líneas
     if (logContainer.children.length > 50) {
-        logContainer.removeChild(logContainer.lastChild);
+        logContainer.removeChild(logContainer.firstChild);
     }
+
+    logContainer.scrollTop = logContainer.scrollHeight;
 }
