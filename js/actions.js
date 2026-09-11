@@ -2,7 +2,7 @@
 
 import { canAfford, deductCost, refreshResourceCaps } from './resources.js';
 import { BUILDINGS_DATA, calculateBuildingCost } from './buildings.js';
-import { calculateMaxHousing, ensureBuildingStates } from './state.js';
+import { calculateMaxHousing, ensureBuildingStates, ensureResourceStates } from './state.js';
 
 function addLog(message, type = 'info') {
     if (typeof window !== 'undefined') {
@@ -31,6 +31,7 @@ export function handleManualHarvest(state) {
 }
 
 export function buildStructure(state, buildingKey) {
+    ensureResourceStates(state);
     ensureBuildingStates(state);
     const buildingInfo = BUILDINGS_DATA[buildingKey];
     const building = state.buildings?.[buildingKey];

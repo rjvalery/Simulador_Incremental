@@ -37,7 +37,8 @@ export function formatNumber(value) {
 // Validación y descuento seguro de costes
 export function canAfford(state, costObj) {
     for (const [resKey, amount] of Object.entries(costObj)) {
-        if (!state.resources[resKey] || state.resources[resKey].value < amount) {
+        const value = Number(state.resources[resKey]?.value);
+        if (!Number.isFinite(value) || value < amount) {
             return false;
         }
     }

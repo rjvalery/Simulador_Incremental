@@ -40,6 +40,30 @@ export const gameState = {
 };
 
 const LOCKED_BY_DEFAULT = new Set(['factory', 'oilRefinery']);
+const RESOURCE_DEFAULTS = {
+    food: { name: 'Alimentos', max: 200 },
+    wood: { name: 'Madera', max: 150 },
+    stone: { name: 'Piedra', max: 100 },
+    money: { name: 'Monedas', max: 1000 },
+    science: { name: 'Ciencia', max: 500 }
+};
+
+export function ensureResourceStates(state) {
+    state.resources = state.resources || {};
+
+    for (const [resourceKey, defaults] of Object.entries(RESOURCE_DEFAULTS)) {
+        const resource = state.resources[resourceKey] || {};
+        const legacyValue = Number(resource.val);
+        const currentValue = Number(resource.value);
+
+        resource.name = resource.name || defaults.name;
+        resource.value = Number.isFinite(currentValue)
+            ? currentValue
+            : Number.isFinite(legacyValue) ? legacyValue : 0;
+        resource.max = Number.isFinite(Number(resource.max)) ? Number(resource.max) : defaults.max;
+        state.resources[resourceKey] = resource;
+    }
+}
 
 export function ensureBuildingStates(state) {
     state.buildings = state.buildings || {};
