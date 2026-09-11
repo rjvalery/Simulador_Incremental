@@ -39,6 +39,21 @@ export const gameState = {
     }
 };
 
+const LOCKED_BY_DEFAULT = new Set(['factory', 'oilRefinery']);
+
+export function ensureBuildingStates(state) {
+    state.buildings = state.buildings || {};
+
+    for (const buildingKey of Object.keys(BUILDINGS_DATA)) {
+        if (!state.buildings[buildingKey]) {
+            state.buildings[buildingKey] = {
+                count: 0,
+                unlocked: !LOCKED_BY_DEFAULT.has(buildingKey)
+            };
+        }
+    }
+}
+
 // Función auxiliar para calcular la capacidad máxima de vivienda de forma dinámica
 export function calculateMaxHousing(state) {
     let totalCapacity = 0;

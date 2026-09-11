@@ -1,4 +1,4 @@
-import { gameState } from './state.js';
+import { ensureBuildingStates, gameState } from './state.js';
 
 function emitLog(message) {
   if (typeof window !== 'undefined') {
@@ -27,6 +27,7 @@ export const Storage = {
     try {
       const parsed = JSON.parse(decodeURIComponent(atob(saved)));
       Object.assign(gameState, parsed);
+      ensureBuildingStates(gameState);
       emitLog('Partida cargada exitosamente.');
       if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('state:updated'));
       return true;

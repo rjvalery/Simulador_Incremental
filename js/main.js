@@ -1,6 +1,6 @@
 // main.js - Punto de entrada principal y bucle del motor corregido
 
-import { gameState } from './state.js';
+import { ensureBuildingStates, gameState } from './state.js';
 import { handleManualHarvest, buildStructure, modifyWorkerAllocation } from './actions.js';
 import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js';
 import { startEngine } from './engine.js';
@@ -8,6 +8,7 @@ import { renderSidebar, addGameLog } from './ui.js';
 import { refreshResourceCaps } from './resources.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+    ensureBuildingStates(gameState);
     setupTabs();
     setupEventListeners();
     renderGame();
