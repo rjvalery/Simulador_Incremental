@@ -1,15 +1,36 @@
-// actions.js - Lógica de negocio para interacciones, construcción, investigación y combate
+// actions.js - Lógica de negocio para interacciones, construcción e investigación
 
 import { deductCost } from './resources.js';
 import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js';
 
-// Recolección manual de recursos
-export function handleManualHarvest(state, resourceKey) {
-    if (state.resources[resourceKey]) {
-        state.resources[resourceKey].value += 1;
-        // Lanzar evento o registrar log si es necesario
+// Recolección manual unificada en el botón de comida con probabilidad de acierto para madera y piedra
+export function handleManualHarvest(state, actionKey) {
+    if (actionKey === 'food') {
+        // La comida siempre se recolecta de forma garantizada al hacer clic
+        if (state.resources.food) {
+            state.resources.food.value += 1;
+        }
+
+        let mensajeLog = "Has recolectado Comida.";
+
+        // Probabilidad de acierto para la madera (ej. 50%)
+        const woodChance = 0.50;
+        const woodRoll = Math.random();
+        if (woodRoll <= woodChance && state.resources.wood) {
+            state.resources.wood.value += 1;
+            mensajeLog += ` Has encontrado Madera (${Math.round(woodRoll * 100)}%).`;
+        }
+
+        // Probabilidad de acierto para la piedra (ej. 35%)
+        const stoneChance = 0.35;
+        const stoneRoll = Math.random();
+        if (stoneRoll <= stoneChance && state.resources.stone) {
+            state.resources.stone.value += 1;
+            mensajeLog += ` ¡Y hallaste un filón de Piedra (${Math.round(stoneRoll * 100)}%)!`;
+        }
+
         window.dispatchEvent(new CustomEvent('log:add', {
-            detail: { message: `Has recolectado 1 de ${resourceKey}.`, type: 'info' }
+            detail: { message: mensajeLog, type: woodRoll <= woodChance || stoneRoll <= stoneChance ? 'success' : 'info' }
         }));
     }
 }
@@ -34,26 +55,20 @@ export function buildStructure(state, buildingKey) {
     }
 }
 
-// Investigación científica (Soluciona el error actual)
+// Investigación científica
 export function researchTech(state, techKey) {
     if (state.techs && state.techs[techKey]) {
-        if (state.techs[techKey].unlocked) {
-            window.dispatchEvent(new CustomEvent('log:add', {
-                detail: { message: `La tecnología ya ha sido investigada.`, type: 'info' }
-            }));
-            return;
-        }
-        
+        if (state.techs[techKey].unlocked) return;
         state.techs[techKey].unlocked = true;
         window.dispatchEvent(new CustomEvent('log:add', {
-            detail: { message: `¡Investigación completada con éxito: ${techKey}!`, type: 'success' }
+            detail: { message: `¡Investigación completada: ${techKey}!`, type: 'success' }
         }));
     }
 }
 
-// Ataque militar contra la IA
+// Ataque militar
 export function launchMilitaryAttack(state, difficulty) {
     window.dispatchEvent(new CustomEvent('log:add', {
-        detail: { message: `Incursión militar lanzada contra el campamento vecino (Dificultad: ${difficulty}).`, type: 'danger' }
+        detail: { message: `Incursión militar lanzada (Dificultad: ${difficulty}).`, type: 'danger' }
     }));
 }
