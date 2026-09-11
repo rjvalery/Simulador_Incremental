@@ -2,6 +2,7 @@
 
 import { state } from './resources.js';
 import { handleManualHarvest, buildStructure, researchTech, launchMilitaryAttack, modifyWorkerAllocation } from './actions.js';
+import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     setupTabs();
@@ -150,5 +151,49 @@ function startGameLoop() {
         runGameTick(state);
         renderResources();
         renderEmploymentUI();
+        renderBuildingsUI();
     }, 1000);
+}
+
+function renderBuildingsUI() {
+    const container = document.getElementById('buildings-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    for (const [buildingKey, buildingInfo] of Object.entries(BUILDINGS_DATA)) {
+        const currentCount = state.buildings[buildingKey] || 0;
+        const currentCost = calculateBuildingCost(buildingKey, currentCount);
+
+        const card = document.createElement('div');
+        card.style.border = '1px solid #444';
+        card.style.padding = '10px';
+        card.style.borderRadius = '5px';
+        card.style.display = 'flex';
+        card.style.justifyContent = 'space-between';
+        card.style.alignItems = 'center';
+
+        let costString = Object.entries(currentCost)
+            .map(([res, amount]) => `${Math.round(amount)} ${res}`)
+            .join(', ');
+
+        card.innerHTML = `
+            <div>
+                <strong>${buildingInfo.name}</strong> (Poseídos: ${currentCount})<br>
+                <small style="color: #aaa;">Costo: ${costString}</small>
+            </div>
+        `;
+
+        const btnBuild = document.createElement('button');
+        btnBuild.textContent = 'Construir';
+        btnBuild.className = 'btn-action';
+        btnBuild.addEventListener('click', () => {
+            buildStructure(state, buildingKey);
+            renderBuildingsUI();
+            renderResources();
+        });
+
+        card.appendChild(btnBuild);
+        container.appendChild(card);
+    }
 }
