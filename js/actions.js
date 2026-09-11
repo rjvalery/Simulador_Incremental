@@ -1,74 +1,42 @@
-// actions.js - Lógica de negocio para interacciones, construcción e investigación
+// actions.js - Gestión de asignación laboral corregida
 
-import { deductCost } from './resources.js';
-import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js';
-
-// Recolección manual unificada en el botón de comida con probabilidad de acierto para madera y piedra
-export function handleManualHarvest(state, actionKey) {
-    if (actionKey === 'food') {
-        // La comida siempre se recolecta de forma garantizada al hacer clic
-        if (state.resources.food) {
-            state.resources.food.value += 1;
-        }
-
-        let mensajeLog = "Has recolectado Comida.";
-
-        // Probabilidad de acierto para la madera (ej. 50%)
-        const woodChance = 0.50;
-        const woodRoll = Math.random();
-        if (woodRoll <= woodChance && state.resources.wood) {
-            state.resources.wood.value += 1;
-            mensajeLog += ` Has encontrado Madera (${Math.round(woodRoll * 100)}%).`;
-        }
-
-        // Probabilidad de acierto para la piedra (ej. 35%)
-        const stoneChance = 0.35;
-        const stoneRoll = Math.random();
-        if (stoneRoll <= stoneChance && state.resources.stone) {
-            state.resources.stone.value += 1;
-            mensajeLog += ` ¡Y hallaste un filón de Piedra (${Math.round(stoneRoll * 100)}%)!`;
-        }
-
-        window.dispatchEvent(new CustomEvent('log:add', {
-            detail: { message: mensajeLog, type: woodRoll <= woodChance || stoneRoll <= stoneChance ? 'success' : 'info' }
-        }));
+export function modifyWorkerAllocation(state, amount) {
+    // Asegurar estructura demográfica con pool de ciudadanos libres (desempleados)
+    if (!state.population) {
+        state.population = { free: 0, workers: 0, technicians: 0 };
     }
-}
+    
+    const maxPop = (state.buildings.shelter || 0) * 5;
+    const currentAssigned = state.population.workers + state.population.technicians;
+    const totalPopulation = currentAssigned + (state.population.free || 0);
 
-// Construcción de infraestructura
-export function buildStructure(state, buildingKey) {
-    const building = BUILDINGS_DATA[buildingKey];
-    if (!building) return;
-
-    const currentCount = state.buildings[buildingKey] || 0;
-    const cost = calculateBuildingCost(buildingKey, currentCount);
-
-    if (deductCost(state, cost)) {
-        state.buildings[buildingKey] = currentCount + 1;
-        window.dispatchEvent(new CustomEvent('log:add', {
-            detail: { message: `Has construido un/a ${building.name}.`, type: 'success' }
-        }));
-    } else {
-        window.dispatchEvent(new CustomEvent('log:add', {
-            detail: { message: `No tienes suficientes recursos para construir ${building.name}.`, type: 'warning' }
-        }));
+    // Intentar asignar obreros (requiere ciudadanos libres y respetar el límite de vivienda)
+    if (amount > 0) {
+        if (state.population.free >= amount && currentAssigned + amount <= maxPop) {
+            state.population.free -= amount;
+            state.population.workers += amount;
+            window.dispatchEvent(new CustomEvent('log:add', {
+                detail: { message: `Un ciudadano ha comenzado a laborar como obrero.`, type: 'success' }
+            }));
+        } else if (totalPopulation < maxPop && state.population.free < amount) {
+            window.dispatchEvent(new CustomEvent('log:add', {
+                detail: { message: `No hay ciudadanos libres suficientes para asignar.`, type: 'warning' }
+            }));
+        } else {
+            window.dispatchEvent(new CustomEvent('log:add', {
+                detail: { message: `Límite de población (Refugios) alcanzado.`, type: 'warning' }
+            }));
+        }
+    } 
+    // Liberar/Desasignar obrero (convierte el puesto en vacante y libera al ciudadano)
+    else if (amount < 0) {
+        const absAmount = Math.abs(amount);
+        if (state.population.workers >= absAmount) {
+            state.population.workers -= absAmount;
+            state.population.free = (state.population.free || 0) + absAmount;
+            window.dispatchEvent(new CustomEvent('log:add', {
+                detail: { message: `Un puesto de trabajo ha quedado vacante.`, type: 'info' }
+            }));
+        }
     }
-}
-
-// Investigación científica
-export function researchTech(state, techKey) {
-    if (state.techs && state.techs[techKey]) {
-        if (state.techs[techKey].unlocked) return;
-        state.techs[techKey].unlocked = true;
-        window.dispatchEvent(new CustomEvent('log:add', {
-            detail: { message: `¡Investigación completada: ${techKey}!`, type: 'success' }
-        }));
-    }
-}
-
-// Ataque militar
-export function launchMilitaryAttack(state, difficulty) {
-    window.dispatchEvent(new CustomEvent('log:add', {
-        detail: { message: `Incursión militar lanzada (Dificultad: ${difficulty}).`, type: 'danger' }
-    }));
 }

@@ -1,108 +1,14 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Asentamiento Incremental - Simulador Estratégico</title>
-  <link rel="stylesheet" href="css/styles.css">
-</head>
-<body>
-
-  <!-- COLUMNA IZQUIERDA: Monitor de Producción y Recursos (~22%) -->
-  <aside id="sidebar-left">
-    <div class="season-header" id="season-display">Verano</div>
-    <p style="margin-bottom:15px; font-size:0.85rem;" id="flavor-text">
-      Líder del asentamiento local.
-    </p>
-    <div class="panel-title" style="margin-bottom: 10px; font-size: 1rem;">📦 Recursos y Producción</div>
-    <div id="sidebar-resources">
-      <!-- Aquí se renderizan los recursos y tasas netas por segundo -->
-    </div>
-    <footer>
-      <p style="font-size: 0.75rem; margin-top: 20px; color: #777;">Soberanía Local (file:///)</p>
-    </footer>
-  </aside>
-
-  <!-- COLUMNA CENTRAL: Zona Activa de Asentamiento y Pestañas (~53%) -->
-  <main id="main-panel">
-    <div class="panel-header">
-      <span class="panel-title" id="current-tab-title">Gestión del Asentamiento</span>
-      <span style="font-size:0.8rem; color:var(--text-muted);">Simulador Estratégico</span>
-    </div>
-
-    <!-- Barra de Pestañas Modulares -->
-    <nav class="tab-bar">
-      <button class="tab-btn active" data-tab="resumen">📊 Resumen</button>
-      <button class="tab-btn" data-tab="empleo">👷 Empleo</button>
-      <button class="tab-btn" data-tab="infraestructura">🏗️ Infraestructura</button>
-      <button class="tab-btn" data-tab="ciencia">🔬 Ciencia e I+D</button>
-      <button class="tab-btn" data-tab="gobierno">📜 Gobierno y Leyes</button>
-    </nav>
-
-    <!-- 1. Pestaña Resumen -->
-    <section id="tab-resumen" class="tab-content">
-      <h3>Acciones Principales</h3>
-      <div class="action-group">
-        <button id="btn-harvest-food" class="btn-action">Reunir Comida</button>
-        <button id="btn-harvest-wood" class="btn-action">Recolectar Madera</button>
-        <button id="btn-attack-ai" class="btn-action btn-military">Atacar Campamento de IA</button>
-      </div>
-      <div class="scrollable-container" style="margin-top: 15px;">
-        <p>Bienvenido al simulador estratégico. Selecciona una pestaña superior para administrar tu asentamiento tecnológico.</p>
-      </div>
-    </section>
-
-    <!-- 2. Pestaña Empleo -->
+<!-- 2. Pestaña Empleo -->
     <section id="tab-empleo" class="tab-content" style="display: none;">
       <h3>Gestión Demográfica y Clases Sociales</h3>
-      <div id="jobs-container">
-        <p>Control de población unificada y asignación de trabajadores técnicos y obreros.</p>
+      <div class="scrollable-container" style="padding: 15px;">
+        <p>Población total y distribución de fuerza laboral:</p>
+        <div id="employment-panel" style="margin-top: 10px;">
+          <p>Obreros activos: <span id="worker-count">0</span></p>
+          <div class="action-group" style="margin-top: 5px;">
+            <button id="btn-assign-worker" class="btn-action">Asignar obrero (+)</button>
+            <button id="btn-unassign-worker" class="btn-action">Liberar obrero (-)</button>
+          </div>
+        </div>
       </div>
     </section>
-
-    <!-- 3. Pestaña Infraestructura -->
-    <section id="tab-infraestructura" class="tab-content" style="display: none;">
-      <h3>Catálogo de Obras y Edificaciones</h3>
-      <div class="action-group">
-        <button id="btn-build-shelter" class="btn-action">Construir Refugio</button>
-        <button id="btn-build-farm" class="btn-action">Construir Granja</button>
-      </div>
-      <div id="buildings-container" class="scrollable-container" style="margin-top: 15px;"></div>
-    </section>
-
-    <!-- 4. Pestaña Ciencia e I+D -->
-    <section id="tab-ciencia" class="tab-content" style="display: none;">
-      <h3>Árbol Tecnológico por Eras</h3>
-      <div class="action-group">
-        <button id="btn-res-agriculture" class="btn-action">Investigar Agricultura</button>
-        <button id="btn-res-bronze" class="btn-action">Investigar Metalurgia (Bronce)</button>
-      </div>
-      <div id="techs-container" style="margin-top: 15px;"></div>
-    </section>
-
-    <!-- 5. Pestaña Gobierno y Leyes -->
-    <section id="tab-gobierno" class="tab-content" style="display: none;">
-      <h3>Políticas, Decretos y Comercio</h3>
-      <div id="government-container">
-        <p>Módulo de leyes estatales y relaciones comerciales con provincias vecinas.</p>
-      </div>
-    </section>
-  </main>
-
-  <!-- COLUMNA DERECHA: Registro Histórico / Game-Log (~25%) -->
-  <aside id="sidebar-right">
-    <div class="panel-header" style="margin-bottom: 10px; padding-bottom: 5px;">
-      <span class="panel-title" style="font-size: 1rem;">📜 Registro Histórico</span>
-      <div class="log-controls">
-        <a id="btn-clear-log" style="cursor: pointer; font-size: 0.75rem;">Limpiar</a> | 
-        <a id="btn-toggle-pause" style="cursor: pointer; font-size: 0.75rem;">Pausar</a>
-      </div>
-    </div>
-    <!-- Game Log en tiempo real -->
-    <div id="game-log" class="scrollable-container log-container"></div>
-  </aside>
-
-  <!-- Punto de entrada principal modular -->
-  <script type="module" src="js/main.js"></script>
-</body>
-</html>

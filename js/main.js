@@ -1,7 +1,7 @@
-// main.js - Punto de entrada principal, gestión de pestañas, bucle (tick) y renderizado UI
+// main.js - Punto de entrada principal y bucle del motor corregido
 
 import { state } from './resources.js';
-import { handleManualHarvest, buildStructure, researchTech, launchMilitaryAttack } from './actions.js';
+import { handleManualHarvest, buildStructure, researchTech, launchMilitaryAttack, modifyWorkerAllocation } from './actions.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     setupTabs();
@@ -30,12 +30,29 @@ function setupTabs() {
 }
 
 function setupEventListeners() {
-    // Vincular el botón único de recolección manual (comida, madera y probabilidad de piedra)
+    // Vincular el botón de recolección manual
     const btnHarvestFood = document.getElementById('btn-harvest-food');
     if (btnHarvestFood) {
         btnHarvestFood.addEventListener('click', () => {
             handleManualHarvest(state, 'food');
             renderResources();
+        });
+    }
+
+    // Vincular botones de asignación de empleo si existen en la UI
+    const btnAssignWorker = document.getElementById('btn-assign-worker');
+    if (btnAssignWorker) {
+        btnAssignWorker.addEventListener('click', () => {
+            modifyWorkerAllocation(state, 1);
+            renderEmploymentUI();
+        });
+    }
+
+    const btnUnassignWorker = document.getElementById('btn-unassign-worker');
+    if (btnUnassignWorker) {
+        btnUnassignWorker.addEventListener('click', () => {
+            modifyWorkerAllocation(state, -1);
+            renderEmploymentUI();
         });
     }
 
@@ -51,6 +68,45 @@ function setupEventListeners() {
         btnClearLog.addEventListener('click', () => {
             document.getElementById('game-log').innerHTML = '';
         });
+    }
+}
+
+// Lógica del motor ejecutada en cada tick por segundo (sin duplicados)
+function runGameTick(currentState) {
+    // 1. Calcular producción pasiva por edificaciones
+    for (const [buildingKey, count] of Object.entries(currentState.buildings || {})) {
+        if (count > 0) {
+            if (buildingKey === 'farm' && currentState.resources.food) {
+                currentState.resources.food.value += 2 * count;
+            }
+            if (buildingKey === 'woodcutter' && currentState.resources.wood) {
+                currentState.resources.wood.value += 1.5 * count;
+            }
+        }
+    }
+
+    // 2. Crecimiento demográfico basado en refugios y comida disponible
+    if (!currentState.population) {
+        currentState.population = { free: 0, workers: 0, technicians: 0 };
+    }
+
+    const maxPopulation = (currentState.buildings.shelter || 0) * 5;
+    const currentAssigned = currentState.population.workers + currentState.population.technicians;
+    const totalPopulation = currentAssigned + currentState.population.free;
+
+    // Si hay espacio y comida suficiente, los ciudadanos libres aumentan gradualmente
+    if (totalPopulation < maxPopulation && currentState.resources.food.value >= 10) {
+        // Incremento acumulativo controlado (al llegar a 1 se añade un ciudadano libre)
+        if (!currentState._popAccumulator) currentState._popAccumulator = 0;
+        currentState._popAccumulator += 0.05; // Goteo demográfico
+        
+        if (currentState._popAccumulator >= 1) {
+            currentState.population.free += 1;
+            currentState._popAccumulator = 0;
+            window.dispatchEvent(new CustomEvent('log:add', {
+                detail: { message: `Un nuevo habitante ha llegado al asentamiento buscando refugio.`, type: 'success' }
+            }));
+        }
     }
 }
 
@@ -82,9 +138,17 @@ function renderResources() {
     }
 }
 
+function renderEmploymentUI() {
+    const workerCountSpan = document.getElementById('worker-count');
+    if (workerCountSpan && state.population) {
+        workerCountSpan.textContent = `Obreros: ${state.population.workers} | Libres: ${state.population.free || 0}`;
+    }
+}
+
 function startGameLoop() {
     setInterval(() => {
-        // Ciclo del motor por segundo (Tick)
+        runGameTick(state);
         renderResources();
+        renderEmploymentUI();
     }, 1000);
 }
