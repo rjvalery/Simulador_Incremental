@@ -1,8 +1,8 @@
 // actions.js - Acciones del jugador y gestión de población
 
-import { canAfford, deductCost, refreshResourceCaps } from './resources.js';
-import { BUILDINGS_DATA, calculateBuildingCost } from './buildings.js';
-import { calculateMaxHousing, ensureBuildingStates, ensureResourceStates } from './state.js';
+import { canAfford, deductCost, refreshResourceCaps } from './resources.js?v=20260911-3';
+import { BUILDINGS_DATA, calculateBuildingCost } from './buildings.js?v=20260911-3';
+import { calculateMaxHousing, ensureBuildingStates, ensureResourceStates } from './state.js?v=20260911-3';
 
 function addLog(message, type = 'info') {
     if (typeof window !== 'undefined') {
