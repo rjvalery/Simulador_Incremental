@@ -1,7 +1,7 @@
 // ui.js - Orquestador de Interfaz y Renderizado Reactivo (Layout de 2 Columnas)
 
-import { formatNumber } from './resources.js?v=20260911-5';
-import { calculateMaxHousing, getTotalPopulation } from './state.js?v=20260911-5';
+import { formatNumber } from './resources.js?v=20260911-6';
+import { calculateMaxHousing, getTotalPopulation } from './state.js?v=20260911-6';
 
 // Renderiza el Sidebar de Recursos (25% derecho)
 export function renderSidebar(state) {

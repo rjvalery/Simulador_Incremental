@@ -1,11 +1,11 @@
 // main.js - Punto de entrada principal y bucle del motor corregido
 
-import { ensureBuildingStates, ensurePopulationStates, ensureResourceStates, gameState } from './state.js?v=20260911-5';
-import { handleManualHarvest, buildStructure, modifyBuildingWorkers, modifyWorkerAllocation } from './actions.js?v=20260911-5';
-import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js?v=20260911-5';
-import { startEngine } from './engine.js?v=20260911-5';
-import { renderSidebar, addGameLog } from './ui.js?v=20260911-5';
-import { canAfford, refreshResourceCaps } from './resources.js?v=20260911-5';
+import { ensureBuildingStates, ensurePopulationStates, ensureResourceStates, gameState } from './state.js?v=20260911-6';
+import { handleManualHarvest, buildStructure, modifyBuildingWorkers, modifyWorkerAllocation } from './actions.js?v=20260911-6';
+import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js?v=20260911-6';
+import { startEngine } from './engine.js?v=20260911-6';
+import { renderSidebar, addGameLog } from './ui.js?v=20260911-6';
+import { canAfford, refreshResourceCaps } from './resources.js?v=20260911-6';
 
 document.addEventListener('DOMContentLoaded', () => {
     ensureResourceStates(gameState);
@@ -86,6 +86,70 @@ function renderEmploymentUI() {
     if (workerCountSpan && gameState.population) {
         workerCountSpan.textContent = `Obreros: ${gameState.population.workers} | Libres: ${gameState.population.unskilled || 0}`;
     }
+
+    const panel = document.getElementById('employment-panel');
+    if (!panel) return;
+
+    const jobEntries = Object.entries(BUILDINGS_DATA)
+        .filter(([buildingKey, buildingInfo]) => {
+            return gameState.buildings[buildingKey]?.unlocked !== false &&
+                (buildingInfo.jobsPerBuilding || 0) > 0 &&
+                (gameState.buildings[buildingKey]?.count || 0) > 0;
+        })
+        .map(([buildingKey, buildingInfo]) => {
+            const buildingCount = gameState.buildings[buildingKey].count || 0;
+            const capacity = buildingCount * buildingInfo.jobsPerBuilding;
+            const assigned = gameState.population.assignments?.[buildingKey] || 0;
+            return { buildingKey, buildingInfo, capacity, assigned };
+        });
+
+    const signature = jobEntries
+        .map(({ buildingKey, capacity, assigned }) => `${buildingKey}:${capacity}:${assigned}`)
+        .join('|');
+    if (panel.dataset.signature === signature) return;
+    panel.dataset.signature = signature;
+
+    panel.innerHTML = '<p class="employment-summary">Asigna obreros desocupados a los puestos disponibles.</p>';
+    if (jobEntries.length === 0) {
+        panel.insertAdjacentHTML('beforeend', '<p class="muted-label">Construye un campo productivo para habilitar puestos.</p>');
+        return;
+    }
+
+    const jobsList = document.createElement('div');
+    jobsList.className = 'jobs-list';
+    for (const { buildingKey, buildingInfo, capacity, assigned } of jobEntries) {
+        const job = document.createElement('div');
+        job.className = 'job-row';
+        job.innerHTML = `
+            <span><strong>${buildingInfo.name}</strong><small>${assigned}/${capacity} puestos ocupados</small></span>
+            <span class="job-controls"></span>
+        `;
+
+        const controls = job.querySelector('.job-controls');
+        const decrease = document.createElement('button');
+        decrease.type = 'button';
+        decrease.textContent = '-';
+        decrease.disabled = assigned === 0;
+        decrease.title = 'Liberar obrero';
+        decrease.addEventListener('click', () => {
+            modifyBuildingWorkers(gameState, buildingKey, -1);
+            renderEmploymentUI();
+            renderGame();
+        });
+        const increase = document.createElement('button');
+        increase.type = 'button';
+        increase.textContent = '+';
+        increase.disabled = assigned >= capacity || gameState.population.unskilled === 0;
+        increase.title = 'Asignar obrero desocupado';
+        increase.addEventListener('click', () => {
+            modifyBuildingWorkers(gameState, buildingKey, 1);
+            renderEmploymentUI();
+            renderGame();
+        });
+        controls.append(decrease, increase);
+        jobsList.appendChild(job);
+    }
+    panel.appendChild(jobsList);
 }
 
 let buildingsRenderSignature = '';
@@ -166,32 +230,6 @@ function renderBuildingsUI() {
         });
 
         card.appendChild(btnBuild);
-        if (jobCapacity > 0) {
-            const employmentControls = document.createElement('div');
-            employmentControls.className = 'employment-controls';
-            const decreaseWorker = document.createElement('button');
-            decreaseWorker.type = 'button';
-            decreaseWorker.textContent = '-';
-            decreaseWorker.title = 'Liberar un obrero';
-            decreaseWorker.disabled = assignedWorkers === 0;
-            decreaseWorker.addEventListener('click', () => {
-                modifyBuildingWorkers(gameState, buildingKey, -1);
-                renderBuildingsUI();
-                renderGame();
-            });
-            const increaseWorker = document.createElement('button');
-            increaseWorker.type = 'button';
-            increaseWorker.textContent = '+';
-            increaseWorker.title = 'Asignar un obrero desocupado';
-            increaseWorker.disabled = assignedWorkers >= jobCapacity || gameState.population.unskilled === 0;
-            increaseWorker.addEventListener('click', () => {
-                modifyBuildingWorkers(gameState, buildingKey, 1);
-                renderBuildingsUI();
-                renderGame();
-            });
-            employmentControls.append(decreaseWorker, increaseWorker);
-            card.appendChild(employmentControls);
-        }
         container.appendChild(card);
     }
 }

@@ -166,7 +166,7 @@ body {
     background: #1b1a18;
     color: #d8d1c5;
     font-family: Georgia, 'Times New Roman', serif;
-    font-size: 14px;
+    font-size: 12px;
 }
 
 aside, main, section.game-log-panel {
@@ -286,6 +286,9 @@ h2 {
     border-color: #684b32 !important;
     border-radius: 2px !important;
     min-height: 78px;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
 }
 
 #buildings-container strong {
@@ -306,6 +309,65 @@ h2 {
     display: flex;
     gap: 4px;
     margin-left: 8px;
+}
+
+#employment-panel {
+    max-width: 720px;
+}
+
+.employment-summary {
+    color: #b9aa98;
+    margin: 8px 0;
+}
+
+.jobs-list {
+    display: grid;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.job-row {
+    align-items: center;
+    border-bottom: 1px solid #4b4035;
+    display: flex;
+    justify-content: space-between;
+    min-height: 42px;
+    padding: 6px 2px;
+}
+
+.job-row span:first-child {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.job-row strong {
+    color: #e3c28e;
+    font-weight: normal;
+}
+
+.job-row small {
+    color: #958675;
+}
+
+.job-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.job-controls button {
+    background: transparent;
+    border: 1px solid #80512d;
+    color: #d6a66e;
+    cursor: pointer;
+    font: inherit;
+    height: 26px;
+    width: 26px;
+}
+
+.job-controls button:disabled {
+    color: #5c5147;
+    cursor: not-allowed;
 }
 
 .employment-controls button {
