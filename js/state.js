@@ -1,5 +1,5 @@
 // state.js - Estado Global del Simulador Incremental
-import { BUILDINGS_DATA } from './buildings.js';
+import { BUILDINGS_DATA } from './buildings.js?v=20260911-5';
 
 export const gameState = {
     resources: {
@@ -13,7 +13,8 @@ export const gameState = {
         unskilled: 2,     // Población libre / desempleada disponible
         workers: 0,       // Asignados a producción primaria
         technicians: 0,   // Asignados a ciencia / industria avanzada
-        professionals: 0  // Profesionales / administración
+        professionals: 0, // Profesionales / administración
+        assignments: {}
     },
     buildings: {
         shelter: { count: 1, unlocked: true },
@@ -76,6 +77,15 @@ export function ensureBuildingStates(state) {
             };
         }
     }
+}
+
+export function ensurePopulationStates(state) {
+    state.population = state.population || {};
+    state.population.unskilled = Number(state.population.unskilled) || 0;
+    state.population.workers = Number(state.population.workers) || 0;
+    state.population.technicians = Number(state.population.technicians) || 0;
+    state.population.professionals = Number(state.population.professionals) || 0;
+    state.population.assignments = state.population.assignments || {};
 }
 
 // Función auxiliar para calcular la capacidad máxima de vivienda de forma dinámica

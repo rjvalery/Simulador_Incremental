@@ -159,3 +159,197 @@ footer {
     border-top: 1px solid var(--border-color);
     padding-top: 10px;
 }
+
+/* Panel layout inspired by compact incremental strategy interfaces. */
+body {
+    grid-template-columns: 220px minmax(0, 1fr) 300px;
+    background: #1b1a18;
+    color: #d8d1c5;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 14px;
+}
+
+aside, main, section.game-log-panel {
+    background: #211f1d;
+    border-color: #4b4035;
+}
+
+main {
+    background: #181715;
+    padding: 18px 22px;
+}
+
+h2, h3 {
+    color: #eee4d3;
+    font-weight: normal;
+}
+
+h2 {
+    border-bottom: 1px solid #55483b;
+    padding-bottom: 8px;
+}
+
+.era-label, .muted-label {
+    color: #8e8172;
+    font-size: 0.8em;
+}
+
+.tab-buttons {
+    border-bottom: 1px solid #55483b;
+    padding-bottom: 8px;
+}
+
+.tab-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    border-bottom-color: #55483b;
+    border-radius: 0;
+    color: #b9aa98;
+    font-family: inherit;
+    font-weight: normal;
+}
+
+.tab-btn.active, .tab-btn:hover {
+    background: #2b2723;
+    border-color: #a66b32;
+    color: #f0d6b3;
+}
+
+.tab-content {
+    gap: 12px;
+}
+
+#sidebar-resources {
+    color: #c9bca9;
+    line-height: 1.55;
+}
+
+#sidebar-resources h3 {
+    color: #c37a36;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+}
+
+.resource-list {
+    list-style: none;
+}
+
+.resource-list li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    column-gap: 8px;
+}
+
+.resource-list .res-rate {
+    grid-column: 2;
+    color: #8d9d8a;
+    font-size: 0.8em;
+}
+
+.resource-list .res-val {
+    color: #e5d1a9;
+    text-align: right;
+}
+
+.resource-list .pop-monitor {
+    border-top: 1px solid #4b4035;
+    margin-top: 8px;
+    padding-top: 8px;
+}
+
+.action-group {
+    margin-bottom: 4px;
+}
+
+.btn-action {
+    background: #2a2723;
+    border: 1px solid #9b5f2b;
+    border-radius: 2px;
+    color: #e9d4b8;
+    font-family: inherit;
+    font-weight: normal;
+}
+
+.btn-action:hover:not(:disabled) {
+    background: #3a3028;
+    border-color: #d18b49;
+}
+
+.btn-action:disabled {
+    color: #766c61;
+    cursor: not-allowed;
+    opacity: 0.75;
+}
+
+#buildings-container > div {
+    background: #211f1d;
+    border-color: #684b32 !important;
+    border-radius: 2px !important;
+    min-height: 78px;
+}
+
+#buildings-container strong {
+    color: #e3c28e;
+    font-weight: normal;
+}
+
+#buildings-container small {
+    color: #a99a88 !important;
+}
+
+.employment-line {
+    color: #92ae8b !important;
+}
+
+.employment-controls {
+    align-self: center;
+    display: flex;
+    gap: 4px;
+    margin-left: 8px;
+}
+
+.employment-controls button {
+    background: transparent;
+    border: 1px solid #80512d;
+    color: #d6a66e;
+    cursor: pointer;
+    font: inherit;
+    height: 28px;
+    width: 28px;
+}
+
+.employment-controls button:hover:not(:disabled) {
+    background: #3b2b20;
+}
+
+.employment-controls button:disabled {
+    color: #5c5147;
+    cursor: not-allowed;
+}
+
+.game-log-panel {
+    padding: 18px 14px;
+}
+
+.game-log-panel h3 {
+    color: #c37a36;
+}
+
+#game-log {
+    background: transparent;
+    border: 0;
+    color: #bbb0a1;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 0.9rem;
+    line-height: 1.35;
+}
+
+#game-log .log-item {
+    border-bottom: 1px solid #302b26;
+    padding: 3px 0;
+}
+
+.scrollable-container {
+    background: transparent;
+    border: 0;
+}

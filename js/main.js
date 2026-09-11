@@ -1,15 +1,16 @@
 // main.js - Punto de entrada principal y bucle del motor corregido
 
-import { ensureBuildingStates, ensureResourceStates, gameState } from './state.js?v=20260911-3';
-import { handleManualHarvest, buildStructure, modifyWorkerAllocation } from './actions.js?v=20260911-3';
-import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js?v=20260911-3';
-import { startEngine } from './engine.js?v=20260911-3';
-import { renderSidebar, addGameLog } from './ui.js?v=20260911-3';
-import { canAfford, refreshResourceCaps } from './resources.js?v=20260911-3';
+import { ensureBuildingStates, ensurePopulationStates, ensureResourceStates, gameState } from './state.js?v=20260911-5';
+import { handleManualHarvest, buildStructure, modifyBuildingWorkers, modifyWorkerAllocation } from './actions.js?v=20260911-5';
+import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js?v=20260911-5';
+import { startEngine } from './engine.js?v=20260911-5';
+import { renderSidebar, addGameLog } from './ui.js?v=20260911-5';
+import { canAfford, refreshResourceCaps } from './resources.js?v=20260911-5';
 
 document.addEventListener('DOMContentLoaded', () => {
     ensureResourceStates(gameState);
     ensureBuildingStates(gameState);
+    ensurePopulationStates(gameState);
     setupTabs();
     setupEventListeners();
     renderGame();
@@ -111,7 +112,7 @@ function renderBuildingsUI() {
         });
 
     const renderSignature = buildingEntries
-        .map(({ buildingKey, currentCount, atLimit, affordable }) => `${buildingKey}:${currentCount}:${atLimit}:${affordable}`)
+        .map(({ buildingKey, currentCount, atLimit, affordable }) => `${buildingKey}:${currentCount}:${gameState.population.assignments?.[buildingKey] || 0}:${atLimit}:${affordable}`)
         .join('|');
     if (renderSignature === buildingsRenderSignature) return;
     buildingsRenderSignature = renderSignature;
@@ -132,9 +133,14 @@ function renderBuildingsUI() {
             .map(([res, amount]) => `${Math.round(amount)} ${gameState.resources[res]?.name || res}`)
             .join(', ');
 
-        const productionString = Object.entries(buildingInfo.production || {})
-            .map(([resource, rate]) => `+${rate}/s ${resource}`)
+        const jobCapacity = (buildingInfo.jobsPerBuilding || 0) * currentCount;
+        const assignedWorkers = gameState.population.assignments?.[buildingKey] || 0;
+        const productionString = Object.entries(buildingInfo.workerOutput || {})
+            .map(([resource, rate]) => `+${(rate * assignedWorkers).toFixed(2)}/s ${gameState.resources[resource]?.name || resource}`)
             .join(', ');
+        const employmentString = jobCapacity
+            ? `<br><small class="employment-line">Puestos: ${assignedWorkers}/${jobCapacity} obreros</small>`
+            : '';
         const limitString = buildingInfo.maxCount ? ` | Máximo: ${buildingInfo.maxCount}` : '';
 
         card.innerHTML = `
@@ -143,6 +149,7 @@ function renderBuildingsUI() {
                 <small style="color: #aaa;">${buildingInfo.description}</small><br>
                 <small style="color: #aaa;">Costo: ${costString}</small>
                 ${productionString ? `<br><small style="color: #81c784;">Producción: ${productionString}</small>` : ''}
+                ${employmentString}
             </div>
         `;
 
@@ -159,6 +166,32 @@ function renderBuildingsUI() {
         });
 
         card.appendChild(btnBuild);
+        if (jobCapacity > 0) {
+            const employmentControls = document.createElement('div');
+            employmentControls.className = 'employment-controls';
+            const decreaseWorker = document.createElement('button');
+            decreaseWorker.type = 'button';
+            decreaseWorker.textContent = '-';
+            decreaseWorker.title = 'Liberar un obrero';
+            decreaseWorker.disabled = assignedWorkers === 0;
+            decreaseWorker.addEventListener('click', () => {
+                modifyBuildingWorkers(gameState, buildingKey, -1);
+                renderBuildingsUI();
+                renderGame();
+            });
+            const increaseWorker = document.createElement('button');
+            increaseWorker.type = 'button';
+            increaseWorker.textContent = '+';
+            increaseWorker.title = 'Asignar un obrero desocupado';
+            increaseWorker.disabled = assignedWorkers >= jobCapacity || gameState.population.unskilled === 0;
+            increaseWorker.addEventListener('click', () => {
+                modifyBuildingWorkers(gameState, buildingKey, 1);
+                renderBuildingsUI();
+                renderGame();
+            });
+            employmentControls.append(decreaseWorker, increaseWorker);
+            card.appendChild(employmentControls);
+        }
         container.appendChild(card);
     }
 }

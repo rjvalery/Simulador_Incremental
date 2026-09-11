@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulador de Juego</title>
+    <link rel="stylesheet" href="./css/styles.css?v=20260911-5">
     <style>
         /* Estilos base para el layout de 3 columnas */
         * {
@@ -123,18 +124,18 @@
 
     <!-- Columna Central: Gestión y Pestañas -->
     <main>
-        <h2>Asentamiento</h2>
+        <h2>Hoguera <span class="era-label">| Pequeña aldea</span></h2>
         <div class="tab-buttons">
-            <button class="tab-btn active" data-tab="resumen">Resumen</button>
-            <button class="tab-btn" data-tab="empleo">Empleo</button>
-            <button class="tab-btn" data-tab="infraestructura">Infraestructura</button>
+            <button class="tab-btn active" data-tab="resumen">Producción</button>
+            <button class="tab-btn" data-tab="empleo">Población</button>
+            <button class="tab-btn" data-tab="infraestructura">Edificios</button>
         </div>
 
         <!-- 1. Pestaña Resumen -->
         <section id="tab-resumen" class="tab-content">
-            <h3>Acciones Principales</h3>
+            <h3>Todos <span class="muted-label">· Disponible · Habilitado</span></h3>
             <div class="action-group">
-                <button id="btn-harvest-food" class="btn-action">Reunir Recursos (Comida, Madera y Piedra)</button>
+                <button id="btn-harvest-food" class="btn-action">Reunir recursos</button>
             </div>
             <div class="scrollable-container" style="margin-top: 15px;">
                 <p>Bienvenido al simulador estratégico. Utiliza el botón superior para recolectar recursos de los alrededores.</p>
@@ -143,24 +144,21 @@
 
         <!-- 2. Pestaña Empleo -->
         <section id="tab-empleo" class="tab-content" style="display: none;">
-            <h3>Gestión Demográfica y Clases Sociales</h3>
+            <h3>Habitantes y empleabilidad</h3>
             <div class="scrollable-container" style="padding: 5px;">
-                <p>Población total y distribución de fuerza laboral:</p>
+                    <p>Asigna obreros desocupados a los campos para activar su producción.</p>
                 <div id="employment-panel" style="margin-top: 10px;">
                     <p><span id="worker-count">Obreros: 0 | Libres: 0</span></p>
-                    <div class="action-group" style="margin-top: 10px; display: flex; gap: 10px;">
-                        <button id="btn-assign-worker" class="btn-action">Asignar obrero (+)</button>
-                        <button id="btn-unassign-worker" class="btn-action" style="background-color: #c62828;">Liberar obrero (-)</button>
-                    </div>
+                    <p class="muted-label">Usa + y - en cada campo de producción para gestionar los puestos.</p>
                 </div>
             </div>
         </section>
 
         <!-- 3. Pestaña Infraestructura / Edificios -->
         <section id="tab-infraestructura" class="tab-content" style="display: none;">
-            <h3>Gestión de Infraestructura</h3>
+            <h3>Edificios y puestos de trabajo</h3>
             <div class="scrollable-container" style="padding: 5px;">
-                <p>Construye edificios para expandir tu asentamiento y automatizar la producción:</p>
+                <p>Construye edificios y asigna trabajadores a sus puestos.</p>
                 <div id="buildings-container" style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
                     <!-- Los edificios se renderizan dinámicamente aquí -->
                 </div>
@@ -170,12 +168,12 @@
 
     <!-- Columna Derecha: Registro del Juego (Game-log) -->
     <section class="game-log-panel">
-        <h3>Registro del Juego</h3>
+        <h3>Otoño <span class="muted-label">· Registro</span></h3>
         <div id="game-log"></div>
         <button id="btn-clear-log" class="btn-action" style="background-color: #444; font-size: 0.8rem; padding: 6px;">Limpiar Log</button>
     </section>
 
     <!-- Módulo Principal de JavaScript -->
-    <script type="module" src="./js/main.js?v=20260911-4"></script>
+    <script type="module" src="./js/main.js?v=20260911-5"></script>
 </body>
 </html>

@@ -1,8 +1,8 @@
 // actions.js - Acciones del jugador y gestión de población
 
-import { canAfford, deductCost, refreshResourceCaps } from './resources.js?v=20260911-3';
-import { BUILDINGS_DATA, calculateBuildingCost } from './buildings.js?v=20260911-3';
-import { calculateMaxHousing, ensureBuildingStates, ensureResourceStates } from './state.js?v=20260911-3';
+import { canAfford, deductCost, refreshResourceCaps } from './resources.js?v=20260911-5';
+import { BUILDINGS_DATA, calculateBuildingCost } from './buildings.js?v=20260911-5';
+import { calculateMaxHousing, ensureBuildingStates, ensurePopulationStates, ensureResourceStates } from './state.js?v=20260911-5';
 
 function addLog(message, type = 'info') {
     if (typeof window !== 'undefined') {
@@ -70,6 +70,32 @@ export function buildStructure(state, buildingKey) {
 
     addLog(`Construiste: ${buildingKey}.`, 'success');
     return true;
+}
+
+export function modifyBuildingWorkers(state, buildingKey, amount) {
+    ensurePopulationStates(state);
+    ensureBuildingStates(state);
+    const buildingInfo = BUILDINGS_DATA[buildingKey];
+    const building = state.buildings[buildingKey];
+    if (!buildingInfo || !building || !building.unlocked || !buildingInfo.jobsPerBuilding) return false;
+
+    const currentAssigned = Number(state.population.assignments[buildingKey]) || 0;
+    const capacity = (Number(building.count) || 0) * buildingInfo.jobsPerBuilding;
+    const nextAssigned = Math.max(0, Math.min(capacity, currentAssigned + amount));
+    const delta = nextAssigned - currentAssigned;
+    if (delta > 0) {
+        if (state.population.unskilled < delta) return false;
+        state.population.unskilled -= delta;
+        state.population.assignments[buildingKey] = nextAssigned;
+        state.population.workers += delta;
+        addLog(`Asignaste ${delta} trabajador(es) a ${buildingInfo.name}.`, 'success');
+    } else if (delta < 0) {
+        state.population.assignments[buildingKey] = nextAssigned;
+        state.population.unskilled += -delta;
+        state.population.workers += delta;
+        addLog(`Liberaste ${-delta} puesto(s) de ${buildingInfo.name}.`, 'info');
+    }
+    return delta !== 0;
 }
 
 export function modifyWorkerAllocation(state, amount) {
