@@ -87,6 +87,8 @@ function renderEmploymentUI() {
     }
 }
 
+let buildingsRenderSignature = '';
+
 function renderGame() {
     refreshResourceCaps(gameState);
     renderSidebar(gameState);
@@ -98,12 +100,25 @@ function renderBuildingsUI() {
     const container = document.getElementById('buildings-container');
     if (!container) return;
 
+    const buildingEntries = Object.entries(BUILDINGS_DATA)
+        .filter(([buildingKey]) => gameState.buildings[buildingKey]?.unlocked !== false)
+        .map(([buildingKey, buildingInfo]) => {
+            const currentCount = gameState.buildings[buildingKey]?.count || 0;
+            const currentCost = calculateBuildingCost(buildingKey, currentCount);
+            const atLimit = buildingInfo.maxCount !== undefined && currentCount >= buildingInfo.maxCount;
+            const affordable = canAfford(gameState, currentCost);
+            return { buildingKey, buildingInfo, currentCount, currentCost, atLimit, affordable };
+        });
+
+    const renderSignature = buildingEntries
+        .map(({ buildingKey, currentCount, atLimit, affordable }) => `${buildingKey}:${currentCount}:${atLimit}:${affordable}`)
+        .join('|');
+    if (renderSignature === buildingsRenderSignature) return;
+    buildingsRenderSignature = renderSignature;
+
     container.innerHTML = '';
 
-    for (const [buildingKey, buildingInfo] of Object.entries(BUILDINGS_DATA)) {
-        if (gameState.buildings[buildingKey]?.unlocked === false) continue;
-        const currentCount = gameState.buildings[buildingKey]?.count || 0;
-        const currentCost = calculateBuildingCost(buildingKey, currentCount);
+    for (const { buildingKey, buildingInfo, currentCount, currentCost, atLimit, affordable } of buildingEntries) {
 
         const card = document.createElement('div');
         card.style.border = '1px solid #444';
@@ -132,8 +147,6 @@ function renderBuildingsUI() {
         `;
 
         const btnBuild = document.createElement('button');
-        const atLimit = buildingInfo.maxCount !== undefined && currentCount >= buildingInfo.maxCount;
-        const affordable = canAfford(gameState, currentCost);
         btnBuild.textContent = atLimit ? 'Construido' : affordable ? 'Construir' : 'Faltan materiales';
         btnBuild.className = 'btn-action';
         btnBuild.disabled = atLimit;
