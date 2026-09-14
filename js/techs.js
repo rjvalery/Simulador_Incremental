@@ -8,7 +8,7 @@ export const TECHS_DATA = Object.freeze({
         description: 'Registra transacciones, saberes y ordenanzas publicas.',
         cost: { science: 25 },
         requires: [],
-        unlocks: { buildings: ['library'] }
+        unlocks: {}
     },
     leadership: {
         id: 'leadership',
@@ -17,7 +17,7 @@ export const TECHS_DATA = Object.freeze({
         description: 'Formaliza la autoridad y la cadena de mando local.',
         cost: { science: 60 },
         requires: ['writing'],
-        unlocks: { buildings: ['townHall'] }
+        unlocks: {}
     },
     laws: {
         id: 'laws',

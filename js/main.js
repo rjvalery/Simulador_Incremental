@@ -113,8 +113,13 @@ function renderTechnologyAndGovernmentUI() {
     const governmentTab = document.getElementById('government-tab');
     if (!techPanel || !governmentPanel || !governmentTab) return;
 
-    governmentTab.style.display = '';
+    const hasLibrary = (gameState.buildings.library?.count || 0) > 0;
+    const hasTownHall = (gameState.buildings.townHall?.count || 0) > 0;
+    governmentTab.style.display = hasLibrary || hasTownHall ? '' : 'none';
     techPanel.innerHTML = '<h4>Árbol de investigación</h4>';
+    if (!hasLibrary) {
+        techPanel.insertAdjacentHTML('beforeend', '<p class="muted-label">Construye una Biblioteca para activar la investigación.</p>');
+    }
     for (const [techKey, tech] of Object.entries(TECHS_DATA)) {
         const completed = gameState.techs?.[techKey]?.completed === true;
         const available = !completed && tech.requires.every(requirement => gameState.techs?.[requirement]?.completed === true);
@@ -126,7 +131,12 @@ function renderTechnologyAndGovernmentUI() {
         const button = document.createElement('button');
         button.className = 'btn-action';
         button.textContent = completed ? 'Completada' : available && affordable ? 'Investigar' : 'Bloqueada';
-        button.disabled = completed || !available || !affordable;
+        if (!completed && !available) {
+            button.title = `Requiere: ${tech.requires.join(', ')}`;
+        } else if (!completed && !affordable) {
+            button.title = `Necesitas ${tech.cost.science} de Ciencia; tienes ${Math.floor(gameState.resources.science?.value || 0)}`;
+        }
+        button.disabled = !hasLibrary || completed || !available || !affordable;
         button.addEventListener('click', () => {
             researchTechnology(gameState, techKey);
             persistGame();
@@ -136,8 +146,12 @@ function renderTechnologyAndGovernmentUI() {
         techPanel.appendChild(row);
     }
 
+    if (!hasTownHall) {
+        governmentPanel.innerHTML = '<p class="muted-label">Construye una Casa Comunal para activar la gobernanza.</p>';
+        return;
+    }
     if (!governanceIsAvailable(gameState)) {
-        governmentPanel.innerHTML = '<p class="muted-label">Investiga Leyes basicas y construye la Casa Comunal para gobernar.</p>';
+        governmentPanel.innerHTML = '<p class="muted-label">Investiga Leyes basicas para activar las leyes y decretos.</p>';
         return;
     }
 

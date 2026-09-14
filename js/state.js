@@ -23,8 +23,8 @@ export const gameState = {
         woodcutter: { count: 0, unlocked: true },
         quarry: { count: 0, unlocked: true },
         warehouse: { count: 0, unlocked: true },
-        library: { count: 0, unlocked: false },
-        townHall: { count: 0, unlocked: false },
+        library: { count: 0, unlocked: true },
+        townHall: { count: 0, unlocked: true },
         factory: { count: 0, unlocked: false },
         oilRefinery: { count: 0, unlocked: false }
     },
@@ -37,7 +37,7 @@ export const gameState = {
     }
 };
 
-const LOCKED_BY_DEFAULT = new Set(['library', 'townHall', 'factory', 'oilRefinery']);
+const LOCKED_BY_DEFAULT = new Set(['factory', 'oilRefinery']);
 const RESOURCE_DEFAULTS = {
     food: { name: 'Alimentos', max: 200 },
     wood: { name: 'Madera', max: 150 },
@@ -61,6 +61,7 @@ export function ensureResourceStates(state) {
         resource.max = Number.isFinite(Number(resource.max)) ? Number(resource.max) : defaults.max;
         state.resources[resourceKey] = resource;
     }
+
 }
 
 export function ensureBuildingStates(state) {
@@ -74,6 +75,10 @@ export function ensureBuildingStates(state) {
             };
         }
     }
+
+    // Estos edificios se desbloquean por disponibilidad material, no por tecnologia.
+    state.buildings.library.unlocked = true;
+    state.buildings.townHall.unlocked = true;
 }
 
 export function ensurePopulationStates(state) {
