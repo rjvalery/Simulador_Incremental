@@ -129,6 +129,7 @@
             <button class="tab-btn active" data-tab="resumen">Producción</button>
             <button class="tab-btn" data-tab="empleo">Población</button>
             <button class="tab-btn" data-tab="infraestructura">Edificios</button>
+            <button class="tab-btn" data-tab="gobierno" id="government-tab">Gobierno y leyes</button>
         </div>
 
         <!-- 1. Pestaña Resumen -->
@@ -161,6 +162,15 @@
                 <div id="buildings-container" style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
                     <!-- Los edificios se renderizan dinámicamente aquí -->
                 </div>
+            </div>
+        </section>
+
+        <!-- 4. Pestaña de I+D y Gobierno -->
+        <section id="tab-gobierno" class="tab-content" style="display: none;">
+            <h3>Gobierno y leyes</h3>
+            <div class="scrollable-container" style="padding: 5px;">
+                <div id="technology-panel"></div>
+                <div id="governance-panel" style="margin-top: 18px;"></div>
             </div>
         </section>
     </main>

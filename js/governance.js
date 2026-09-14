@@ -1,0 +1,70 @@
+// governance.js - Liderazgo y decretos del asentamiento
+
+export const LEADERS = Object.freeze({
+    hunter: {
+        id: 'hunter',
+        name: 'Lider Cazador / Capataz',
+        description: '+15% a la recoleccion manual de alimentos y materiales.'
+    },
+    scholar: {
+        id: 'scholar',
+        name: 'Lider Sabio / Erudito',
+        description: '+20% a la ciencia pasiva de las bibliotecas.'
+    },
+    builder: {
+        id: 'builder',
+        name: 'Lider Constructor',
+        description: '-5% al coste de nuevas estructuras.'
+    }
+});
+
+export const POLICIES = Object.freeze({
+    rationing: {
+        id: 'rationing',
+        name: 'Racionamiento de Emergencia',
+        description: '-20% al consumo de comida, con -10% de eficiencia laboral.'
+    },
+    extendedWorkday: {
+        id: 'extendedWorkday',
+        name: 'Jornada Prolongada',
+        description: '+10% a madera y piedra pasivas, con +10% de consumo de comida.'
+    }
+});
+
+export function ensureGovernance(state) {
+    state.governance = state.governance || {};
+    state.governance.unlocked = state.governance.unlocked === true;
+    state.governance.leader = LEADERS[state.governance.leader] ? state.governance.leader : null;
+    state.governance.policies = Array.isArray(state.governance.policies)
+        ? state.governance.policies.filter(policy => POLICIES[policy])
+        : [];
+}
+
+export function governanceIsAvailable(state) {
+    return state.governance?.unlocked === true &&
+        (state.buildings.townHall?.count || 0) > 0 &&
+        state.techs?.laws?.completed === true;
+}
+
+export function constructionCostMultiplier(state) {
+    return state.governance?.leader === 'builder' ? 0.95 : 1;
+}
+
+export function productionMultiplier(state, resourceKey, passive = false) {
+    let multiplier = 1;
+    if (state.governance?.policies?.includes('extendedWorkday') && ['wood', 'stone'].includes(resourceKey)) {
+        multiplier *= 1.1;
+    }
+    if (passive && resourceKey === 'science' && state.governance?.leader === 'scholar') {
+        multiplier *= 1.2;
+    }
+    if (state.governance?.policies?.includes('rationing')) multiplier *= 0.9;
+    return multiplier;
+}
+
+export function foodConsumptionMultiplier(state) {
+    let multiplier = 1;
+    if (state.governance?.policies?.includes('rationing')) multiplier *= 0.8;
+    if (state.governance?.policies?.includes('extendedWorkday')) multiplier *= 1.1;
+    return multiplier;
+}

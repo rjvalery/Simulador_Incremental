@@ -6,8 +6,13 @@ import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js?v=20260911
 import { startEngine } from './engine.js?v=20260911-7';
 import { renderSidebar, addGameLog } from './ui.js?v=20260911-8';
 import { canAfford, refreshResourceCaps } from './resources.js?v=20260911-7';
+import { TECHS_DATA } from './techs.js';
+import { LEADERS, POLICIES, constructionCostMultiplier, governanceIsAvailable } from './governance.js';
+import { researchTechnology, setLeader, togglePolicy } from './actions.js?v=20260911-7';
+import { Storage } from './storage.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+    Storage.load();
     ensureResourceStates(gameState);
     ensureBuildingStates(gameState);
     ensurePopulationStates(gameState);
@@ -16,8 +21,22 @@ document.addEventListener('DOMContentLoaded', () => {
     renderGame();
     renderEmploymentUI();
     renderBuildingsUI();
+    renderTechnologyAndGovernmentUI();
+    setupAutosave();
     startEngine(gameState, renderGame);
 });
+
+function setupAutosave() {
+    const saveGame = () => Storage.save({ notify: false });
+
+    // El intervalo limita las escrituras y los eventos cubren cierres o recargas inmediatas.
+    window.setInterval(saveGame, 5000);
+    window.addEventListener('pagehide', saveGame);
+    window.addEventListener('beforeunload', saveGame);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') saveGame();
+    });
+}
 
 function setupTabs() {
     const tabButtons = document.querySelectorAll('.tab-btn');
@@ -78,6 +97,60 @@ function setupEventListeners() {
         btnClearLog.addEventListener('click', () => {
             document.getElementById('game-log').innerHTML = '';
         });
+    }
+}
+
+function renderTechnologyAndGovernmentUI() {
+    const techPanel = document.getElementById('technology-panel');
+    const governmentPanel = document.getElementById('governance-panel');
+    const governmentTab = document.getElementById('government-tab');
+    if (!techPanel || !governmentPanel || !governmentTab) return;
+
+    const writingCompleted = gameState.techs?.writing?.completed === true;
+    governmentTab.style.display = writingCompleted ? '' : 'none';
+    techPanel.innerHTML = '<h4>Árbol de investigación</h4>';
+    for (const [techKey, tech] of Object.entries(TECHS_DATA)) {
+        const completed = gameState.techs?.[techKey]?.completed === true;
+        const available = !completed && tech.requires.every(requirement => gameState.techs?.[requirement]?.completed === true);
+        const affordable = canAfford(gameState, tech.cost);
+        const row = document.createElement('div');
+        row.className = 'tech-row';
+        const cost = Object.entries(tech.cost).map(([resource, amount]) => `${amount} ${gameState.resources[resource]?.name || resource}`).join(', ');
+        row.innerHTML = `<div><strong>${tech.name}</strong><br><small>${tech.description}</small><br><small>Costo: ${cost}${tech.requires.length ? ` | Requiere: ${tech.requires.join(', ')}` : ''}</small></div>`;
+        const button = document.createElement('button');
+        button.className = 'btn-action';
+        button.textContent = completed ? 'Completada' : available && affordable ? 'Investigar' : 'Bloqueada';
+        button.disabled = completed || !available || !affordable;
+        button.addEventListener('click', () => {
+            researchTechnology(gameState, techKey);
+            renderGame();
+        });
+        row.appendChild(button);
+        techPanel.appendChild(row);
+    }
+
+    if (!governanceIsAvailable(gameState)) {
+        governmentPanel.innerHTML = '<p class="muted-label">Investiga Leyes basicas y construye la Casa Comunal para gobernar.</p>';
+        return;
+    }
+
+    governmentPanel.innerHTML = '<h4>Lider del asentamiento</h4>';
+    for (const [leaderKey, leader] of Object.entries(LEADERS)) {
+        const button = document.createElement('button');
+        button.className = 'btn-action';
+        button.textContent = `${leader.name}${gameState.governance.leader === leaderKey ? ' (activo)' : ''}`;
+        button.title = leader.description;
+        button.addEventListener('click', () => { setLeader(gameState, leaderKey); renderGame(); });
+        governmentPanel.appendChild(button);
+    }
+    governmentPanel.insertAdjacentHTML('beforeend', '<h4 style="margin-top: 14px;">Decretos y politicas</h4>');
+    for (const [policyKey, policy] of Object.entries(POLICIES)) {
+        const button = document.createElement('button');
+        button.className = 'btn-action';
+        button.textContent = `${policy.name}${gameState.governance.policies.includes(policyKey) ? ' (activo)' : ''}`;
+        button.title = policy.description;
+        button.addEventListener('click', () => { togglePolicy(gameState, policyKey); renderGame(); });
+        governmentPanel.appendChild(button);
     }
 }
 
@@ -159,6 +232,7 @@ function renderGame() {
     renderSidebar(gameState);
     renderEmploymentUI();
     renderBuildingsUI();
+    renderTechnologyAndGovernmentUI();
 }
 
 function renderBuildingsUI() {
@@ -169,7 +243,8 @@ function renderBuildingsUI() {
         .filter(([buildingKey]) => gameState.buildings[buildingKey]?.unlocked !== false)
         .map(([buildingKey, buildingInfo]) => {
             const currentCount = gameState.buildings[buildingKey]?.count || 0;
-            const currentCost = calculateBuildingCost(buildingKey, currentCount);
+            const baseCost = calculateBuildingCost(buildingKey, currentCount);
+            const currentCost = Object.fromEntries(Object.entries(baseCost).map(([resource, amount]) => [resource, Math.floor(amount * constructionCostMultiplier(gameState))]));
             const atLimit = buildingInfo.maxCount !== undefined && currentCount >= buildingInfo.maxCount;
             const affordable = canAfford(gameState, currentCost);
             return { buildingKey, buildingInfo, currentCount, currentCost, atLimit, affordable };

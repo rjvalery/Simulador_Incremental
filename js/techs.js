@@ -1,6 +1,33 @@
 // techs.js - Arbol tecnologico persistente y basado en el estado de la partida
 
 export const TECHS_DATA = Object.freeze({
+    writing: {
+        id: 'writing',
+        era: 'Antigua',
+        name: 'Escritura',
+        description: 'Registra transacciones, saberes y ordenanzas publicas.',
+        cost: { science: 25 },
+        requires: [],
+        unlocks: { buildings: ['library'] }
+    },
+    leadership: {
+        id: 'leadership',
+        era: 'Antigua',
+        name: 'Liderazgo',
+        description: 'Formaliza la autoridad y la cadena de mando local.',
+        cost: { science: 60 },
+        requires: ['writing'],
+        unlocks: { buildings: ['townHall'] }
+    },
+    laws: {
+        id: 'laws',
+        era: 'Antigua',
+        name: 'Leyes basicas',
+        description: 'Sistematiza las reglas de trabajo y asignacion social.',
+        cost: { science: 100 },
+        requires: ['leadership'],
+        unlocks: {}
+    },
     agriculture: {
         id: 'agriculture',
         era: 'Antigua',

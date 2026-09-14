@@ -3,6 +3,7 @@
 import { calculateMaxHousing, ensurePopulationStates, getTotalPopulation } from './state.js?v=20260911-7';
 import { BUILDINGS_DATA } from './buildings.js?v=20260911-7';
 import { refreshResourceCaps } from './resources.js?v=20260911-7';
+import { foodConsumptionMultiplier, productionMultiplier } from './governance.js';
 
 let migrationTimer = 0;
 const FOOD_CONSUMPTION_PER_PERSON = 0.1;
@@ -37,8 +38,21 @@ export function runGameTick(state, deltaTime = 1) {
         for (const [resourceKey, baseRate] of Object.entries(buildingInfo.workerOutput || {})) {
             const resource = state.resources[resourceKey];
             const multiplier = resource?.productionMultiplier || 1;
-            const rate = baseRate * assigned * multiplier;
+            const rate = baseRate * assigned * multiplier * productionMultiplier(state, resourceKey);
             if (!resource) continue;
+            resource.production += rate;
+            addResource(resource, rate * deltaTime);
+        }
+    }
+
+    for (const [buildingKey, buildingState] of Object.entries(state.buildings)) {
+        const buildingInfo = BUILDINGS_DATA[buildingKey];
+        if (!buildingInfo || !buildingState.unlocked || !buildingState.count) continue;
+        for (const [resourceKey, baseRate] of Object.entries(buildingInfo.production || {})) {
+            const resource = state.resources[resourceKey];
+            if (!resource) continue;
+            const multiplier = (resource.productionMultiplier || 1) * productionMultiplier(state, resourceKey, true);
+            const rate = baseRate * buildingState.count * multiplier;
             resource.production += rate;
             addResource(resource, rate * deltaTime);
         }
@@ -57,7 +71,7 @@ export function runGameTick(state, deltaTime = 1) {
     const totalPopulation = getTotalPopulation(state);
     const food = state.resources.food;
     if (food) {
-        food.consumption = totalPopulation * FOOD_CONSUMPTION_PER_PERSON;
+        food.consumption = totalPopulation * FOOD_CONSUMPTION_PER_PERSON * foodConsumptionMultiplier(state);
         food.value -= food.consumption * deltaTime;
     }
 

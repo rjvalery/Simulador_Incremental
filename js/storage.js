@@ -9,11 +9,11 @@ function emitLog(message) {
 export const Storage = {
   key: "KITTENS_GAME_SAVE",
 
-  save() {
+  save({ notify = true } = {}) {
     try {
       const data = JSON.stringify(gameState);
       localStorage.setItem(this.key, btoa(encodeURIComponent(data)));
-      emitLog('Partida guardada correctamente.');
+      if (notify) emitLog('Partida guardada correctamente.');
       return true;
     } catch (err) {
       console.error("Error al guardar la partida:", err);

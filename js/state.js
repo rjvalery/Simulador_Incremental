@@ -1,5 +1,6 @@
 // state.js - Estado Global del Simulador Incremental
 import { BUILDINGS_DATA } from './buildings.js?v=20260911-7';
+import { ensureGovernance } from './governance.js';
 
 export const gameState = {
     resources: {
@@ -22,25 +23,21 @@ export const gameState = {
         woodcutter: { count: 0, unlocked: true },
         quarry: { count: 0, unlocked: true },
         warehouse: { count: 0, unlocked: true },
-        library: { count: 0, unlocked: true },
-        townHall: { count: 0, unlocked: true },
+        library: { count: 0, unlocked: false },
+        townHall: { count: 0, unlocked: false },
         factory: { count: 0, unlocked: false },
         oilRefinery: { count: 0, unlocked: false }
     },
     techs: {},
     unlockedTechs: {},
     military: { unlockedUnits: [] },
-    governance: {
-        unlocked: false,
-        leader: null,
-        policies: []
-    },
+    governance: { unlocked: false, leader: null, policies: [] },
     settings: {
         gameSpeed: 1
     }
 };
 
-const LOCKED_BY_DEFAULT = new Set(['factory', 'oilRefinery']);
+const LOCKED_BY_DEFAULT = new Set(['library', 'townHall', 'factory', 'oilRefinery']);
 const RESOURCE_DEFAULTS = {
     food: { name: 'Alimentos', max: 200 },
     wood: { name: 'Madera', max: 150 },
@@ -86,6 +83,7 @@ export function ensurePopulationStates(state) {
     state.population.technicians = Number(state.population.technicians) || 0;
     state.population.professionals = Number(state.population.professionals) || 0;
     state.population.assignments = state.population.assignments || {};
+    ensureGovernance(state);
 }
 
 // Función auxiliar para calcular la capacidad máxima de vivienda de forma dinámica

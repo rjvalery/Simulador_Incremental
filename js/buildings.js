@@ -58,9 +58,7 @@ export const BUILDINGS_DATA = {
         baseCost: { wood: 100, stone: 50 },
         costMultiplier: 1.15,
         production: { science: 0.25 },
-        jobsPerBuilding: 1,
-        workerType: 'technicians',
-        workerOutput: { science: 0.25 }
+        jobsPerBuilding: 0
     },
     townHall: {
         id: "townHall",

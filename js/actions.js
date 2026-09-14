@@ -3,6 +3,8 @@
 import { canAfford, deductCost, refreshResourceCaps } from './resources.js?v=20260911-7';
 import { BUILDINGS_DATA, calculateBuildingCost } from './buildings.js?v=20260911-7';
 import { calculateMaxHousing, ensureBuildingStates, ensurePopulationStates, ensureResourceStates } from './state.js?v=20260911-7';
+import { constructionCostMultiplier, governanceIsAvailable, LEADERS, POLICIES } from './governance.js';
+import { researchTech } from './techs.js';
 
 function addLog(message, type = 'info') {
     if (typeof window !== 'undefined') {
@@ -11,7 +13,8 @@ function addLog(message, type = 'info') {
 }
 
 export function handleManualHarvest(state) {
-    const amounts = { food: 5, wood: 2, stone: 1 };
+    const harvestMultiplier = state.governance?.leader === 'hunter' ? 1.15 : 1;
+    const amounts = { food: 5 * harvestMultiplier, wood: 2 * harvestMultiplier, stone: 1 * harvestMultiplier };
     const harvested = {};
 
     for (const [resourceKey, amount] of Object.entries(amounts)) {
@@ -48,7 +51,9 @@ export function buildStructure(state, buildingKey) {
         return false;
     }
 
-    const cost = calculateBuildingCost(buildingKey, currentCount);
+    const baseCost = calculateBuildingCost(buildingKey, currentCount);
+    const discount = constructionCostMultiplier(state);
+    const cost = Object.fromEntries(Object.entries(baseCost).map(([resource, amount]) => [resource, Math.floor(amount * discount)]));
     if (!canAfford(state, cost)) {
         const missingResources = Object.entries(cost)
             .filter(([resourceKey, amount]) => (state.resources[resourceKey]?.value || 0) < amount)
@@ -69,6 +74,29 @@ export function buildStructure(state, buildingKey) {
     }
 
     addLog(`Construiste: ${buildingKey}.`, 'success');
+    return true;
+}
+
+export function researchTechnology(state, techKey) {
+    const researched = researchTech(state, techKey);
+    if (researched) addLog(`Investigacion completada: ${techKey}.`, 'success');
+    return researched;
+}
+
+export function setLeader(state, leaderKey) {
+    if (!governanceIsAvailable(state) || !LEADERS[leaderKey]) return false;
+    state.governance.leader = leaderKey;
+    addLog(`Lider designado: ${LEADERS[leaderKey].name}.`, 'success');
+    return true;
+}
+
+export function togglePolicy(state, policyKey) {
+    if (!governanceIsAvailable(state) || !POLICIES[policyKey]) return false;
+    const policies = state.governance.policies;
+    const index = policies.indexOf(policyKey);
+    if (index >= 0) policies.splice(index, 1);
+    else policies.push(policyKey);
+    addLog(`${index >= 0 ? 'Revocado' : 'Promulgado'}: ${POLICIES[policyKey].name}.`, 'success');
     return true;
 }
 
