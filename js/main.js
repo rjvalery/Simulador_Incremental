@@ -130,7 +130,7 @@ function renderTechnologyAndGovernmentUI() {
         button.textContent = status.completed ? 'Completada' : status.researchable ? 'Investigar' : 'Bloqueada';
         button.title = status.completed ? 'Tecnología ya investigada' :
             requirementNames ? `Requiere: ${requirementNames}` : `Necesitas: ${resourceNames}`;
-        button.disabled = status.completed;
+        button.disabled = status.completed || !status.researchable;
         button.dataset.techKey = techKey;
         button.addEventListener('click', () => {
             researchTechnology(gameState, techKey);
