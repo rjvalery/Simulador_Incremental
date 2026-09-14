@@ -94,6 +94,8 @@ export function togglePolicy(state, policyKey) {
     if (!governanceIsAvailable(state) || !POLICIES[policyKey]) return false;
     const policies = state.governance.policies;
     const index = policies.indexOf(policyKey);
+    if (index < 0 && !canAfford(state, POLICIES[policyKey].cost || {})) return false;
+    if (index < 0) deductCost(state, POLICIES[policyKey].cost || {});
     if (index >= 0) policies.splice(index, 1);
     else policies.push(policyKey);
     addLog(`${index >= 0 ? 'Revocado' : 'Promulgado'}: ${POLICIES[policyKey].name}.`, 'success');
@@ -111,16 +113,18 @@ export function modifyBuildingWorkers(state, buildingKey, amount) {
     const capacity = (Number(building.count) || 0) * buildingInfo.jobsPerBuilding;
     const nextAssigned = Math.max(0, Math.min(capacity, currentAssigned + amount));
     const delta = nextAssigned - currentAssigned;
+    const workerPool = buildingInfo.workerType || 'workers';
+    const assignedPool = Number(state.population[workerPool]) || 0;
     if (delta > 0) {
         if (state.population.unskilled < delta) return false;
         state.population.unskilled -= delta;
         state.population.assignments[buildingKey] = nextAssigned;
-        state.population.workers += delta;
-        addLog(`Asignaste ${delta} trabajador(es) a ${buildingInfo.name}.`, 'success');
+        state.population[workerPool] = assignedPool + delta;
+        addLog(`Asignaste ${delta} ${workerPool} a ${buildingInfo.name}.`, 'success');
     } else if (delta < 0) {
         state.population.assignments[buildingKey] = nextAssigned;
         state.population.unskilled += -delta;
-        state.population.workers += delta;
+        state.population[workerPool] = Math.max(0, assignedPool + delta);
         addLog(`Liberaste ${-delta} puesto(s) de ${buildingInfo.name}.`, 'info');
     }
     return delta !== 0;

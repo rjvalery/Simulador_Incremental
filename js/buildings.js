@@ -54,23 +54,34 @@ export const BUILDINGS_DATA = {
     library: {
         id: "library",
         name: "Biblioteca",
-        description: "Genera conocimiento y puntos de ciencia de forma pasiva.",
+        description: "Genera ciencia cuando tiene tecnicos asignados.",
         baseCost: { wood: 100, stone: 50 },
         costMultiplier: 1.15,
-        production: { science: 0.25 },
-        jobsPerBuilding: 0
+        production: {},
+        jobsPerBuilding: 1,
+        workerType: 'technicians',
+        workerOutput: { science: 0.25 }
     },
     townHall: {
         id: "townHall",
         name: "Casa Comunal",
-        description: "Desbloquea el liderazgo y las políticas de gobernanza.",
-        baseCost: { wood: 150, stone: 100, food: 75 },
+        description: "Habilita la interfaz de gobernanza y la asignacion del lider.",
+        baseCost: { wood: 150, stone: 100 },
         costMultiplier: 1.15,
         maxCount: 1,
         production: {},
-        jobsPerBuilding: 1,
-        workerType: 'professionals',
-        workerOutput: { money: 0.5 }
+        jobsPerBuilding: 0
+    },
+    taxOffice: {
+        id: "taxOffice",
+        name: "Oficina de Impuestos",
+        description: "Recauda oro segun la poblacion cuando tiene recaudadores asignados.",
+        baseCost: { wood: 120, stone: 80 },
+        costMultiplier: 1.15,
+        production: {},
+        jobsPerBuilding: 2,
+        workerType: 'workers',
+        workerOutput: { gold: 0.05 }
     },
     factory: {
         id: "factory",

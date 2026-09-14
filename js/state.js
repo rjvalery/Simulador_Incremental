@@ -7,7 +7,7 @@ export const gameState = {
         food: { name: "Alimentos", value: 50, max: 200, baseMax: 200, production: 0, consumption: 0 },
         wood: { name: "Madera", value: 30, max: 150, baseMax: 150, production: 0, consumption: 0 },
         stone: { name: "Piedra", value: 10, max: 100, baseMax: 100, production: 0, consumption: 0 },
-        money: { name: "Monedas", value: 0, max: 1000, baseMax: 1000, production: 0, consumption: 0 },
+        gold: { name: "Oro", value: 0, max: 1000, baseMax: 1000, production: 0, consumption: 0 },
         science: { name: "Ciencia", value: 0, max: 500, baseMax: 500, production: 0, consumption: 0 }
     },
     population: {
@@ -23,8 +23,9 @@ export const gameState = {
         woodcutter: { count: 0, unlocked: true },
         quarry: { count: 0, unlocked: true },
         warehouse: { count: 0, unlocked: true },
-        library: { count: 0, unlocked: true },
-        townHall: { count: 0, unlocked: true },
+        library: { count: 0, unlocked: false },
+        townHall: { count: 0, unlocked: false },
+        taxOffice: { count: 0, unlocked: false },
         factory: { count: 0, unlocked: false },
         oilRefinery: { count: 0, unlocked: false }
     },
@@ -37,17 +38,23 @@ export const gameState = {
     }
 };
 
-const LOCKED_BY_DEFAULT = new Set(['factory', 'oilRefinery']);
+const LOCKED_BY_DEFAULT = new Set(['library', 'townHall', 'taxOffice', 'factory', 'oilRefinery']);
 const RESOURCE_DEFAULTS = {
     food: { name: 'Alimentos', max: 200 },
     wood: { name: 'Madera', max: 150 },
     stone: { name: 'Piedra', max: 100 },
-    money: { name: 'Monedas', max: 1000 },
+    gold: { name: 'Oro', max: 1000 },
     science: { name: 'Ciencia', max: 500 }
 };
 
 export function ensureResourceStates(state) {
     state.resources = state.resources || {};
+
+    if (!state.resources.gold && state.resources.money) {
+        state.resources.gold = state.resources.money;
+        state.resources.gold.name = 'Oro';
+        delete state.resources.money;
+    }
 
     for (const [resourceKey, defaults] of Object.entries(RESOURCE_DEFAULTS)) {
         const resource = state.resources[resourceKey] || {};
@@ -76,9 +83,10 @@ export function ensureBuildingStates(state) {
         }
     }
 
-    // Estos edificios se desbloquean por disponibilidad material, no por tecnologia.
-    state.buildings.library.unlocked = true;
-    state.buildings.townHall.unlocked = true;
+    const researchedTechs = state.techs || {};
+    if (researchedTechs.writing?.completed) state.buildings.library.unlocked = true;
+    if (researchedTechs.leadership?.completed) state.buildings.townHall.unlocked = true;
+    if (researchedTechs.taxation?.completed) state.buildings.taxOffice.unlocked = true;
 }
 
 export function ensurePopulationStates(state) {

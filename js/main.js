@@ -115,11 +115,9 @@ function renderTechnologyAndGovernmentUI() {
 
     const hasLibrary = (gameState.buildings.library?.count || 0) > 0;
     const hasTownHall = (gameState.buildings.townHall?.count || 0) > 0;
-    governmentTab.style.display = hasLibrary || hasTownHall ? '' : 'none';
+    governmentTab.style.display = '';
     techPanel.innerHTML = '<h4>Árbol de investigación</h4>';
-    if (!hasLibrary) {
-        techPanel.insertAdjacentHTML('beforeend', '<p class="muted-label">Construye una Biblioteca para activar la investigación.</p>');
-    }
+    if (!hasLibrary) techPanel.insertAdjacentHTML('beforeend', '<p class="muted-label">Investiga Escritura para desbloquear la Biblioteca.</p>');
     for (const [techKey, tech] of Object.entries(TECHS_DATA)) {
         const completed = gameState.techs?.[techKey]?.completed === true;
         const available = !completed && tech.requires.every(requirement => gameState.techs?.[requirement]?.completed === true);
@@ -136,7 +134,7 @@ function renderTechnologyAndGovernmentUI() {
         } else if (!completed && !affordable) {
             button.title = `Necesitas ${tech.cost.science} de Ciencia; tienes ${Math.floor(gameState.resources.science?.value || 0)}`;
         }
-        button.disabled = !hasLibrary || completed || !available || !affordable;
+        button.disabled = completed || !available || !affordable;
         button.addEventListener('click', () => {
             researchTechnology(gameState, techKey);
             persistGame();
@@ -194,7 +192,12 @@ function renderEmploymentUI() {
             const buildingCount = gameState.buildings[buildingKey].count || 0;
             const capacity = buildingCount * buildingInfo.jobsPerBuilding;
             const assigned = gameState.population.assignments?.[buildingKey] || 0;
-            return { buildingKey, buildingInfo, capacity, assigned };
+            const workerLabel = buildingInfo.workerType === 'technicians'
+                ? 'tecnicos'
+                : buildingInfo.workerType === 'workers'
+                ? 'recaudadores'
+                : 'obreros';
+            return { buildingKey, buildingInfo, capacity, assigned, workerLabel };
         });
 
     const signature = jobEntries
@@ -211,11 +214,11 @@ function renderEmploymentUI() {
 
     const jobsList = document.createElement('div');
     jobsList.className = 'jobs-list';
-    for (const { buildingKey, buildingInfo, capacity, assigned } of jobEntries) {
+    for (const { buildingKey, buildingInfo, capacity, assigned, workerLabel } of jobEntries) {
         const job = document.createElement('div');
         job.className = 'job-row';
         job.innerHTML = `
-            <span><strong>${buildingInfo.name}</strong><small>${assigned}/${capacity} puestos ocupados</small></span>
+            <span><strong>${buildingInfo.name}</strong><small>${assigned}/${capacity} ${workerLabel} asignados</small></span>
             <span class="job-controls"></span>
         `;
 
@@ -317,7 +320,7 @@ function renderBuildingsUI() {
         `;
 
         const btnBuild = document.createElement('button');
-        const requiredTech = buildingKey === 'library' ? 'writing' : buildingKey === 'townHall' ? 'leadership' : null;
+        const requiredTech = buildingKey === 'library' ? 'writing' : buildingKey === 'townHall' ? 'leadership' : buildingKey === 'taxOffice' ? 'taxation' : null;
         btnBuild.textContent = !unlocked ? `Investiga ${requiredTech}` : atLimit ? 'Construido' : affordable ? 'Construir' : 'Faltan materiales';
         btnBuild.className = 'btn-action';
         btnBuild.disabled = !unlocked || atLimit;

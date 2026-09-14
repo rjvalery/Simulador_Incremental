@@ -24,6 +24,7 @@ function addResource(resource, amount) {
 export function runGameTick(state, deltaTime = 1) {
     ensurePopulationStates(state);
     refreshResourceCaps(state);
+    const totalPopulation = getTotalPopulation(state);
     for (const resource of Object.values(state.resources)) resource.production = 0;
 
     for (const [buildingKey, buildingState] of Object.entries(state.buildings)) {
@@ -38,7 +39,8 @@ export function runGameTick(state, deltaTime = 1) {
         for (const [resourceKey, baseRate] of Object.entries(buildingInfo.workerOutput || {})) {
             const resource = state.resources[resourceKey];
             const multiplier = resource?.productionMultiplier || 1;
-            const rate = baseRate * assigned * multiplier * productionMultiplier(state, resourceKey);
+            const populationFactor = buildingKey === 'taxOffice' ? totalPopulation : 1;
+            const rate = baseRate * assigned * populationFactor * multiplier * productionMultiplier(state, resourceKey);
             if (!resource) continue;
             resource.production += rate;
             addResource(resource, rate * deltaTime);
@@ -58,17 +60,6 @@ export function runGameTick(state, deltaTime = 1) {
         }
     }
 
-    const employedWorkers = Object.values(state.population.assignments)
-        .reduce((total, assigned) => total + (Number(assigned) || 0), 0);
-    const treasury = state.resources.money;
-    if (treasury) {
-        const taxRate = 0.1;
-        const rate = employedWorkers * taxRate;
-        treasury.production = rate;
-        addResource(treasury, rate * deltaTime);
-    }
-
-    const totalPopulation = getTotalPopulation(state);
     const food = state.resources.food;
     if (food) {
         food.consumption = totalPopulation * FOOD_CONSUMPTION_PER_PERSON * foodConsumptionMultiplier(state);

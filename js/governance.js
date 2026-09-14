@@ -22,12 +22,14 @@ export const POLICIES = Object.freeze({
     rationing: {
         id: 'rationing',
         name: 'Racionamiento de Emergencia',
-        description: '-20% al consumo de comida, con -10% de eficiencia laboral.'
+        description: '-20% al consumo de comida, con -10% de eficiencia laboral.',
+        cost: { gold: 10 }
     },
     extendedWorkday: {
         id: 'extendedWorkday',
         name: 'Jornada Prolongada',
-        description: '+10% a madera y piedra pasivas, con +10% de consumo de comida.'
+        description: '+10% a madera y piedra pasivas, con +10% de consumo de comida.',
+        cost: { gold: 10 }
     }
 });
 
