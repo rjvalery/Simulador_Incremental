@@ -1,5 +1,5 @@
 // state.js - Estado Global del Simulador Incremental
-import { BUILDINGS_DATA } from './buildings.js?v=20260914-4';
+import { BUILDINGS_DATA } from './buildings.js?v=20260914-5';
 import { ensureGovernance } from './governance.js';
 
 export const gameState = {
@@ -65,6 +65,7 @@ export function ensureResourceStates(state) {
         resource.value = Number.isFinite(currentValue)
             ? currentValue
             : Number.isFinite(legacyValue) ? legacyValue : 0;
+        resource.value = Number(resource.value) || 0;
         resource.max = Number.isFinite(Number(resource.max)) ? Number(resource.max) : defaults.max;
         state.resources[resourceKey] = resource;
     }

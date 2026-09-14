@@ -77,7 +77,9 @@ export const TECHS_DATA = Object.freeze({
 });
 
 function isCompleted(state, techKey) {
-    return state.techs?.[techKey]?.completed === true;
+    return state.techs?.[techKey] === true ||
+        state.techs?.[techKey]?.completed === true ||
+        state.unlockedTechs?.[techKey] === true;
 }
 
 function ensureResource(state, resourceKey) {

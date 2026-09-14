@@ -1,14 +1,14 @@
 // main.js - Punto de entrada principal y bucle del motor corregido
 
-import { ensureBuildingStates, ensurePopulationStates, ensureResourceStates, gameState } from './state.js?v=20260914-4';
-import { handleManualHarvest, buildStructure, modifyBuildingWorkers, modifyWorkerAllocation } from './actions.js?v=20260914-4';
-import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js?v=20260914-4';
-import { startEngine } from './engine.js?v=20260914-4';
-import { renderSidebar, addGameLog } from './ui.js?v=20260914-4';
-import { canAfford, refreshResourceCaps } from './resources.js?v=20260914-4';
-import { canResearch, TECHS_DATA } from './techs.js?v=20260914-4';
+import { ensureBuildingStates, ensurePopulationStates, ensureResourceStates, gameState } from './state.js?v=20260914-5';
+import { handleManualHarvest, buildStructure, modifyBuildingWorkers, modifyWorkerAllocation } from './actions.js?v=20260914-5';
+import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js?v=20260914-5';
+import { startEngine } from './engine.js?v=20260914-5';
+import { renderSidebar, addGameLog } from './ui.js?v=20260914-5';
+import { canAfford, refreshResourceCaps } from './resources.js?v=20260914-5';
+import { canResearch, TECHS_DATA } from './techs.js?v=20260914-5';
 import { LEADERS, POLICIES, constructionCostMultiplier, governanceIsAvailable } from './governance.js';
-import { researchTechnology, setLeader, togglePolicy } from './actions.js?v=20260914-4';
+import { researchTechnology, setLeader, togglePolicy } from './actions.js?v=20260914-5';
 import { Storage } from './storage.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -117,7 +117,9 @@ function renderTechnologyAndGovernmentUI() {
     governmentTab.style.display = '';
     techPanel.innerHTML = '<h4>Árbol de investigación</h4>';
     for (const [techKey, tech] of Object.entries(TECHS_DATA)) {
-        const completed = gameState.techs?.[techKey]?.completed === true;
+        const completed = gameState.techs?.[techKey] === true ||
+            gameState.techs?.[techKey]?.completed === true ||
+            gameState.unlockedTechs?.[techKey] === true;
         const available = !completed && tech.requires.every(requirement => gameState.techs?.[requirement]?.completed === true);
         const affordable = canAfford(gameState, tech.cost);
         const researchable = canResearch(gameState, techKey);

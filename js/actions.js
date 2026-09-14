@@ -1,10 +1,10 @@
 // actions.js - Acciones del jugador y gestión de población
 
-import { canAfford, deductCost, refreshResourceCaps } from './resources.js?v=20260914-4';
-import { BUILDINGS_DATA, calculateBuildingCost } from './buildings.js?v=20260914-4';
-import { calculateMaxHousing, ensureBuildingStates, ensurePopulationStates, ensureResourceStates } from './state.js?v=20260914-4';
+import { canAfford, deductCost, refreshResourceCaps } from './resources.js?v=20260914-5';
+import { BUILDINGS_DATA, calculateBuildingCost } from './buildings.js?v=20260914-5';
+import { calculateMaxHousing, ensureBuildingStates, ensurePopulationStates, ensureResourceStates } from './state.js?v=20260914-5';
 import { constructionCostMultiplier, governanceIsAvailable, LEADERS, POLICIES } from './governance.js';
-import { researchTech } from './techs.js?v=20260914-4';
+import { researchTech } from './techs.js?v=20260914-5';
 
 function addLog(message, type = 'info') {
     if (typeof window !== 'undefined') {
@@ -80,6 +80,7 @@ export function buildStructure(state, buildingKey) {
 export function researchTechnology(state, techKey) {
     const researched = researchTech(state, techKey);
     if (researched) addLog(`Investigacion completada: ${techKey}.`, 'success');
+    else addLog(`No se puede investigar ${techKey}: revisa la Ciencia y los prerrequisitos.`, 'warning');
     return researched;
 }
 
