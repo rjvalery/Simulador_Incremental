@@ -1,5 +1,5 @@
 // state.js - Estado Global del Simulador Incremental
-import { BUILDINGS_DATA } from './buildings.js?v=20260914-5';
+import { BUILDINGS_DATA } from './buildings.js?v=20260914-6';
 import { ensureGovernance } from './governance.js';
 
 export const gameState = {
@@ -58,14 +58,24 @@ export function ensureResourceStates(state) {
 
     for (const [resourceKey, defaults] of Object.entries(RESOURCE_DEFAULTS)) {
         const resource = state.resources[resourceKey] || {};
-        const legacyValue = Number(resource.val);
-        const currentValue = Number(resource.value);
+        const parseValue = value => {
+            if (typeof value === 'string') {
+                const normalizedText = value.trim();
+                const normalizedValue = /^[\d.,]+$/.test(normalizedText) && /[.,]\d{3}$/.test(normalizedText)
+                    ? normalizedText.replace(/[.,]/g, '')
+                    : normalizedText.replace(',', '.');
+                return Number(normalizedValue);
+            }
+            return Number(value);
+        };
+        const legacyValue = parseValue(resource.val);
+        const currentValue = parseValue(resource.value);
 
         resource.name = resource.name || defaults.name;
         resource.value = Number.isFinite(currentValue)
             ? currentValue
             : Number.isFinite(legacyValue) ? legacyValue : 0;
-        resource.value = Number(resource.value) || 0;
+        resource.value = Number.isFinite(resource.value) ? resource.value : 0;
         resource.max = Number.isFinite(Number(resource.max)) ? Number(resource.max) : defaults.max;
         state.resources[resourceKey] = resource;
     }

@@ -1,14 +1,14 @@
 // main.js - Punto de entrada principal y bucle del motor corregido
 
-import { ensureBuildingStates, ensurePopulationStates, ensureResourceStates, gameState } from './state.js?v=20260914-5';
-import { handleManualHarvest, buildStructure, modifyBuildingWorkers, modifyWorkerAllocation } from './actions.js?v=20260914-5';
-import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js?v=20260914-5';
-import { startEngine } from './engine.js?v=20260914-5';
-import { renderSidebar, addGameLog } from './ui.js?v=20260914-5';
-import { canAfford, refreshResourceCaps } from './resources.js?v=20260914-5';
-import { canResearch, TECHS_DATA } from './techs.js?v=20260914-5';
+import { ensureBuildingStates, ensurePopulationStates, ensureResourceStates, gameState } from './state.js?v=20260914-6';
+import { handleManualHarvest, buildStructure, modifyBuildingWorkers, modifyWorkerAllocation } from './actions.js?v=20260914-6';
+import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js?v=20260914-6';
+import { startEngine } from './engine.js?v=20260914-6';
+import { renderSidebar, addGameLog } from './ui.js?v=20260914-6';
+import { canAfford, refreshResourceCaps } from './resources.js?v=20260914-6';
+import { canResearch, TECHS_DATA } from './techs.js?v=20260914-6';
 import { LEADERS, POLICIES, constructionCostMultiplier, governanceIsAvailable } from './governance.js';
-import { researchTechnology, setLeader, togglePolicy } from './actions.js?v=20260914-5';
+import { researchTechnology, setLeader, togglePolicy } from './actions.js?v=20260914-6';
 import { Storage } from './storage.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -141,6 +141,7 @@ function renderTechnologyAndGovernmentUI() {
             button.title = `Necesitas ${amount} ${resourceName}; tienes ${Math.floor(Number(gameState.resources?.[resourceKey]?.value) || 0)}`;
         }
         button.disabled = completed || !researchable;
+        button.dataset.techKey = techKey;
         button.addEventListener('click', () => {
             researchTechnology(gameState, techKey);
             persistGame();

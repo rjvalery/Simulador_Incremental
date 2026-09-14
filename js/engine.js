@@ -1,8 +1,8 @@
 // engine.js - Motor unico de produccion y crecimiento demografico
 
-import { calculateMaxHousing, ensurePopulationStates, getTotalPopulation } from './state.js?v=20260914-5';
-import { BUILDINGS_DATA } from './buildings.js?v=20260914-5';
-import { refreshResourceCaps } from './resources.js?v=20260914-5';
+import { calculateMaxHousing, ensurePopulationStates, getTotalPopulation } from './state.js?v=20260914-6';
+import { BUILDINGS_DATA } from './buildings.js?v=20260914-6';
+import { refreshResourceCaps } from './resources.js?v=20260914-6';
 import { foodConsumptionMultiplier, productionMultiplier } from './governance.js';
 
 let migrationTimer = 0;

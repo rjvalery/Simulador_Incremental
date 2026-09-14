@@ -82,6 +82,18 @@ function isCompleted(state, techKey) {
         state.unlockedTechs?.[techKey] === true;
 }
 
+function resourceValue(state, resourceKey) {
+    const rawValue = state.resources?.[resourceKey]?.value;
+    if (typeof rawValue === 'string') {
+        const normalizedText = rawValue.trim();
+        const normalizedValue = /^[\d.,]+$/.test(normalizedText) && /[.,]\d{3}$/.test(normalizedText)
+            ? normalizedText.replace(/[.,]/g, '')
+            : normalizedText.replace(',', '.');
+        return Number(normalizedValue);
+    }
+    return Number(rawValue);
+}
+
 function ensureResource(state, resourceKey) {
     if (!state.resources[resourceKey]) {
         state.resources[resourceKey] = {
@@ -102,7 +114,7 @@ export function canResearch(state, techKey) {
     if (tech.requires.some(requirement => !isCompleted(state, requirement))) return false;
 
     return Object.entries(tech.cost).every(([resourceKey, amount]) => {
-        return Number(state.resources?.[resourceKey]?.value) >= amount;
+        return resourceValue(state, resourceKey) >= amount;
     });
 }
 
