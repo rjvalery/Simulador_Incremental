@@ -1,14 +1,14 @@
 // main.js - Punto de entrada principal y bucle del motor corregido
 
-import { ensureBuildingStates, ensurePopulationStates, ensureResourceStates, gameState } from './state.js?v=20260914-6';
-import { handleManualHarvest, buildStructure, modifyBuildingWorkers, modifyWorkerAllocation } from './actions.js?v=20260914-6';
-import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js?v=20260914-6';
-import { startEngine } from './engine.js?v=20260914-6';
-import { renderSidebar, addGameLog } from './ui.js?v=20260914-6';
-import { canAfford, refreshResourceCaps } from './resources.js?v=20260914-6';
-import { canResearch, TECHS_DATA } from './techs.js?v=20260914-6';
+import { ensureBuildingStates, ensurePopulationStates, ensureResourceStates, gameState } from './state.js?v=20260914-7';
+import { handleManualHarvest, buildStructure, modifyBuildingWorkers, modifyWorkerAllocation } from './actions.js?v=20260914-7';
+import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js?v=20260914-7';
+import { startEngine } from './engine.js?v=20260914-7';
+import { renderSidebar, addGameLog } from './ui.js?v=20260914-7';
+import { canAfford, refreshResourceCaps } from './resources.js?v=20260914-7';
+import { canResearch, TECHS_DATA } from './techs.js?v=20260914-7';
 import { LEADERS, POLICIES, constructionCostMultiplier, governanceIsAvailable } from './governance.js';
-import { researchTechnology, setLeader, togglePolicy } from './actions.js?v=20260914-6';
+import { researchTechnology, setLeader, togglePolicy } from './actions.js?v=20260914-7';
 import { Storage } from './storage.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -211,7 +211,10 @@ function renderEmploymentUI() {
         });
 
     const signature = jobEntries
-        .map(({ buildingKey, capacity, assigned }) => `${buildingKey}:${capacity}:${assigned}`)
+        .map(({ buildingKey, capacity, assigned, buildingInfo }) => {
+            const availableWorkers = gameState.population[buildingInfo.workerType || 'workers'] || 0;
+            return `${buildingKey}:${capacity}:${assigned}:${availableWorkers}:${gameState.population.unskilled || 0}`;
+        })
         .join('|');
     if (panel.dataset.signature === signature) return;
     panel.dataset.signature = signature;
@@ -333,7 +336,7 @@ function renderBuildingsUI() {
         const requiredTech = buildingKey === 'taxOffice' ? 'taxation' : null;
         btnBuild.textContent = !unlocked ? `Investiga ${requiredTech}` : atLimit ? 'Construido' : affordable ? 'Construir' : 'Faltan materiales';
         btnBuild.className = 'btn-action';
-        btnBuild.disabled = !unlocked || atLimit;
+        btnBuild.disabled = !unlocked || atLimit || !affordable;
         if ((!affordable && !atLimit) || !unlocked) btnBuild.classList.add('btn-unaffordable');
         btnBuild.title = !unlocked ? `Requiere la tecnología ${requiredTech}` : atLimit ? 'Límite de construcción alcanzado' : affordable ? 'Construir edificio' : 'No tienes todos los materiales necesarios';
         btnBuild.addEventListener('click', () => {

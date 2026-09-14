@@ -1,5 +1,5 @@
 // state.js - Estado Global del Simulador Incremental
-import { BUILDINGS_DATA } from './buildings.js?v=20260914-6';
+import { BUILDINGS_DATA } from './buildings.js?v=20260914-7';
 import { ensureGovernance } from './governance.js';
 
 export const gameState = {

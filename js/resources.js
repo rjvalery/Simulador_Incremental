@@ -1,6 +1,6 @@
 // resources.js - Utilidades de formato numérico y gestión de recursos
 
-import { BUILDINGS_DATA } from './buildings.js?v=20260914-6';
+import { BUILDINGS_DATA } from './buildings.js?v=20260914-7';
 
 const WAREHOUSE_CAPPED_RESOURCES = new Set(['food', 'wood', 'stone', 'science']);
 
