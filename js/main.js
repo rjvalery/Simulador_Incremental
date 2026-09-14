@@ -1,14 +1,14 @@
 // main.js - Punto de entrada principal y bucle del motor corregido
 
-import { ensureBuildingStates, ensurePopulationStates, ensureResourceStates, gameState } from './state.js?v=20260914-7';
-import { handleManualHarvest, buildStructure, modifyBuildingWorkers, modifyWorkerAllocation } from './actions.js?v=20260914-7';
-import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js?v=20260914-7';
-import { startEngine } from './engine.js?v=20260914-7';
-import { renderSidebar, addGameLog } from './ui.js?v=20260914-7';
-import { canAfford, refreshResourceCaps } from './resources.js?v=20260914-7';
-import { getTechnologyStatus, TECHS_DATA } from './techs.js?v=20260914-10';
+import { ensureBuildingStates, ensurePopulationStates, ensureResourceStates, gameState } from './state.js';
+import { handleManualHarvest, buildStructure, modifyBuildingWorkers, modifyWorkerAllocation } from './actions.js';
+import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js';
+import { startEngine } from './engine.js';
+import { renderSidebar, addGameLog } from './ui.js';
+import { canAfford, refreshResourceCaps } from './resources.js';
+import { getTechnologyStatus, TECHS_DATA } from './techs.js';
 import { LEADERS, POLICIES, constructionCostMultiplier, governanceIsAvailable } from './governance.js';
-import { researchTechnology, setLeader, togglePolicy } from './actions.js?v=20260914-7';
+import { researchTechnology, setLeader, togglePolicy } from './actions.js';
 import { Storage } from './storage.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -127,7 +127,7 @@ function renderTechnologyAndGovernmentUI() {
         const requirementNames = status.missingRequirements.join(', ');
         const resourceNames = status.missingResources.map(({ resourceKey, amount, current }) =>
             `${amount} ${gameState.resources?.[resourceKey]?.name || resourceKey} (tienes ${Math.floor(current)})`).join(', ');
-        button.textContent = status.completed ? 'Completada' : status.researchable ? 'Investigar' : 'Revisar requisitos';
+        button.textContent = status.completed ? 'Completada' : status.researchable ? 'Investigar' : 'Bloqueada';
         button.title = status.completed ? 'Tecnología ya investigada' :
             requirementNames ? `Requiere: ${requirementNames}` : `Necesitas: ${resourceNames}`;
         button.disabled = status.completed;

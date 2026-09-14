@@ -1,6 +1,6 @@
 // governance.js - Liderazgo y decretos del asentamiento
 
-import { isTechnologyCompleted } from './techs.js?v=20260914-10';
+import { isTechnologyCompleted } from './techs.js';
 
 export const LEADERS = Object.freeze({
     hunter: {

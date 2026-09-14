@@ -1,4 +1,4 @@
-// techs.js - Arbol tecnologico persistente y basado en el estado de la partida
+// techs.js - módulo centralizado para investigación y desbloqueos
 
 export const TECHS_DATA = Object.freeze({
     writing: {
@@ -76,47 +76,39 @@ export const TECHS_DATA = Object.freeze({
     }
 });
 
+function normalizeValue(value) {
+    if (typeof value === 'string') {
+        const text = value.trim();
+        if (!text) return 0;
+        return Number(text.replace(/\./g, '').replace(',', '.')) || 0;
+    }
+    return Number(value) || 0;
+}
+
 export function isTechnologyCompleted(state, techKey) {
     return state.techs?.[techKey] === true ||
         state.techs?.[techKey]?.completed === true ||
         state.unlockedTechs?.[techKey] === true;
 }
 
-function resourceValue(state, resourceKey) {
-    const rawValue = state.resources?.[resourceKey]?.value;
-    if (typeof rawValue === 'string') {
-        const normalizedText = rawValue.trim();
-        const normalizedValue = /^[\d.,]+$/.test(normalizedText) && /[.,]\d{3}$/.test(normalizedText)
-            ? normalizedText.replace(/[.,]/g, '')
-            : normalizedText.replace(',', '.');
-        return Number(normalizedValue);
-    }
-    return Number(rawValue);
-}
-
 export function getTechnologyStatus(state, techKey) {
     const tech = TECHS_DATA[techKey];
-    if (!tech) return { exists: false, completed: false, missingRequirements: [], missingResources: [] };
+    if (!tech) {
+        return { exists: false, completed: false, researchable: false, missingRequirements: [], missingResources: [] };
+    }
 
-    const missingRequirements = tech.requires.filter(requirement => {
-        return !isTechnologyCompleted(state, requirement);
-    });
+    const missingRequirements = tech.requires.filter(requirement => !isTechnologyCompleted(state, requirement));
     const missingResources = Object.entries(tech.cost)
-        .filter(([resourceKey, amount]) => resourceValue(state, resourceKey) < amount)
-        .map(([resourceKey, amount]) => ({
-            resourceKey,
-            amount,
-            current: Number.isFinite(resourceValue(state, resourceKey)) ? resourceValue(state, resourceKey) : 0
-        }));
+        .filter(([resourceKey, amount]) => normalizeValue(state.resources?.[resourceKey]?.value) < Number(amount))
+        .map(([resourceKey, amount]) => ({ resourceKey, amount: Number(amount), current: normalizeValue(state.resources?.[resourceKey]?.value) }));
 
+    const completed = isTechnologyCompleted(state, techKey);
     return {
         exists: true,
-        completed: isTechnologyCompleted(state, techKey),
+        completed,
         missingRequirements,
         missingResources,
-        researchable: !isTechnologyCompleted(state, techKey) &&
-            missingRequirements.length === 0 &&
-            missingResources.length === 0
+        researchable: !completed && missingRequirements.length === 0 && missingResources.length === 0
     };
 }
 
@@ -139,22 +131,27 @@ export function canResearch(state, techKey) {
 }
 
 export function researchTech(state, techKey) {
-    if (!canResearch(state, techKey)) return false;
+    const status = getTechnologyStatus(state, techKey);
+    if (!status.exists || status.completed || !status.researchable) return false;
 
     const tech = TECHS_DATA[techKey];
     state.techs = state.techs || {};
     state.unlockedTechs = state.unlockedTechs || {};
     state.military = state.military || { unlockedUnits: [] };
+
     for (const [resourceKey, amount] of Object.entries(tech.cost)) {
-        state.resources[resourceKey].value -= amount;
+        const resource = state.resources[resourceKey];
+        if (!resource) continue;
+        resource.value = normalizeValue(resource.value) - Number(amount);
     }
 
     state.techs[techKey] = { completed: true, researchedAt: Date.now() };
     state.unlockedTechs[techKey] = true;
 
     for (const buildingKey of tech.unlocks?.buildings || []) {
-        if (state.buildings[buildingKey]) state.buildings[buildingKey].unlocked = true;
+        if (state.buildings?.[buildingKey]) state.buildings[buildingKey].unlocked = true;
     }
+
     for (const resourceKey of tech.unlocks?.resources || []) ensureResource(state, resourceKey);
 
     if (tech.effects?.productionMultiplier) {
@@ -164,9 +161,11 @@ export function researchTech(state, techKey) {
         }
     }
 
-    state.military.unlockedUnits.push(...(tech.unlocks?.units || []).filter(unit => {
-        return !state.military.unlockedUnits.includes(unit);
-    }));
+    for (const unit of tech.unlocks?.units || []) {
+        if (!state.military.unlockedUnits.includes(unit)) {
+            state.military.unlockedUnits.push(unit);
+        }
+    }
 
     return true;
 }

@@ -1,4 +1,4 @@
-import { ensureBuildingStates, ensureResourceStates, gameState } from './state.js?v=20260914-7';
+import { ensureBuildingStates, ensureResourceStates, gameState } from './state.js';
 
 function emitLog(message) {
   if (typeof window !== 'undefined') {

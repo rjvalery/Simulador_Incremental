@@ -1,10 +1,10 @@
 // actions.js - Acciones del jugador y gestión de población
 
-import { canAfford, deductCost, refreshResourceCaps } from './resources.js?v=20260914-7';
-import { BUILDINGS_DATA, calculateBuildingCost } from './buildings.js?v=20260914-7';
-import { calculateMaxHousing, ensureBuildingStates, ensurePopulationStates, ensureResourceStates } from './state.js?v=20260914-7';
+import { canAfford, deductCost, refreshResourceCaps } from './resources.js';
+import { BUILDINGS_DATA, calculateBuildingCost } from './buildings.js';
+import { calculateMaxHousing, ensureBuildingStates, ensurePopulationStates, ensureResourceStates } from './state.js';
 import { constructionCostMultiplier, governanceIsAvailable, LEADERS, POLICIES } from './governance.js';
-import { getTechnologyStatus, researchTech } from './techs.js?v=20260914-10';
+import { getTechnologyStatus, researchTech } from './techs.js';
 
 function addLog(message, type = 'info') {
     if (typeof window !== 'undefined') {
