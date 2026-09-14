@@ -131,19 +131,20 @@ function renderTechnologyAndGovernmentUI() {
         row.innerHTML = `<div><strong>${tech.name}</strong><br><small>${tech.description}</small><br><small>Costo: ${cost}${tech.requires.length ? ` | Requiere: ${tech.requires.join(', ')}` : ''}</small></div>`;
         const button = document.createElement('button');
         button.className = 'btn-action';
-        button.textContent = completed ? 'Completada' : researchable ? 'Investigar' : 'Bloqueada';
-        if (!completed && !researchable && tech.requires.some(requirement => {
+        const missingRequirement = tech.requires.some(requirement => {
             return gameState.techs?.[requirement] !== true &&
                 gameState.techs?.[requirement]?.completed !== true &&
                 gameState.unlockedTechs?.[requirement] !== true;
-        })) {
+        });
+        button.textContent = completed ? 'Completada' : missingRequirement ? 'Bloqueada' : researchable ? 'Investigar' : 'Faltan recursos';
+        if (!completed && missingRequirement) {
             button.title = `Requiere: ${tech.requires.join(', ')}`;
         } else if (!completed && missingResource) {
             const [resourceKey, amount] = missingResource;
             const resourceName = gameState.resources?.[resourceKey]?.name || resourceKey;
             button.title = `Necesitas ${amount} ${resourceName}; tienes ${Math.floor(Number(gameState.resources?.[resourceKey]?.value) || 0)}`;
         }
-        button.disabled = completed || !researchable;
+        button.disabled = completed || missingRequirement;
         button.dataset.techKey = techKey;
         button.addEventListener('click', () => {
             researchTechnology(gameState, techKey);
