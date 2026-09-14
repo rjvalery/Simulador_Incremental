@@ -337,7 +337,7 @@ function renderBuildingsUI() {
         const requiredTech = buildingKey === 'taxOffice' ? 'taxation' : null;
         btnBuild.textContent = !unlocked ? `Investiga ${requiredTech}` : atLimit ? 'Construido' : affordable ? 'Construir' : 'Faltan materiales';
         btnBuild.className = 'btn-action';
-        btnBuild.disabled = !unlocked || atLimit || !affordable;
+        btnBuild.disabled = !unlocked || atLimit;
         if ((!affordable && !atLimit) || !unlocked) btnBuild.classList.add('btn-unaffordable');
         btnBuild.title = !unlocked ? `Requiere la tecnología ${requiredTech}` : atLimit ? 'Límite de construcción alcanzado' : affordable ? 'Construir edificio' : 'No tienes todos los materiales necesarios';
         btnBuild.addEventListener('click', () => {
