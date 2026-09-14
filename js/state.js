@@ -1,5 +1,5 @@
 // state.js - Estado Global del Simulador Incremental
-import { BUILDINGS_DATA } from './buildings.js?v=20260911-7';
+import { BUILDINGS_DATA } from './buildings.js?v=20260914-4';
 import { ensureGovernance } from './governance.js';
 
 export const gameState = {
@@ -38,7 +38,7 @@ export const gameState = {
     }
 };
 
-const LOCKED_BY_DEFAULT = new Set(['library', 'townHall', 'taxOffice', 'factory', 'oilRefinery']);
+const LOCKED_BY_DEFAULT = new Set(['taxOffice', 'factory', 'oilRefinery']);
 const RESOURCE_DEFAULTS = {
     food: { name: 'Alimentos', max: 200 },
     wood: { name: 'Madera', max: 150 },
@@ -83,10 +83,9 @@ export function ensureBuildingStates(state) {
         }
     }
 
-    const researchedTechs = state.techs || {};
-    if (researchedTechs.writing?.completed) state.buildings.library.unlocked = true;
-    if (researchedTechs.leadership?.completed) state.buildings.townHall.unlocked = true;
-    if (researchedTechs.taxation?.completed) state.buildings.taxOffice.unlocked = true;
+    state.buildings.library.unlocked = true;
+    state.buildings.townHall.unlocked = true;
+    if (state.techs?.taxation?.completed) state.buildings.taxOffice.unlocked = true;
 }
 
 export function ensurePopulationStates(state) {

@@ -1,14 +1,14 @@
 // main.js - Punto de entrada principal y bucle del motor corregido
 
-import { ensureBuildingStates, ensurePopulationStates, ensureResourceStates, gameState } from './state.js?v=20260911-7';
-import { handleManualHarvest, buildStructure, modifyBuildingWorkers, modifyWorkerAllocation } from './actions.js?v=20260911-7';
-import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js?v=20260911-7';
-import { startEngine } from './engine.js?v=20260911-7';
-import { renderSidebar, addGameLog } from './ui.js?v=20260911-8';
-import { canAfford, refreshResourceCaps } from './resources.js?v=20260911-7';
-import { canResearch, TECHS_DATA } from './techs.js';
+import { ensureBuildingStates, ensurePopulationStates, ensureResourceStates, gameState } from './state.js?v=20260914-4';
+import { handleManualHarvest, buildStructure, modifyBuildingWorkers, modifyWorkerAllocation } from './actions.js?v=20260914-4';
+import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js?v=20260914-4';
+import { startEngine } from './engine.js?v=20260914-4';
+import { renderSidebar, addGameLog } from './ui.js?v=20260914-4';
+import { canAfford, refreshResourceCaps } from './resources.js?v=20260914-4';
+import { canResearch, TECHS_DATA } from './techs.js?v=20260914-4';
 import { LEADERS, POLICIES, constructionCostMultiplier, governanceIsAvailable } from './governance.js';
-import { researchTechnology, setLeader, togglePolicy } from './actions.js?v=20260911-7';
+import { researchTechnology, setLeader, togglePolicy } from './actions.js?v=20260914-4';
 import { Storage } from './storage.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -113,16 +113,17 @@ function renderTechnologyAndGovernmentUI() {
     const governmentTab = document.getElementById('government-tab');
     if (!techPanel || !governmentPanel || !governmentTab) return;
 
-    const hasLibrary = (gameState.buildings.library?.count || 0) > 0;
     const hasTownHall = (gameState.buildings.townHall?.count || 0) > 0;
     governmentTab.style.display = '';
     techPanel.innerHTML = '<h4>Árbol de investigación</h4>';
-    if (!hasLibrary) techPanel.insertAdjacentHTML('beforeend', '<p class="muted-label">Investiga Escritura para desbloquear la Biblioteca.</p>');
     for (const [techKey, tech] of Object.entries(TECHS_DATA)) {
         const completed = gameState.techs?.[techKey]?.completed === true;
         const available = !completed && tech.requires.every(requirement => gameState.techs?.[requirement]?.completed === true);
         const affordable = canAfford(gameState, tech.cost);
         const researchable = canResearch(gameState, techKey);
+        const missingResource = Object.entries(tech.cost).find(([resourceKey, amount]) => {
+            return Number(gameState.resources?.[resourceKey]?.value || 0) < amount;
+        });
         const row = document.createElement('div');
         row.className = 'tech-row';
         const cost = Object.entries(tech.cost).map(([resource, amount]) => `${amount} ${gameState.resources[resource]?.name || resource}`).join(', ');
@@ -132,8 +133,10 @@ function renderTechnologyAndGovernmentUI() {
         button.textContent = completed ? 'Completada' : researchable ? 'Investigar' : 'Bloqueada';
         if (!completed && !available) {
             button.title = `Requiere: ${tech.requires.join(', ')}`;
-        } else if (!completed && !affordable) {
-            button.title = `Necesitas ${tech.cost.science} de Ciencia; tienes ${Math.floor(gameState.resources.science?.value || 0)}`;
+        } else if (!completed && missingResource) {
+            const [resourceKey, amount] = missingResource;
+            const resourceName = gameState.resources?.[resourceKey]?.name || resourceKey;
+            button.title = `Necesitas ${amount} ${resourceName}; tienes ${Math.floor(Number(gameState.resources?.[resourceKey]?.value) || 0)}`;
         }
         button.disabled = completed || !researchable;
         button.addEventListener('click', () => {
@@ -321,7 +324,7 @@ function renderBuildingsUI() {
         `;
 
         const btnBuild = document.createElement('button');
-        const requiredTech = buildingKey === 'library' ? 'writing' : buildingKey === 'townHall' ? 'leadership' : buildingKey === 'taxOffice' ? 'taxation' : null;
+        const requiredTech = buildingKey === 'taxOffice' ? 'taxation' : null;
         btnBuild.textContent = !unlocked ? `Investiga ${requiredTech}` : atLimit ? 'Construido' : affordable ? 'Construir' : 'Faltan materiales';
         btnBuild.className = 'btn-action';
         btnBuild.disabled = !unlocked || atLimit;

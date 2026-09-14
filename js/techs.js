@@ -100,7 +100,7 @@ export function canResearch(state, techKey) {
     if (tech.requires.some(requirement => !isCompleted(state, requirement))) return false;
 
     return Object.entries(tech.cost).every(([resourceKey, amount]) => {
-        return state.resources[resourceKey]?.value >= amount;
+        return Number(state.resources?.[resourceKey]?.value) >= amount;
     });
 }
 
