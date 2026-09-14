@@ -120,7 +120,6 @@ function renderTechnologyAndGovernmentUI() {
         const completed = gameState.techs?.[techKey] === true ||
             gameState.techs?.[techKey]?.completed === true ||
             gameState.unlockedTechs?.[techKey] === true;
-        const available = !completed && tech.requires.every(requirement => gameState.techs?.[requirement]?.completed === true);
         const affordable = canAfford(gameState, tech.cost);
         const researchable = canResearch(gameState, techKey);
         const missingResource = Object.entries(tech.cost).find(([resourceKey, amount]) => {
@@ -133,7 +132,11 @@ function renderTechnologyAndGovernmentUI() {
         const button = document.createElement('button');
         button.className = 'btn-action';
         button.textContent = completed ? 'Completada' : researchable ? 'Investigar' : 'Bloqueada';
-        if (!completed && !available) {
+        if (!completed && !researchable && tech.requires.some(requirement => {
+            return gameState.techs?.[requirement] !== true &&
+                gameState.techs?.[requirement]?.completed !== true &&
+                gameState.unlockedTechs?.[requirement] !== true;
+        })) {
             button.title = `Requiere: ${tech.requires.join(', ')}`;
         } else if (!completed && missingResource) {
             const [resourceKey, amount] = missingResource;

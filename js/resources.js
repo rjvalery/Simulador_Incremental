@@ -38,7 +38,12 @@ export function formatNumber(value) {
 // Validación y descuento seguro de costes
 export function canAfford(state, costObj) {
     for (const [resKey, amount] of Object.entries(costObj)) {
-        const value = Number(state.resources[resKey]?.value);
+        const rawValue = state.resources[resKey]?.value;
+        const textValue = typeof rawValue === 'string' ? rawValue.trim() : rawValue;
+        const normalizedValue = typeof textValue === 'string' && /^[\d.,]+$/.test(textValue) && /[.,]\d{3}$/.test(textValue)
+            ? textValue.replace(/[.,]/g, '')
+            : typeof textValue === 'string' ? textValue.replace(',', '.') : textValue;
+        const value = Number(normalizedValue);
         if (!Number.isFinite(value) || value < amount) {
             return false;
         }
