@@ -26,6 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
     startEngine(gameState, renderGame);
 });
 
+function persistGame() {
+    Storage.save({ notify: false });
+}
+
 function setupAutosave() {
     const saveGame = () => Storage.save({ notify: false });
 
@@ -64,6 +68,7 @@ function setupEventListeners() {
     if (btnHarvestFood) {
         btnHarvestFood.addEventListener('click', () => {
             handleManualHarvest(gameState);
+            persistGame();
             renderGame();
         });
     }
@@ -73,6 +78,7 @@ function setupEventListeners() {
     if (btnAssignWorker) {
         btnAssignWorker.addEventListener('click', () => {
             modifyWorkerAllocation(gameState, 1);
+            persistGame();
             renderEmploymentUI();
         });
     }
@@ -81,6 +87,7 @@ function setupEventListeners() {
     if (btnUnassignWorker) {
         btnUnassignWorker.addEventListener('click', () => {
             modifyWorkerAllocation(gameState, -1);
+            persistGame();
             renderEmploymentUI();
         });
     }
@@ -106,8 +113,7 @@ function renderTechnologyAndGovernmentUI() {
     const governmentTab = document.getElementById('government-tab');
     if (!techPanel || !governmentPanel || !governmentTab) return;
 
-    const writingCompleted = gameState.techs?.writing?.completed === true;
-    governmentTab.style.display = writingCompleted ? '' : 'none';
+    governmentTab.style.display = '';
     techPanel.innerHTML = '<h4>Árbol de investigación</h4>';
     for (const [techKey, tech] of Object.entries(TECHS_DATA)) {
         const completed = gameState.techs?.[techKey]?.completed === true;
@@ -123,6 +129,7 @@ function renderTechnologyAndGovernmentUI() {
         button.disabled = completed || !available || !affordable;
         button.addEventListener('click', () => {
             researchTechnology(gameState, techKey);
+            persistGame();
             renderGame();
         });
         row.appendChild(button);
@@ -140,7 +147,7 @@ function renderTechnologyAndGovernmentUI() {
         button.className = 'btn-action';
         button.textContent = `${leader.name}${gameState.governance.leader === leaderKey ? ' (activo)' : ''}`;
         button.title = leader.description;
-        button.addEventListener('click', () => { setLeader(gameState, leaderKey); renderGame(); });
+        button.addEventListener('click', () => { setLeader(gameState, leaderKey); persistGame(); renderGame(); });
         governmentPanel.appendChild(button);
     }
     governmentPanel.insertAdjacentHTML('beforeend', '<h4 style="margin-top: 14px;">Decretos y politicas</h4>');
@@ -149,7 +156,7 @@ function renderTechnologyAndGovernmentUI() {
         button.className = 'btn-action';
         button.textContent = `${policy.name}${gameState.governance.policies.includes(policyKey) ? ' (activo)' : ''}`;
         button.title = policy.description;
-        button.addEventListener('click', () => { togglePolicy(gameState, policyKey); renderGame(); });
+        button.addEventListener('click', () => { togglePolicy(gameState, policyKey); persistGame(); renderGame(); });
         governmentPanel.appendChild(button);
     }
 }
@@ -206,6 +213,7 @@ function renderEmploymentUI() {
         decrease.title = 'Liberar obrero';
         decrease.addEventListener('click', () => {
             modifyBuildingWorkers(gameState, buildingKey, -1);
+            persistGame();
             renderEmploymentUI();
             renderGame();
         });
@@ -216,6 +224,7 @@ function renderEmploymentUI() {
         increase.title = 'Asignar obrero desocupado';
         increase.addEventListener('click', () => {
             modifyBuildingWorkers(gameState, buildingKey, 1);
+            persistGame();
             renderEmploymentUI();
             renderGame();
         });
@@ -240,25 +249,26 @@ function renderBuildingsUI() {
     if (!container) return;
 
     const buildingEntries = Object.entries(BUILDINGS_DATA)
-        .filter(([buildingKey]) => gameState.buildings[buildingKey]?.unlocked !== false)
+        .filter(([buildingKey]) => gameState.buildings[buildingKey]?.unlocked !== false || ['library', 'townHall'].includes(buildingKey))
         .map(([buildingKey, buildingInfo]) => {
             const currentCount = gameState.buildings[buildingKey]?.count || 0;
+            const unlocked = gameState.buildings[buildingKey]?.unlocked !== false;
             const baseCost = calculateBuildingCost(buildingKey, currentCount);
             const currentCost = Object.fromEntries(Object.entries(baseCost).map(([resource, amount]) => [resource, Math.floor(amount * constructionCostMultiplier(gameState))]));
             const atLimit = buildingInfo.maxCount !== undefined && currentCount >= buildingInfo.maxCount;
             const affordable = canAfford(gameState, currentCost);
-            return { buildingKey, buildingInfo, currentCount, currentCost, atLimit, affordable };
+            return { buildingKey, buildingInfo, currentCount, currentCost, atLimit, affordable, unlocked };
         });
 
     const renderSignature = buildingEntries
-        .map(({ buildingKey, currentCount, atLimit, affordable }) => `${buildingKey}:${currentCount}:${gameState.population.assignments?.[buildingKey] || 0}:${atLimit}:${affordable}`)
+        .map(({ buildingKey, currentCount, atLimit, affordable, unlocked }) => `${buildingKey}:${currentCount}:${gameState.population.assignments?.[buildingKey] || 0}:${atLimit}:${affordable}:${unlocked}`)
         .join('|');
     if (renderSignature === buildingsRenderSignature) return;
     buildingsRenderSignature = renderSignature;
 
     container.innerHTML = '';
 
-    for (const { buildingKey, buildingInfo, currentCount, currentCost, atLimit, affordable } of buildingEntries) {
+    for (const { buildingKey, buildingInfo, currentCount, currentCost, atLimit, affordable, unlocked } of buildingEntries) {
 
         const card = document.createElement('div');
         card.style.border = '1px solid #444';
@@ -293,13 +303,15 @@ function renderBuildingsUI() {
         `;
 
         const btnBuild = document.createElement('button');
-        btnBuild.textContent = atLimit ? 'Construido' : affordable ? 'Construir' : 'Faltan materiales';
+        const requiredTech = buildingKey === 'library' ? 'writing' : buildingKey === 'townHall' ? 'leadership' : null;
+        btnBuild.textContent = !unlocked ? `Investiga ${requiredTech}` : atLimit ? 'Construido' : affordable ? 'Construir' : 'Faltan materiales';
         btnBuild.className = 'btn-action';
-        btnBuild.disabled = atLimit;
-        if (!affordable && !atLimit) btnBuild.classList.add('btn-unaffordable');
-        btnBuild.title = atLimit ? 'Límite de construcción alcanzado' : affordable ? 'Construir edificio' : 'No tienes todos los materiales necesarios';
+        btnBuild.disabled = !unlocked || atLimit;
+        if ((!affordable && !atLimit) || !unlocked) btnBuild.classList.add('btn-unaffordable');
+        btnBuild.title = !unlocked ? `Requiere la tecnología ${requiredTech}` : atLimit ? 'Límite de construcción alcanzado' : affordable ? 'Construir edificio' : 'No tienes todos los materiales necesarios';
         btnBuild.addEventListener('click', () => {
             buildStructure(gameState, buildingKey);
+            persistGame();
             renderBuildingsUI();
             renderGame();
         });
