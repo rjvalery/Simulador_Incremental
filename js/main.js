@@ -6,7 +6,7 @@ import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js?v=20260911
 import { startEngine } from './engine.js?v=20260911-7';
 import { renderSidebar, addGameLog } from './ui.js?v=20260911-8';
 import { canAfford, refreshResourceCaps } from './resources.js?v=20260911-7';
-import { TECHS_DATA } from './techs.js';
+import { canResearch, TECHS_DATA } from './techs.js';
 import { LEADERS, POLICIES, constructionCostMultiplier, governanceIsAvailable } from './governance.js';
 import { researchTechnology, setLeader, togglePolicy } from './actions.js?v=20260911-7';
 import { Storage } from './storage.js';
@@ -122,19 +122,20 @@ function renderTechnologyAndGovernmentUI() {
         const completed = gameState.techs?.[techKey]?.completed === true;
         const available = !completed && tech.requires.every(requirement => gameState.techs?.[requirement]?.completed === true);
         const affordable = canAfford(gameState, tech.cost);
+        const researchable = canResearch(gameState, techKey);
         const row = document.createElement('div');
         row.className = 'tech-row';
         const cost = Object.entries(tech.cost).map(([resource, amount]) => `${amount} ${gameState.resources[resource]?.name || resource}`).join(', ');
         row.innerHTML = `<div><strong>${tech.name}</strong><br><small>${tech.description}</small><br><small>Costo: ${cost}${tech.requires.length ? ` | Requiere: ${tech.requires.join(', ')}` : ''}</small></div>`;
         const button = document.createElement('button');
         button.className = 'btn-action';
-        button.textContent = completed ? 'Completada' : available && affordable ? 'Investigar' : 'Bloqueada';
+        button.textContent = completed ? 'Completada' : researchable ? 'Investigar' : 'Bloqueada';
         if (!completed && !available) {
             button.title = `Requiere: ${tech.requires.join(', ')}`;
         } else if (!completed && !affordable) {
             button.title = `Necesitas ${tech.cost.science} de Ciencia; tienes ${Math.floor(gameState.resources.science?.value || 0)}`;
         }
-        button.disabled = completed || !available || !affordable;
+        button.disabled = completed || !researchable;
         button.addEventListener('click', () => {
             researchTechnology(gameState, techKey);
             persistGame();
