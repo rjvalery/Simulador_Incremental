@@ -1,6 +1,7 @@
 // state.js - Estado Global del Simulador Incremental
 import { BUILDINGS_DATA } from './buildings.js?v=20260914-7';
 import { ensureGovernance } from './governance.js';
+import { isTechnologyCompleted } from './techs.js?v=20260914-10';
 
 export const gameState = {
     resources: {
@@ -96,7 +97,7 @@ export function ensureBuildingStates(state) {
 
     state.buildings.library.unlocked = true;
     state.buildings.townHall.unlocked = true;
-    if (state.techs?.taxation?.completed) state.buildings.taxOffice.unlocked = true;
+    if (isTechnologyCompleted(state, 'taxation')) state.buildings.taxOffice.unlocked = true;
 }
 
 export function ensurePopulationStates(state) {

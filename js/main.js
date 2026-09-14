@@ -6,7 +6,7 @@ import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js?v=20260914
 import { startEngine } from './engine.js?v=20260914-7';
 import { renderSidebar, addGameLog } from './ui.js?v=20260914-7';
 import { canAfford, refreshResourceCaps } from './resources.js?v=20260914-7';
-import { canResearch, TECHS_DATA } from './techs.js?v=20260914-7';
+import { getTechnologyStatus, TECHS_DATA } from './techs.js?v=20260914-10';
 import { LEADERS, POLICIES, constructionCostMultiplier, governanceIsAvailable } from './governance.js';
 import { researchTechnology, setLeader, togglePolicy } from './actions.js?v=20260914-7';
 import { Storage } from './storage.js';
@@ -117,34 +117,20 @@ function renderTechnologyAndGovernmentUI() {
     governmentTab.style.display = '';
     techPanel.innerHTML = '<h4>Árbol de investigación</h4>';
     for (const [techKey, tech] of Object.entries(TECHS_DATA)) {
-        const completed = gameState.techs?.[techKey] === true ||
-            gameState.techs?.[techKey]?.completed === true ||
-            gameState.unlockedTechs?.[techKey] === true;
-        const affordable = canAfford(gameState, tech.cost);
-        const researchable = canResearch(gameState, techKey);
-        const missingResource = Object.entries(tech.cost).find(([resourceKey, amount]) => {
-            return Number(gameState.resources?.[resourceKey]?.value || 0) < amount;
-        });
+        const status = getTechnologyStatus(gameState, techKey);
         const row = document.createElement('div');
         row.className = 'tech-row';
         const cost = Object.entries(tech.cost).map(([resource, amount]) => `${amount} ${gameState.resources[resource]?.name || resource}`).join(', ');
         row.innerHTML = `<div><strong>${tech.name}</strong><br><small>${tech.description}</small><br><small>Costo: ${cost}${tech.requires.length ? ` | Requiere: ${tech.requires.join(', ')}` : ''}</small></div>`;
         const button = document.createElement('button');
         button.className = 'btn-action';
-        const missingRequirement = tech.requires.some(requirement => {
-            return gameState.techs?.[requirement] !== true &&
-                gameState.techs?.[requirement]?.completed !== true &&
-                gameState.unlockedTechs?.[requirement] !== true;
-        });
-        button.textContent = completed ? 'Completada' : missingRequirement ? 'Bloqueada' : researchable ? 'Investigar' : 'Faltan recursos';
-        if (!completed && missingRequirement) {
-            button.title = `Requiere: ${tech.requires.join(', ')}`;
-        } else if (!completed && missingResource) {
-            const [resourceKey, amount] = missingResource;
-            const resourceName = gameState.resources?.[resourceKey]?.name || resourceKey;
-            button.title = `Necesitas ${amount} ${resourceName}; tienes ${Math.floor(Number(gameState.resources?.[resourceKey]?.value) || 0)}`;
-        }
-        button.disabled = completed;
+        const requirementNames = status.missingRequirements.join(', ');
+        const resourceNames = status.missingResources.map(({ resourceKey, amount, current }) =>
+            `${amount} ${gameState.resources?.[resourceKey]?.name || resourceKey} (tienes ${Math.floor(current)})`).join(', ');
+        button.textContent = status.completed ? 'Completada' : status.researchable ? 'Investigar' : 'Revisar requisitos';
+        button.title = status.completed ? 'Tecnología ya investigada' :
+            requirementNames ? `Requiere: ${requirementNames}` : `Necesitas: ${resourceNames}`;
+        button.disabled = status.completed;
         button.dataset.techKey = techKey;
         button.addEventListener('click', () => {
             researchTechnology(gameState, techKey);

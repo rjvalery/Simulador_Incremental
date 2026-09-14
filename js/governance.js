@@ -1,5 +1,7 @@
 // governance.js - Liderazgo y decretos del asentamiento
 
+import { isTechnologyCompleted } from './techs.js?v=20260914-10';
+
 export const LEADERS = Object.freeze({
     hunter: {
         id: 'hunter',
@@ -45,7 +47,7 @@ export function ensureGovernance(state) {
 export function governanceIsAvailable(state) {
     return state.governance?.unlocked === true &&
         (state.buildings.townHall?.count || 0) > 0 &&
-        state.techs?.laws?.completed === true;
+    isTechnologyCompleted(state, 'laws');
 }
 
 export function constructionCostMultiplier(state) {

@@ -4,7 +4,7 @@ import { canAfford, deductCost, refreshResourceCaps } from './resources.js?v=202
 import { BUILDINGS_DATA, calculateBuildingCost } from './buildings.js?v=20260914-7';
 import { calculateMaxHousing, ensureBuildingStates, ensurePopulationStates, ensureResourceStates } from './state.js?v=20260914-7';
 import { constructionCostMultiplier, governanceIsAvailable, LEADERS, POLICIES } from './governance.js';
-import { researchTech } from './techs.js?v=20260914-7';
+import { getTechnologyStatus, researchTech } from './techs.js?v=20260914-10';
 
 function addLog(message, type = 'info') {
     if (typeof window !== 'undefined') {
@@ -78,6 +78,23 @@ export function buildStructure(state, buildingKey) {
 }
 
 export function researchTechnology(state, techKey) {
+    const status = getTechnologyStatus(state, techKey);
+    if (!status.exists) {
+        addLog('Tecnología no encontrada.', 'warning');
+        return false;
+    }
+    if (status.completed) {
+        addLog('Esta tecnología ya está investigada.', 'info');
+        return false;
+    }
+    if (status.missingRequirements.length > 0) {
+        addLog(`Faltan tecnologías: ${status.missingRequirements.join(', ')}.`, 'warning');
+        return false;
+    }
+    if (status.missingResources.length > 0) {
+        addLog(`Faltan recursos para investigar ${techKey}.`, 'warning');
+        return false;
+    }
     const researched = researchTech(state, techKey);
     if (researched) addLog(`Investigacion completada: ${techKey}.`, 'success');
     else addLog(`No se puede investigar ${techKey}: revisa la Ciencia y los prerrequisitos.`, 'warning');

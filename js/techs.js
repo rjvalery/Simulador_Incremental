@@ -76,7 +76,7 @@ export const TECHS_DATA = Object.freeze({
     }
 });
 
-function isCompleted(state, techKey) {
+export function isTechnologyCompleted(state, techKey) {
     return state.techs?.[techKey] === true ||
         state.techs?.[techKey]?.completed === true ||
         state.unlockedTechs?.[techKey] === true;
@@ -94,6 +94,32 @@ function resourceValue(state, resourceKey) {
     return Number(rawValue);
 }
 
+export function getTechnologyStatus(state, techKey) {
+    const tech = TECHS_DATA[techKey];
+    if (!tech) return { exists: false, completed: false, missingRequirements: [], missingResources: [] };
+
+    const missingRequirements = tech.requires.filter(requirement => {
+        return !isTechnologyCompleted(state, requirement);
+    });
+    const missingResources = Object.entries(tech.cost)
+        .filter(([resourceKey, amount]) => resourceValue(state, resourceKey) < amount)
+        .map(([resourceKey, amount]) => ({
+            resourceKey,
+            amount,
+            current: Number.isFinite(resourceValue(state, resourceKey)) ? resourceValue(state, resourceKey) : 0
+        }));
+
+    return {
+        exists: true,
+        completed: isTechnologyCompleted(state, techKey),
+        missingRequirements,
+        missingResources,
+        researchable: !isTechnologyCompleted(state, techKey) &&
+            missingRequirements.length === 0 &&
+            missingResources.length === 0
+    };
+}
+
 function ensureResource(state, resourceKey) {
     if (!state.resources[resourceKey]) {
         state.resources[resourceKey] = {
@@ -109,13 +135,7 @@ function ensureResource(state, resourceKey) {
 }
 
 export function canResearch(state, techKey) {
-    const tech = TECHS_DATA[techKey];
-    if (!tech || isCompleted(state, techKey)) return false;
-    if (tech.requires.some(requirement => !isCompleted(state, requirement))) return false;
-
-    return Object.entries(tech.cost).every(([resourceKey, amount]) => {
-        return resourceValue(state, resourceKey) >= amount;
-    });
+    return getTechnologyStatus(state, techKey).researchable;
 }
 
 export function researchTech(state, techKey) {
