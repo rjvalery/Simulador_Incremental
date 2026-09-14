@@ -144,7 +144,7 @@ function renderTechnologyAndGovernmentUI() {
             const resourceName = gameState.resources?.[resourceKey]?.name || resourceKey;
             button.title = `Necesitas ${amount} ${resourceName}; tienes ${Math.floor(Number(gameState.resources?.[resourceKey]?.value) || 0)}`;
         }
-        button.disabled = completed || missingRequirement;
+        button.disabled = completed;
         button.dataset.techKey = techKey;
         button.addEventListener('click', () => {
             researchTechnology(gameState, techKey);
