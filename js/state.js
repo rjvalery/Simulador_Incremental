@@ -9,7 +9,7 @@ export const gameState = {
         wood: { name: "Madera", value: 30, max: 150, baseMax: 150, production: 0, consumption: 0 },
         stone: { name: "Piedra", value: 10, max: 100, baseMax: 100, production: 0, consumption: 0 },
         gold: { name: "Oro", value: 0, max: 1000, baseMax: 1000, production: 0, consumption: 0 },
-        science: { name: "Ciencia", value: 0, max: 500, baseMax: 500, production: 0, consumption: 0 }
+        science: { name: "Ciencia", value: 25, max: 500, baseMax: 500, production: 0, consumption: 0 }
     },
     population: {
         unskilled: 2,     // Población libre / desempleada disponible
@@ -39,7 +39,16 @@ export const gameState = {
     }
 };
 
-const LOCKED_BY_DEFAULT = new Set(['taxOffice', 'factory', 'oilRefinery']);
+const LOCKED_BY_DEFAULT = new Set(['farm', 'quarry', 'library', 'townHall', 'taxOffice', 'factory', 'oilRefinery']);
+const BUILDING_TECH_REQUIREMENTS = {
+    farm: 'agriculture',
+    quarry: 'bronzeWorking',
+    library: 'writing',
+    townHall: 'leadership',
+    taxOffice: 'taxation',
+    factory: 'industrialization',
+    oilRefinery: 'mechanizedWarfare'
+};
 const RESOURCE_DEFAULTS = {
     food: { name: 'Alimentos', max: 200 },
     wood: { name: 'Madera', max: 150 },
@@ -95,9 +104,9 @@ export function ensureBuildingStates(state) {
         }
     }
 
-    state.buildings.library.unlocked = true;
-    state.buildings.townHall.unlocked = true;
-    if (isTechnologyCompleted(state, 'taxation')) state.buildings.taxOffice.unlocked = true;
+    for (const [buildingKey, requirement] of Object.entries(BUILDING_TECH_REQUIREMENTS)) {
+        state.buildings[buildingKey].unlocked = isTechnologyCompleted(state, requirement);
+    }
 }
 
 export function ensurePopulationStates(state) {

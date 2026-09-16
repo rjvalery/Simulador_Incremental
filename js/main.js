@@ -6,10 +6,20 @@ import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js';
 import { startEngine } from './engine.js';
 import { renderSidebar, addGameLog } from './ui.js';
 import { canAfford, refreshResourceCaps } from './resources.js';
-import { getTechnologyStatus, TECHS_DATA } from './techs.js';
+import { getTechnologyStatus, isTechnologyCompleted, TECHS_DATA } from './techs.js';
 import { LEADERS, POLICIES, constructionCostMultiplier, governanceIsAvailable } from './governance.js';
 import { researchTechnology, setLeader, togglePolicy } from './actions.js';
 import { Storage } from './storage.js';
+
+const BUILDING_TECH_REQUIREMENTS = {
+    farm: 'agriculture',
+    quarry: 'bronzeWorking',
+    library: 'writing',
+    townHall: 'leadership',
+    taxOffice: 'taxation',
+    factory: 'industrialization',
+    oilRefinery: 'mechanizedWarfare'
+};
 
 document.addEventListener('DOMContentLoaded', () => {
     Storage.load();
@@ -114,7 +124,10 @@ function renderTechnologyAndGovernmentUI() {
     if (!techPanel || !governmentPanel || !governmentTab) return;
 
     const hasTownHall = (gameState.buildings.townHall?.count || 0) > 0;
-    governmentTab.style.display = '';
+    governmentTab.style.display = isTechnologyCompleted(gameState, 'writing') ? '' : 'none';
+    if (!isTechnologyCompleted(gameState, 'writing')) {
+        governmentPanel.innerHTML = '<p class="muted-label">Investiga Escritura para habilitar Gobierno y leyes.</p>';
+    }
     techPanel.innerHTML = '<h4>Árbol de investigación</h4>';
     for (const [techKey, tech] of Object.entries(TECHS_DATA)) {
         const status = getTechnologyStatus(gameState, techKey);
@@ -141,6 +154,7 @@ function renderTechnologyAndGovernmentUI() {
         techPanel.appendChild(row);
     }
 
+    if (!isTechnologyCompleted(gameState, 'writing')) return;
     if (!hasTownHall) {
         governmentPanel.innerHTML = '<p class="muted-label">Construye una Casa Comunal para activar la gobernanza.</p>';
         return;
@@ -162,9 +176,12 @@ function renderTechnologyAndGovernmentUI() {
     governmentPanel.insertAdjacentHTML('beforeend', '<h4 style="margin-top: 14px;">Decretos y politicas</h4>');
     for (const [policyKey, policy] of Object.entries(POLICIES)) {
         const button = document.createElement('button');
+        const requirementMet = isTechnologyCompleted(gameState, policy.requires);
+        const active = gameState.governance.policies.includes(policyKey);
         button.className = 'btn-action';
-        button.textContent = `${policy.name}${gameState.governance.policies.includes(policyKey) ? ' (activo)' : ''}`;
-        button.title = policy.description;
+        button.textContent = `${policy.name}${active ? ' (activo)' : ''}`;
+        button.disabled = !requirementMet && !active;
+        button.title = requirementMet ? policy.description : `${policy.description} Requiere: ${policy.requires}.`;
         button.addEventListener('click', () => { togglePolicy(gameState, policyKey); persistGame(); renderGame(); });
         governmentPanel.appendChild(button);
     }
@@ -266,7 +283,6 @@ function renderBuildingsUI() {
     if (!container) return;
 
     const buildingEntries = Object.entries(BUILDINGS_DATA)
-        .filter(([buildingKey]) => gameState.buildings[buildingKey]?.unlocked !== false || ['library', 'townHall'].includes(buildingKey))
         .map(([buildingKey, buildingInfo]) => {
             const currentCount = gameState.buildings[buildingKey]?.count || 0;
             const unlocked = gameState.buildings[buildingKey]?.unlocked !== false;
@@ -320,12 +336,13 @@ function renderBuildingsUI() {
         `;
 
         const btnBuild = document.createElement('button');
-        const requiredTech = buildingKey === 'taxOffice' ? 'taxation' : null;
-        btnBuild.textContent = !unlocked ? `Investiga ${requiredTech}` : atLimit ? 'Construido' : affordable ? 'Construir' : 'Faltan materiales';
+        const requiredTech = BUILDING_TECH_REQUIREMENTS[buildingKey];
+        const requiredTechName = requiredTech ? TECHS_DATA[requiredTech]?.name || requiredTech : '';
+        btnBuild.textContent = !unlocked ? `Investiga ${requiredTechName}` : atLimit ? 'Construido' : affordable ? 'Construir' : 'Faltan materiales';
         btnBuild.className = 'btn-action';
         btnBuild.disabled = !unlocked || atLimit;
         if ((!affordable && !atLimit) || !unlocked) btnBuild.classList.add('btn-unaffordable');
-        btnBuild.title = !unlocked ? `Requiere la tecnología ${requiredTech}` : atLimit ? 'Límite de construcción alcanzado' : affordable ? 'Construir edificio' : 'No tienes todos los materiales necesarios';
+        btnBuild.title = !unlocked ? `Requiere la tecnología ${requiredTechName}` : atLimit ? 'Límite de construcción alcanzado' : affordable ? 'Construir edificio' : 'No tienes todos los materiales necesarios';
         btnBuild.addEventListener('click', () => {
             buildStructure(gameState, buildingKey);
             persistGame();

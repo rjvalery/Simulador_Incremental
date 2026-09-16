@@ -5,8 +5,8 @@ import { isTechnologyCompleted } from './techs.js';
 export const LEADERS = Object.freeze({
     hunter: {
         id: 'hunter',
-        name: 'Lider Cazador / Capataz',
-        description: '+15% a la recoleccion manual de alimentos y materiales.'
+        name: 'Lider Capataz',
+        description: '+15% a la velocidad de recoleccion manual de recursos.'
     },
     scholar: {
         id: 'scholar',
@@ -15,7 +15,7 @@ export const LEADERS = Object.freeze({
     },
     builder: {
         id: 'builder',
-        name: 'Lider Constructor',
+        name: 'Lider Arquitecto',
         description: '-5% al coste de nuevas estructuras.'
     }
 });
@@ -25,13 +25,19 @@ export const POLICIES = Object.freeze({
         id: 'rationing',
         name: 'Racionamiento de Emergencia',
         description: '-20% al consumo de comida, con -10% de eficiencia laboral.',
-        cost: { gold: 10 }
+        requires: 'laws'
     },
     extendedWorkday: {
         id: 'extendedWorkday',
         name: 'Jornada Prolongada',
-        description: '+10% a madera y piedra pasivas, con +10% de consumo de comida.',
-        cost: { gold: 10 }
+        description: '+10% a la producción de madera y piedra, con +15% de consumo de comida.',
+        requires: 'laws'
+    },
+    capitationTax: {
+        id: 'capitationTax',
+        name: 'Impuesto de Capitación',
+        description: 'Recauda oro por cada habitante libre u obrero.',
+        requires: 'taxation'
     }
 });
 

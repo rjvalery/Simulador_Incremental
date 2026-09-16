@@ -5,7 +5,7 @@ export const TECHS_DATA = Object.freeze({
         id: 'writing',
         era: 'Antigua',
         name: 'Escritura',
-        description: 'Registra transacciones, saberes y ordenanzas publicas.',
+        description: 'Introduce la capacidad de registrar transacciones, almacenar saberes y documentar ordenanzas publicas.',
         cost: { science: 25 },
         requires: [],
         unlocks: { buildings: ['library'] }
@@ -14,7 +14,7 @@ export const TECHS_DATA = Object.freeze({
         id: 'leadership',
         era: 'Antigua',
         name: 'Liderazgo',
-        description: 'Formaliza la autoridad y la cadena de mando local.',
+        description: 'Formaliza la autoridad, la cadena de mando y la centralizacion del poder local.',
         cost: { science: 60 },
         requires: ['writing'],
         unlocks: { buildings: ['townHall'] }
@@ -23,7 +23,7 @@ export const TECHS_DATA = Object.freeze({
         id: 'taxation',
         era: 'Antigua',
         name: 'Recaudacion',
-        description: 'Organiza la recaudacion de tributos y desbloquea la tesoreria.',
+        description: 'Organiza la recoleccion de tributos y la gestion de la tesoreria local.',
         cost: { science: 80 },
         requires: ['leadership'],
         unlocks: { buildings: ['taxOffice'] }
@@ -32,7 +32,7 @@ export const TECHS_DATA = Object.freeze({
         id: 'laws',
         era: 'Antigua',
         name: 'Leyes basicas',
-        description: 'Sistematiza las reglas de trabajo y asignacion social.',
+        description: 'Sistematiza las reglas de la comunidad, regulando el trabajo y la asignacion social.',
         cost: { science: 100, gold: 25 },
         requires: ['leadership'],
         unlocks: {}
@@ -41,7 +41,7 @@ export const TECHS_DATA = Object.freeze({
         id: 'agriculture',
         era: 'Antigua',
         name: 'Agricultura avanzada',
-        description: 'Mejora la produccion de alimentos y formaliza la agricultura.',
+        description: 'Mejora la produccion de alimentos y formaliza las tecnicas agricolas.',
         cost: { science: 50 },
         requires: [],
         unlocks: { buildings: ['farm'] },
@@ -51,7 +51,7 @@ export const TECHS_DATA = Object.freeze({
         id: 'bronzeWorking',
         era: 'Antigua',
         name: 'Metalurgia del bronce',
-        description: 'Permite extraer piedra y prepara la transicion industrial.',
+        description: 'Permite la extraccion eficiente de minerales e instruye las primeras milicias armadas.',
         cost: { science: 120 },
         requires: ['agriculture'],
         unlocks: { buildings: ['quarry'], units: ['spearman'] }

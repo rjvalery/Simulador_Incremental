@@ -4,6 +4,7 @@ import { calculateMaxHousing, ensurePopulationStates, getTotalPopulation } from 
 import { BUILDINGS_DATA } from './buildings.js';
 import { refreshResourceCaps } from './resources.js';
 import { foodConsumptionMultiplier, productionMultiplier } from './governance.js';
+import { isTechnologyCompleted } from './techs.js';
 
 let migrationTimer = 0;
 const FOOD_CONSUMPTION_PER_PERSON = 0.1;
@@ -40,24 +41,18 @@ export function runGameTick(state, deltaTime = 1) {
             const resource = state.resources[resourceKey];
             const multiplier = resource?.productionMultiplier || 1;
             const populationFactor = buildingKey === 'taxOffice' ? totalPopulation : 1;
-            const rate = baseRate * assigned * populationFactor * multiplier * productionMultiplier(state, resourceKey);
+            const rate = baseRate * assigned * populationFactor * multiplier * productionMultiplier(state, resourceKey, resourceKey === 'science');
             if (!resource) continue;
             resource.production += rate;
             addResource(resource, rate * deltaTime);
         }
     }
 
-    for (const [buildingKey, buildingState] of Object.entries(state.buildings)) {
-        const buildingInfo = BUILDINGS_DATA[buildingKey];
-        if (!buildingInfo || !buildingState.unlocked || !buildingState.count) continue;
-        for (const [resourceKey, baseRate] of Object.entries(buildingInfo.production || {})) {
-            const resource = state.resources[resourceKey];
-            if (!resource) continue;
-            const multiplier = (resource.productionMultiplier || 1) * productionMultiplier(state, resourceKey, true);
-            const rate = baseRate * buildingState.count * multiplier;
-            resource.production += rate;
-            addResource(resource, rate * deltaTime);
-        }
+    const taxablePopulation = (state.population.unskilled || 0) + (state.population.workers || 0);
+    if (taxablePopulation > 0 && state.resources.gold && isTaxationActive(state)) {
+        const rate = 0.05 * taxablePopulation;
+        state.resources.gold.production += rate;
+        addResource(state.resources.gold, rate * deltaTime);
     }
 
     const food = state.resources.food;
@@ -74,6 +69,11 @@ export function runGameTick(state, deltaTime = 1) {
             emitLog('Un nuevo habitante ha migrado al asentamiento.', 'info');
         }
     }
+}
+
+function isTaxationActive(state) {
+    return state.governance?.policies?.includes('capitationTax') &&
+    isTechnologyCompleted(state, 'taxation');
 }
 
 export function startEngine(state, onTick) {

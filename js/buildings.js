@@ -15,9 +15,8 @@ export const BUILDINGS_DATA = {
         id: "farm",
         name: "Granja",
         description: "Produce alimento de manera constante gracias al trabajo de los obreros.",
-        baseCost: { wood: 20 },
+        baseCost: { wood: 40 },
         costMultiplier: 1.15,
-        production: { food: 1 },
         jobsPerBuilding: 2,
         workerOutput: { food: 1 }
     },
@@ -27,7 +26,6 @@ export const BUILDINGS_DATA = {
         description: "Produce madera de manera constante.",
         baseCost: { wood: 20 },
         costMultiplier: 1.15,
-        production: { wood: 0.8 },
         jobsPerBuilding: 2,
         workerOutput: { wood: 0.8 }
     },
@@ -35,9 +33,8 @@ export const BUILDINGS_DATA = {
         id: "quarry",
         name: "Cantera",
         description: "Extrae piedra para construcciones avanzadas.",
-        baseCost: { wood: 50, food: 30 },
+        baseCost: { wood: 80 },
         costMultiplier: 1.15,
-        production: { stone: 0.5 },
         jobsPerBuilding: 2,
         workerOutput: { stone: 0.5 }
     },
@@ -55,9 +52,8 @@ export const BUILDINGS_DATA = {
         id: "library",
         name: "Biblioteca",
         description: "Genera ciencia cuando tiene tecnicos asignados.",
-        baseCost: { wood: 100, stone: 50 },
+        baseCost: { wood: 60, stone: 40 },
         costMultiplier: 1.15,
-        production: {},
         jobsPerBuilding: 1,
         workerType: 'technicians',
         workerOutput: { science: 0.25 }
@@ -69,7 +65,6 @@ export const BUILDINGS_DATA = {
         baseCost: { wood: 150, stone: 100 },
         costMultiplier: 1.15,
         maxCount: 1,
-        production: {},
         jobsPerBuilding: 0
     },
     taxOffice: {
@@ -89,7 +84,6 @@ export const BUILDINGS_DATA = {
         description: "Convierte madera y piedra en producción industrial.",
         baseCost: { wood: 180, stone: 100 },
         costMultiplier: 1.18,
-        production: { science: 0.5 },
         jobsPerBuilding: 3,
         workerType: 'technicians',
         workerOutput: { science: 0.5 }
@@ -100,7 +94,6 @@ export const BUILDINGS_DATA = {
         description: "Procesa petróleo para sostener la industria moderna.",
         baseCost: { wood: 350, stone: 250, science: 100 },
         costMultiplier: 1.2,
-        production: { power: 1 },
         jobsPerBuilding: 3,
         workerType: 'technicians',
         workerOutput: { power: 1 }

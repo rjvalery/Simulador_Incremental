@@ -4,7 +4,7 @@ import { canAfford, deductCost, refreshResourceCaps } from './resources.js';
 import { BUILDINGS_DATA, calculateBuildingCost } from './buildings.js';
 import { calculateMaxHousing, ensureBuildingStates, ensurePopulationStates, ensureResourceStates } from './state.js';
 import { constructionCostMultiplier, governanceIsAvailable, LEADERS, POLICIES } from './governance.js';
-import { getTechnologyStatus, researchTech } from './techs.js';
+import { getTechnologyStatus, isTechnologyCompleted, researchTech } from './techs.js';
 
 function addLog(message, type = 'info') {
     if (typeof window !== 'undefined') {
@@ -110,6 +110,7 @@ export function setLeader(state, leaderKey) {
 
 export function togglePolicy(state, policyKey) {
     if (!governanceIsAvailable(state) || !POLICIES[policyKey]) return false;
+    if (!isTechnologyCompleted(state, POLICIES[policyKey].requires)) return false;
     const policies = state.governance.policies;
     const index = policies.indexOf(policyKey);
     if (index < 0 && !canAfford(state, POLICIES[policyKey].cost || {})) return false;
