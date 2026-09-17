@@ -6,7 +6,7 @@ import { calculateBuildingCost, BUILDINGS_DATA } from './buildings.js';
 import { startEngine } from './engine.js';
 import { renderSidebar, addGameLog } from './ui.js';
 import { canAfford, refreshResourceCaps } from './resources.js';
-import { getTechnologyStatus, isTechnologyCompleted, TECHS_DATA } from './techs.js';
+import { canResearch, getTechnologyStatus, isTechnologyCompleted, researchTech, TECHS_DATA } from './techs.js';
 import { LEADERS, POLICIES, constructionCostMultiplier, governanceIsAvailable } from './governance.js';
 import { researchTechnology, setLeader, togglePolicy } from './actions.js';
 import { Storage } from './storage.js';
@@ -291,8 +291,10 @@ function renderBuildingsUI() {
     if (!container) return;
 
     const buildingEntries = Object.entries(BUILDINGS_DATA)
-        .filter(([buildingKey, buildingInfo]) => !getRequiredBuildingTech(buildingKey, buildingInfo) ||
-            isTechnologyCompleted(gameState, getRequiredBuildingTech(buildingKey, buildingInfo)))
+        .filter(([buildingKey, buildingInfo]) => {
+            const requiredTech = getRequiredBuildingTech(buildingKey, buildingInfo);
+            return !requiredTech || isTechnologyCompleted(gameState, requiredTech) || canResearch(gameState, requiredTech);
+        })
         .map(([buildingKey, buildingInfo]) => {
             const currentCount = gameState.buildings[buildingKey]?.count || 0;
             const unlocked = gameState.buildings[buildingKey]?.unlocked !== false;
@@ -348,14 +350,20 @@ function renderBuildingsUI() {
         const btnBuild = document.createElement('button');
         const requiredTech = getRequiredBuildingTech(buildingKey, buildingInfo);
         const requiredTechName = requiredTech ? TECHS_DATA[requiredTech]?.name || requiredTech : '';
+        const researchable = requiredTech && canResearch(gameState, requiredTech);
         btnBuild.textContent = !unlocked ? `Investiga ${requiredTechName}` : atLimit ? 'Construido' : affordable ? 'Construir' : 'Faltan materiales';
         btnBuild.className = 'btn-action';
-        btnBuild.disabled = !unlocked || atLimit;
+        btnBuild.disabled = !unlocked ? !researchable : atLimit;
         if ((!affordable && !atLimit) || !unlocked) btnBuild.classList.add('btn-unaffordable');
-        btnBuild.title = !unlocked ? `Requiere la tecnología ${requiredTechName}` : atLimit ? 'Límite de construcción alcanzado' : affordable ? 'Construir edificio' : 'No tienes todos los materiales necesarios';
+        btnBuild.title = !unlocked ? researchable ? `Investigar ${requiredTechName}` : `Requiere la tecnología ${requiredTechName}` : atLimit ? 'Límite de construcción alcanzado' : affordable ? 'Construir edificio' : 'No tienes todos los materiales necesarios';
         btnBuild.addEventListener('click', () => {
-            buildStructure(gameState, buildingKey);
+            if (!unlocked && requiredTech) {
+                researchTech(gameState, requiredTech);
+            } else {
+                buildStructure(gameState, buildingKey);
+            }
             persistGame();
+            buildingsRenderSignature = '';
             renderBuildingsUI();
             renderGame();
         });
