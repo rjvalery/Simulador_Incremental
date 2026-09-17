@@ -1,5 +1,18 @@
 import { TECHS_DATA, canResearch, researchTech, isTechnologyCompleted } from './techs.js';
 
+export function addLog(message) {
+  const logContainer = document.getElementById('game-log');
+  if (!logContainer) return;
+
+  const timeStr = new Date().toLocaleTimeString();
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.textContent = `[${timeStr}] ${message}`;
+
+  logContainer.appendChild(entry);
+  logContainer.scrollTop = logContainer.scrollHeight;
+}
+
 export function renderUI(gameState) {
   const state = gameState || window.state;
   if (!state) return;
@@ -7,6 +20,7 @@ export function renderUI(gameState) {
   renderResourceMonitor(state);
   renderTechPanel(state);
   renderBuildingCards(state);
+  renderPopulationControls(state);
 }
 
 function renderResourceMonitor(state) {
@@ -64,6 +78,7 @@ export function renderTechPanel(state) {
       button.addEventListener('click', () => {
         const success = researchTech(state, techId);
         if (success) {
+          addLog(`Investigaste la tecnología: ${tech.name}`);
           renderUI(state);
           window.dispatchEvent(new CustomEvent('state:updated'));
         }
@@ -81,10 +96,10 @@ export function renderBuildingCards(state) {
   container.innerHTML = '';
 
   const buildingsData = [
-    { id: 'shelter', name: 'Refugio', desc: 'Aumenta la capacidad máxima de población.', costWood: 17, costFood: 11 },
+    { id: 'shelter', name: 'Refugio', desc: 'Aumenta la capacidad de población (+2).', costWood: 17, costFood: 11, popBonus: 2 },
     { id: 'farm', name: 'Granja', desc: 'Produce alimento constante con obreros.', costWood: 46 },
-    { id: 'sawmill', name: 'Aserradero', desc: 'Produce madera constante.', costWood: 23 },
-    { id: 'warehouse', name: 'Almacén', desc: 'Aumenta capacidad de almacenamiento.', costWood: 88, costStone: 28 },
+    { id: 'sawmill', name: 'Aserradero', desc: 'Produce madera constante con obreros.', costWood: 23 },
+    { id: 'warehouse', name: 'Almacén', desc: 'Aumenta la capacidad de almacenamiento.', costWood: 88, costStone: 28 },
     { id: 'library', name: 'Biblioteca', desc: 'Produce puntos de Ciencia por segundo.', costWood: 100, costStone: 50, reqTech: 'writing' }
   ];
 
@@ -126,9 +141,73 @@ export function renderBuildingCards(state) {
         if (b.costStone) state.resources.stone.value -= b.costStone;
         if (b.costFood) state.resources.food.value -= b.costFood;
 
-        if (!state.buildings[b.id]) state.buildings[b.id] = { count: 0 };
+        if (!state.buildings[b.id]) state.buildings[b.id] = { count: 0, workers: 0 };
         state.buildings[b.id].count += 1;
 
+        if (b.popBonus) {
+          state.population.max += b.popBonus;
+        }
+
+        addLog(`Construiste: ${b.name}`);
+        renderUI(state);
+        window.dispatchEvent(new CustomEvent('state:updated'));
+      });
+    }
+
+    container.appendChild(card);
+  });
+}
+
+export function renderPopulationControls(state) {
+  const container = document.getElementById('population-controls');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  const jobBuildings = [
+    { id: 'farm', name: 'Granja', jobName: 'Agricultores', maxPerBuilding: 2 },
+    { id: 'sawmill', name: 'Aserradero', jobName: 'Leñadores', maxPerBuilding: 2 },
+    { id: 'library', name: 'Biblioteca', jobName: 'Eruditos', maxPerBuilding: 1, reqTech: 'writing' }
+  ];
+
+  jobBuildings.forEach(job => {
+    const building = state.buildings[job.id];
+    if (!building || building.count <= 0) return;
+    if (job.reqTech && !isTechnologyCompleted(state, job.reqTech)) return;
+
+    const currentWorkers = building.workers || 0;
+    const maxCapacity = building.count * job.maxPerBuilding;
+    const unassigned = state.population.total - state.population.workers;
+
+    const card = document.createElement('div');
+    card.className = 'building-card';
+    card.innerHTML = `
+      <h4>${job.name} - ${job.jobName}</h4>
+      <p>Asignados: ${currentWorkers} / ${maxCapacity}</p>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn-add-worker" ${unassigned <= 0 || currentWorkers >= maxCapacity ? 'disabled' : ''}>+ Asignar</button>
+        <button class="btn-remove-worker" ${currentWorkers <= 0 ? 'disabled' : ''}>- Quitar</button>
+      </div>
+    `;
+
+    const btnAdd = card.querySelector('.btn-add-worker');
+    const btnRemove = card.querySelector('.btn-remove-worker');
+
+    if (btnAdd && unassigned > 0 && currentWorkers < maxCapacity) {
+      btnAdd.addEventListener('click', () => {
+        state.buildings[job.id].workers = currentWorkers + 1;
+        state.population.workers += 1;
+        addLog(`Asignaste 1 obrero a ${job.name}`);
+        renderUI(state);
+        window.dispatchEvent(new CustomEvent('state:updated'));
+      });
+    }
+
+    if (btnRemove && currentWorkers > 0) {
+      btnRemove.addEventListener('click', () => {
+        state.buildings[job.id].workers = currentWorkers - 1;
+        state.population.workers -= 1;
+        addLog(`Quitaste 1 obrero de ${job.name}`);
         renderUI(state);
         window.dispatchEvent(new CustomEvent('state:updated'));
       });
