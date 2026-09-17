@@ -2,7 +2,7 @@ export const TECHS_DATA = {
     writing: {
         id: 'writing',
         name: 'Escritura',
-        cost: { science: 25 },
+        cost: { food: 50 },
         requires: [],
         description: 'Permite el registro de conocimientos y habilita la construcción de Bibliotecas.'
     },
@@ -39,9 +39,13 @@ export function canResearch(gameState, techId) {
     const hasPrereqs = tech.requires.every(reqId => isTechnologyCompleted(currentState, reqId));
     if (!hasPrereqs) return false;
 
-    const science = currentState?.resources?.science;
-    const currentScience = science?.value ?? science;
-    return currentScience >= tech.cost.science;
+    for (const [resourceKey, requiredAmount] of Object.entries(tech.cost)) {
+        const resource = currentState?.resources?.[resourceKey];
+        const currentValue = resource?.value ?? resource ?? 0;
+        if (currentValue < requiredAmount) return false;
+    }
+
+    return true;
 }
 
 export function getTechnologyStatus(gameState, techId) {
@@ -51,12 +55,16 @@ export function getTechnologyStatus(gameState, techId) {
         return { exists: false, completed: false, researchable: false, missingRequirements: [], missingResources: [] };
     }
 
-    const science = currentState?.resources?.science;
-    const currentScience = science?.value ?? science ?? 0;
     const missingRequirements = tech.requires.filter(requirement => !isTechnologyCompleted(currentState, requirement));
-    const missingResources = currentScience < tech.cost.science
-        ? [{ resourceKey: 'science', amount: tech.cost.science, current: currentScience }]
-        : [];
+    const missingResources = Object.entries(tech.cost)
+        .map(([resourceKey, requiredAmount]) => {
+            const resource = currentState?.resources?.[resourceKey];
+            const currentValue = resource?.value ?? resource ?? 0;
+            return currentValue < requiredAmount
+                ? { resourceKey, amount: requiredAmount, current: currentValue }
+                : null;
+        })
+        .filter(Boolean);
     const completed = isTechnologyCompleted(currentState, techId);
     return {
         exists: true,
@@ -72,7 +80,14 @@ export function researchTech(gameState, techId) {
     if (!canResearch(currentState, techId)) return false;
 
     const tech = TECHS_DATA[techId];
-    currentState.resources.science.value -= tech.cost.science;
+    for (const [resourceKey, requiredAmount] of Object.entries(tech.cost)) {
+        const resource = currentState.resources[resourceKey];
+        if (typeof resource === 'object') {
+            resource.value -= requiredAmount;
+        } else {
+            currentState.resources[resourceKey] -= requiredAmount;
+        }
+    }
 
     if (!currentState.techs) currentState.techs = {};
     if (!currentState.unlockedTechs) currentState.unlockedTechs = {};

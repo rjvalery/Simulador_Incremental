@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Botones de recolección manual
   const btnFood = document.getElementById('btn-collect-food');
   const btnWood = document.getElementById('btn-collect-wood');
+  const btnStone = document.getElementById('btn-collect-stone');
   const btnClearLog = document.getElementById('btn-clear-log');
 
   if (btnFood) {
@@ -55,6 +56,14 @@ document.addEventListener('DOMContentLoaded', () => {
     btnWood.addEventListener('click', () => {
       state.resources.wood.value = Math.min(state.resources.wood.max, state.resources.wood.value + 1);
       addLog('Cortaste +1 de Madera.');
+      renderUI(state);
+    });
+  }
+
+  if (btnStone) {
+    btnStone.addEventListener('click', () => {
+      state.resources.stone.value = Math.min(state.resources.stone.max, state.resources.stone.value + 1);
+      addLog('Picoteaste +1 de Piedra.');
       renderUI(state);
     });
   }
