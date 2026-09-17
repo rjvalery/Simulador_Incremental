@@ -20,6 +20,12 @@ const BUILDING_TECH_REQUIREMENTS = {
     oilRefinery: 'mechanizedWarfare'
 };
 
+function getRequiredBuildingTech(buildingKey, buildingInfo) {
+    return buildingInfo.requiredTech ||
+        Object.entries(TECHS_DATA).find(([, tech]) => tech.unlocks?.buildings?.includes(buildingKey))?.[0] ||
+        BUILDING_TECH_REQUIREMENTS[buildingKey];
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     Storage.load();
     ensureResourceStates(gameState);
@@ -128,7 +134,10 @@ function renderTechnologyAndGovernmentUI() {
         governmentPanel.innerHTML = '<p class="muted-label">Investiga Escritura para habilitar Gobierno y leyes.</p>';
     }
     techPanel.innerHTML = '<h4>Árbol de investigación</h4>';
-    for (const [techKey, tech] of Object.entries(TECHS_DATA)) {
+    const availableTechEntries = Object.entries(TECHS_DATA)
+        .filter(([techKey, tech]) => !isTechnologyCompleted(gameState, techKey) &&
+            tech.requires.every(requirement => isTechnologyCompleted(gameState, requirement)));
+    for (const [techKey, tech] of availableTechEntries) {
         const status = getTechnologyStatus(gameState, techKey);
         const row = document.createElement('div');
         row.className = 'tech-row';
@@ -282,6 +291,8 @@ function renderBuildingsUI() {
     if (!container) return;
 
     const buildingEntries = Object.entries(BUILDINGS_DATA)
+        .filter(([buildingKey, buildingInfo]) => !getRequiredBuildingTech(buildingKey, buildingInfo) ||
+            isTechnologyCompleted(gameState, getRequiredBuildingTech(buildingKey, buildingInfo)))
         .map(([buildingKey, buildingInfo]) => {
             const currentCount = gameState.buildings[buildingKey]?.count || 0;
             const unlocked = gameState.buildings[buildingKey]?.unlocked !== false;
@@ -335,7 +346,7 @@ function renderBuildingsUI() {
         `;
 
         const btnBuild = document.createElement('button');
-        const requiredTech = BUILDING_TECH_REQUIREMENTS[buildingKey];
+        const requiredTech = getRequiredBuildingTech(buildingKey, buildingInfo);
         const requiredTechName = requiredTech ? TECHS_DATA[requiredTech]?.name || requiredTech : '';
         btnBuild.textContent = !unlocked ? `Investiga ${requiredTechName}` : atLimit ? 'Construido' : affordable ? 'Construir' : 'Faltan materiales';
         btnBuild.className = 'btn-action';
