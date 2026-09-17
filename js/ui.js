@@ -1,89 +1,74 @@
-// ui.js - Orquestador de Interfaz y Renderizado Reactivo (Layout de 2 Columnas)
+import { TECHS_DATA, canResearch, researchTech, isTechnologyCompleted } from './techs.js';
 
-import { formatNumber } from './resources.js';
-import { calculateMaxHousing, getTotalPopulation } from './state.js';
-import { BUILDINGS_DATA } from './buildings.js';
+export function renderUI(gameState) {
+    const state = gameState || window.state;
+    if (!state) return;
 
-// Renderiza el Sidebar de Recursos (25% derecho)
-export function renderSidebar(state) {
-    const sidebarContainer = document.getElementById('sidebar-resources');
-    if (!sidebarContainer) return;
-
-    let html = '<h3>Monitor de Recursos</h3><ul class="resource-list">';
-
-    const totalJobCapacity = Object.entries(state.buildings || {}).reduce((total, [buildingKey, buildingState]) => {
-        const buildingInfo = BUILDINGS_DATA[buildingKey];
-        return total + (buildingState.count || 0) * (buildingInfo?.jobsPerBuilding || 0);
-    }, 0);
-    const occupiedJobs = Object.values(state.population?.assignments || {})
-        .reduce((total, assigned) => total + (Number(assigned) || 0), 0);
-
-    for (const [key, res] of Object.entries(state.resources)) {
-        if (res.unlocked !== false) {
-            const productionRate = Number(res.production) || 0;
-            const consumptionRate = Number(res.consumption) || 0;
-            const rateText = key === 'wood'
-                ? `(${productionRate >= 0 ? '+' : ''}${formatNumber(productionRate)}/s)`
-                : consumptionRate > 0
-                ? `(+${formatNumber(productionRate)}/s, -${formatNumber(consumptionRate)}/s)`
-                : `(${productionRate >= 0 ? '+' : ''}${formatNumber(productionRate)}/s)`;
-            const tooltip = key === 'wood'
-                ? `Producción: ${productionRate >= 0 ? '+' : ''}${formatNumber(productionRate)}/s | Consumo: ${formatNumber(consumptionRate)}/s`
-                : '';
-            html += `
-                <li>
-                    <span class="res-name${tooltip ? ' resource-tooltip' : ''}"${tooltip ? ` data-tooltip="${tooltip}"` : ''}>${res.name || key}:</span>
-                    <span class="res-val">${formatNumber(res.value)} / ${formatNumber(res.max)}</span>
-                    <span class="res-rate">${rateText}</span>
-                </li>`;
-        }
-    }
-
-    // Añadir resumen demográfico en el sidebar
-    const maxHousing = calculateMaxHousing(state);
-    const totalPop = getTotalPopulation(state);
-    html += `
-        <li class="pop-monitor">
-            <span class="res-name">Obreros:</span>
-            <span class="res-val">${state.population?.workers || 0}</span>
-            <span class="res-rate">Puestos: ${occupiedJobs} / ${totalJobCapacity}</span>
-        </li>
-        <li class="pop-monitor">
-            <span class="res-name">Población:</span>
-            <span class="res-val">${totalPop} / ${maxHousing}</span>
-        </li>`;
-
-    html += '</ul>';
-    sidebarContainer.innerHTML = html;
+    renderResourceMonitor(state);
+    renderTechPanel(state);
 }
 
-// Orquestador principal de pestañas de la Zona Activa (75% izquierdo)
-export function switchTab(tabId) {
-    const tabs = document.querySelectorAll('.tab-content');
-    tabs.forEach(tab => {
-        if (tab.id === `tab-${tabId}`) {
-            tab.style.display = 'block';
-        } else {
-            tab.style.display = 'none';
+function renderResourceMonitor(state) {
+    const getVal = (res) => (typeof res === 'object' ? res.value : res);
+    const getMax = (res) => (typeof res === 'object' ? res.max : 0);
+
+    const foodEl = document.getElementById('res-food');
+    const woodEl = document.getElementById('res-wood');
+    const stoneEl = document.getElementById('res-stone');
+    const goldEl = document.getElementById('res-gold');
+    const scienceEl = document.getElementById('res-science');
+    const popEl = document.getElementById('res-pop');
+    const workersEl = document.getElementById('res-workers');
+
+    if (foodEl) foodEl.textContent = `${getVal(state.resources.food).toFixed(1)} / ${getMax(state.resources.food)}`;
+    if (woodEl) woodEl.textContent = `${getVal(state.resources.wood).toFixed(1)} / ${getMax(state.resources.wood)}`;
+    if (stoneEl) stoneEl.textContent = `${getVal(state.resources.stone).toFixed(0)} / ${getMax(state.resources.stone)}`;
+    if (goldEl) goldEl.textContent = `${getVal(state.resources.gold).toFixed(0)} / ${getMax(state.resources.gold)}`;
+    if (scienceEl) scienceEl.textContent = `${getVal(state.resources.science).toFixed(0)} / ${getMax(state.resources.science)}`;
+    if (popEl) popEl.textContent = `${state.population.total} / ${state.population.max}`;
+    if (workersEl) workersEl.textContent = `${state.population.workers} / ${state.population.total}`;
+}
+
+export function renderTechPanel(state) {
+    const container = document.getElementById('tech-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    Object.keys(TECHS_DATA).forEach(techId => {
+        const tech = TECHS_DATA[techId];
+        const completed = isTechnologyCompleted(state, techId);
+        const available = canResearch(state, techId);
+
+        const hasPrereqs = tech.requires.every(reqId => isTechnologyCompleted(state, reqId));
+        if (!hasPrereqs && !completed) return;
+
+        const card = document.createElement('div');
+        card.className = `tech-card ${completed ? 'completed' : ''}`;
+
+        card.innerHTML = `
+            <h4>${tech.name}</h4>
+            <p>${tech.description}</p>
+            <p>Costo: ${tech.cost.science} Ciencia</p>
+            <button 
+                class="btn-tech" 
+                data-tech="${techId}"
+                ${!available || completed ? 'disabled' : ''}>
+                ${completed ? '✓ Investigado' : 'Investigar'}
+            </button>
+        `;
+
+        const button = card.querySelector('.btn-tech');
+        if (button && !completed) {
+            button.addEventListener('click', () => {
+                const success = researchTech(state, techId);
+                if (success) {
+                    renderUI(state);
+                    window.dispatchEvent(new CustomEvent('state:updated'));
+                }
+            });
         }
+
+        container.appendChild(card);
     });
-}
-
-// Añadir mensajes al historial de eventos (game-log)
-export function addGameLog(message, type = "info") {
-    const logContainer = document.getElementById('game-log');
-    if (!logContainer) return;
-
-    const p = document.createElement('p');
-    p.className = `log-item log-${type}`;
-    p.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-
-    logContainer.appendChild(p);
-
-    // Limitar el historial a 50 líneas
-    if (logContainer.children.length > 50) {
-        logContainer.removeChild(logContainer.firstChild);
-    }
-
-    logContainer.scrollTop = logContainer.scrollHeight;
 }

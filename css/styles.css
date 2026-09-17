@@ -1,10 +1,13 @@
 :root {
-    --bg-color: #121212;
-    --panel-bg: #1e1e1e;
-    --text-color: #e0e0e0;
-    --text-muted: #888888;
-    --accent-color: #4CAF50;
+    --bg-main: #121212;
+    --bg-card: #1e1e1e;
+    --bg-sidebar: #181818;
+    --accent-color: #4caf50;
+    --accent-hover: #45a049;
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
     --border-color: #333333;
+    --btn-disabled: #444444;
 }
 
 * {
@@ -14,431 +17,196 @@
 }
 
 body {
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    font-family: monospace, sans-serif;
-    display: flex;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     height: 100vh;
     overflow: hidden;
 }
 
-/* 1. Columna Izquierda: Monitor de Recursos y Producción (~22%) */
-#sidebar-left {
-    flex: 0 0 22%;
+.game-container {
+    display: grid;
+    grid-template-columns: 240px 1fr 300px;
     height: 100vh;
-    background-color: var(--panel-bg);
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    border-right: 1px solid var(--border-color);
+    width: 100vw;
 }
 
-/* 2. Columna Central: Zona Activa / Asentamiento (~53%) */
-#main-panel {
-    flex: 0 0 53%;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
+.sidebar-left {
+    background-color: var(--bg-sidebar);
+    border-right: 1px solid var(--border-color);
     padding: 20px;
-    border-right: 1px solid var(--border-color);
-    overflow-y: auto;
-}
-
-/* 3. Columna Derecha: Registro Histórico / Game-Log (~25%) */
-#sidebar-right {
-    flex: 0 0 25%;
-    height: 100vh;
-    background-color: var(--panel-bg);
-    padding: 15px;
     display: flex;
     flex-direction: column;
+    gap: 20px;
     overflow-y: auto;
 }
 
-.panel-header {
+.sidebar-left h2 {
+    font-size: 1.2rem;
+    color: var(--accent-color);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+}
+
+.resource-group h3 {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.resource-group ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.resource-group li {
+    font-size: 0.95rem;
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 10px;
-    margin-bottom: 15px;
 }
 
-.panel-title {
-    font-size: 1.1rem;
-    font-weight: bold;
+.resource-group span {
+    font-weight: 600;
 }
 
-/* Barra de Pestañas */
-.tab-bar {
+.main-content {
     display: flex;
-    gap: 5px;
+    flex-direction: column;
+    background-color: var(--bg-main);
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.main-header {
     margin-bottom: 15px;
-    flex-wrap: wrap;
+}
+
+.main-header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.tabs-bar {
+    display: flex;
+    gap: 10px;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 20px;
 }
 
 .tab-btn {
-    background-color: var(--panel-bg);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 10px 16px;
+    font-size: 1rem;
+    font-weight: 500;
     cursor: pointer;
-    font-family: inherit;
-    font-size: 0.85rem;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
 }
 
 .tab-btn:hover {
-    background-color: #2a2a2a;
+    color: var(--text-primary);
 }
 
 .tab-btn.active {
-    background-color: var(--accent-color);
-    color: #fff;
-    border-color: var(--accent-color);
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
 }
 
-.tab-content {
+.tab-container {
     flex: 1;
+}
+
+.tab-content h3 {
+    font-size: 1.2rem;
+    margin-bottom: 5px;
+}
+
+.tab-content p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+}
+
+.tech-card, .building-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 8px;
 }
 
-.action-group {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
+.tech-card.completed {
+    opacity: 0.7;
+    border-color: #2e7d32;
 }
 
-.btn-action {
-    background-color: var(--panel-bg);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-    padding: 10px 15px;
+.btn-action, .btn-tech {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 5px;
+    font-weight: 600;
     cursor: pointer;
-    font-family: inherit;
+    align-self: flex-start;
+    transition: background-color 0.2s;
 }
 
-.btn-action:hover {
-    border-color: var(--accent-color);
+.btn-action:hover, .btn-tech:hover:not(:disabled) {
+    background-color: var(--accent-hover);
 }
 
-.btn-military {
-    border-color: #d32f2f;
+.btn-action:disabled, .btn-tech:disabled {
+    background-color: var(--btn-disabled);
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 
-.scrollable-container {
-    background-color: #171717;
-    border: 1px solid var(--border-color);
-    padding: 10px;
-    overflow-y: auto;
+.sidebar-right {
+    background-color: var(--bg-sidebar);
+    border-left: 1px solid var(--border-color);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.log-header {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 5px;
 }
 
 .log-container {
-    font-size: 0.82rem;
-    color: #ccc;
     flex: 1;
-    max-height: calc(100vh - 100px);
-}
-
-.log-controls a {
-    color: var(--text-muted);
-    text-decoration: underline;
-}
-
-.season-header {
-    font-size: 1.1rem;
-    font-weight: bold;
-    margin-bottom: 10px;
-    color: var(--accent-color);
-}
-
-footer {
-    margin-top: auto;
-    border-top: 1px solid var(--border-color);
-    padding-top: 10px;
-}
-
-/* Panel layout inspired by compact incremental strategy interfaces. */
-body {
-    grid-template-columns: 220px minmax(0, 1fr) 300px;
-    background: #1b1a18;
-    color: #d8d1c5;
-    font-family: Georgia, 'Times New Roman', serif;
-    font-size: 12px;
-}
-
-aside, main, section.game-log-panel {
-    background: #211f1d;
-    border-color: #4b4035;
-}
-
-main {
-    background: #181715;
-    padding: 18px 22px;
-}
-
-h2, h3 {
-    color: #eee4d3;
-    font-weight: normal;
-}
-
-h2 {
-    border-bottom: 1px solid #55483b;
-    padding-bottom: 8px;
-}
-
-.era-label, .muted-label {
-    color: #8e8172;
-    font-size: 0.8em;
-}
-
-.tab-buttons {
-    border-bottom: 1px solid #55483b;
-    padding-bottom: 8px;
-}
-
-.tab-btn {
-    background: transparent;
-    border: 1px solid transparent;
-    border-bottom-color: #55483b;
-    border-radius: 0;
-    color: #b9aa98;
-    font-family: inherit;
-    font-weight: normal;
-}
-
-.tab-btn.active, .tab-btn:hover {
-    background: #2b2723;
-    border-color: #a66b32;
-    color: #f0d6b3;
-}
-
-.tab-content {
-    gap: 12px;
-}
-
-#sidebar-resources {
-    color: #c9bca9;
-    line-height: 1.55;
-}
-
-#sidebar-resources h3 {
-    color: #c37a36;
-    font-size: 0.95rem;
-    text-transform: uppercase;
-}
-
-.resource-list {
-    list-style: none;
-}
-
-.resource-list li {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    column-gap: 8px;
-}
-
-.resource-list .res-rate {
-    grid-column: 2;
-    color: #8d9d8a;
-    font-size: 0.8em;
-}
-
-.resource-list .res-val {
-    color: #e5d1a9;
-    text-align: right;
-}
-
-.resource-list .pop-monitor {
-    border-top: 1px solid #4b4035;
-    margin-top: 8px;
-    padding-top: 8px;
-}
-
-.resource-tooltip {
-    cursor: help;
-    position: relative;
-}
-
-.resource-tooltip::after {
-    background: #302821;
-    border: 1px solid #9b5f2b;
-    color: #ead8bf;
-    content: attr(data-tooltip);
-    font-size: 11px;
-    left: 0;
-    opacity: 0;
-    padding: 6px 8px;
-    pointer-events: none;
-    position: absolute;
-    top: calc(100% + 5px);
-    transition: opacity 120ms ease;
-    white-space: nowrap;
-    z-index: 10;
-}
-
-.resource-tooltip:hover::after,
-.resource-tooltip:focus-visible::after {
-    opacity: 1;
-}
-
-.action-group {
-    margin-bottom: 4px;
-}
-
-.btn-action {
-    background: #2a2723;
-    border: 1px solid #9b5f2b;
-    border-radius: 2px;
-    color: #e9d4b8;
-    font-family: inherit;
-    font-weight: normal;
-}
-
-.btn-action:hover:not(:disabled) {
-    background: #3a3028;
-    border-color: #d18b49;
-}
-
-.btn-action:disabled {
-    color: #766c61;
-    cursor: not-allowed;
-    opacity: 0.75;
-}
-
-#buildings-container > div {
-    background: #211f1d;
-    border-color: #684b32 !important;
-    border-radius: 2px !important;
-    min-height: 78px;
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 12px;
-}
-
-#buildings-container strong {
-    color: #e3c28e;
-    font-weight: normal;
-}
-
-#buildings-container small {
-    color: #a99a88 !important;
-}
-
-.employment-line {
-    color: #92ae8b !important;
-}
-
-.employment-controls {
-    align-self: center;
-    display: flex;
-    gap: 4px;
-    margin-left: 8px;
-}
-
-#employment-panel {
-    max-width: 720px;
-}
-
-.employment-summary {
-    color: #b9aa98;
-    margin: 8px 0;
-}
-
-.jobs-list {
-    display: grid;
-    gap: 6px;
-    margin-top: 12px;
-}
-
-.job-row {
-    align-items: center;
-    border-bottom: 1px solid #4b4035;
-    display: flex;
-    justify-content: space-between;
-    min-height: 42px;
-    padding: 6px 2px;
-}
-
-.job-row span:first-child {
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 0.85rem;
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 6px;
 }
 
-.job-row strong {
-    color: #e3c28e;
-    font-weight: normal;
-}
-
-.job-row small {
-    color: #958675;
-}
-
-.job-controls {
-    display: flex;
-    gap: 4px;
-}
-
-.job-controls button {
+.btn-secondary {
     background: transparent;
-    border: 1px solid #80512d;
-    color: #d6a66e;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 8px;
+    border-radius: 4px;
     cursor: pointer;
-    font: inherit;
-    height: 26px;
-    width: 26px;
 }
 
-.job-controls button:disabled {
-    color: #5c5147;
-    cursor: not-allowed;
-}
-
-.employment-controls button {
-    background: transparent;
-    border: 1px solid #80512d;
-    color: #d6a66e;
-    cursor: pointer;
-    font: inherit;
-    height: 28px;
-    width: 28px;
-}
-
-.employment-controls button:hover:not(:disabled) {
-    background: #3b2b20;
-}
-
-.employment-controls button:disabled {
-    color: #5c5147;
-    cursor: not-allowed;
-}
-
-.game-log-panel {
-    padding: 18px 14px;
-}
-
-.game-log-panel h3 {
-    color: #c37a36;
-}
-
-#game-log {
-    background: transparent;
-    border: 0;
-    color: #bbb0a1;
-    font-family: Georgia, 'Times New Roman', serif;
-    font-size: 0.9rem;
-    line-height: 1.35;
-}
-
-#game-log .log-item {
-    border-bottom: 1px solid #302b26;
-    padding: 3px 0;
-}
-
-.scrollable-container {
-    background: transparent;
-    border: 0;
+.btn-secondary:hover {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
 }

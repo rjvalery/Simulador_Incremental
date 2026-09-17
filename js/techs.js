@@ -1,112 +1,63 @@
-// techs.js - módulo centralizado para investigación y desbloqueos
-
-export const TECHS_DATA = Object.freeze({
+export const TECHS_DATA = {
     writing: {
         id: 'writing',
-        era: 'Antigua',
         name: 'Escritura',
-        description: 'Introduce la capacidad de registrar transacciones, almacenar saberes y documentar ordenanzas publicas.',
         cost: { science: 25 },
         requires: [],
-        unlocks: { buildings: ['library'] }
+        description: 'Permite el registro de conocimientos y habilita la construcción de Bibliotecas.'
     },
     leadership: {
         id: 'leadership',
-        era: 'Antigua',
         name: 'Liderazgo',
-        description: 'Formaliza la autoridad, la cadena de mando y la centralizacion del poder local.',
-        cost: { science: 60 },
+        cost: { science: 50 },
         requires: ['writing'],
-        unlocks: { buildings: ['townHall'] }
-    },
-    taxation: {
-        id: 'taxation',
-        era: 'Antigua',
-        name: 'Recaudacion',
-        description: 'Organiza la recoleccion de tributos y la gestion de la tesoreria local.',
-        cost: { science: 80 },
-        requires: ['leadership'],
-        unlocks: {}
+        description: 'Habilita la Casa Comunal y la gestión centralizada de la aldea.'
     },
     laws: {
         id: 'laws',
-        era: 'Antigua',
-        name: 'Leyes basicas',
-        description: 'Sistematiza las reglas de la comunidad, regulando el trabajo y la asignacion social.',
-        cost: { science: 100, gold: 25 },
+        name: 'Leyes Básicas',
+        cost: { science: 100 },
         requires: ['leadership'],
-        unlocks: {}
-    },
-    agriculture: {
-        id: 'agriculture',
-        era: 'Antigua',
-        name: 'Agricultura avanzada',
-        description: 'Mejora la produccion de alimentos y formaliza las tecnicas agricolas.',
-        cost: { science: 50 },
-        requires: [],
-        unlocks: {},
-        effects: { productionMultiplier: { food: 1.25 } }
-    },
-    bronzeWorking: {
-        id: 'bronzeWorking',
-        era: 'Antigua',
-        name: 'Metalurgia del bronce',
-        description: 'Permite la extraccion eficiente de minerales e instruye las primeras milicias armadas.',
-        cost: { science: 120 },
-        requires: ['agriculture'],
-        unlocks: { buildings: ['quarry'], units: ['spearman'] }
-    },
-    industrialization: {
-        id: 'industrialization',
-        era: 'Industrial',
-        name: 'Industrializacion',
-        description: 'Desbloquea la fabrica y genera ciencia mediante procesos industriales.',
-        cost: { science: 500 },
-        requires: ['bronzeWorking'],
-        unlocks: { buildings: ['factory'], resources: ['iron'], units: ['infantry'] }
-    },
-    mechanizedWarfare: {
-        id: 'mechanizedWarfare',
-        era: 'Moderna',
-        name: 'Guerra mecanizada',
-        description: 'Desbloquea la refineria y el uso estrategico del petroleo.',
-        cost: { science: 1500 },
-        requires: ['industrialization'],
-        unlocks: { buildings: ['oilRefinery'], resources: ['oil'], units: ['tank', 'mechanizedInfantry'] }
+        description: 'Permite la promulgación de decretos y políticas sociales.'
     }
-});
+};
 
-function normalizeValue(value) {
-    if (typeof value === 'string') {
-        const text = value.trim();
-        if (!text) return 0;
-        return Number(text.replace(/\./g, '').replace(',', '.')) || 0;
-    }
-    return Number(value) || 0;
+function getCurrentState(gameState) {
+    return gameState || (typeof window !== 'undefined' ? window.state : undefined);
 }
 
-function getResourceValue(resource) {
-    return normalizeValue(resource && typeof resource === 'object' ? resource.value : resource);
+export function isTechnologyCompleted(gameState, techId) {
+    const currentState = getCurrentState(gameState);
+    return Boolean(currentState?.techs?.[techId]?.completed || currentState?.unlockedTechs?.[techId]);
 }
 
-export function isTechnologyCompleted(state, techKey) {
-    return state.techs?.[techKey] === true ||
-        state.techs?.[techKey]?.completed === true ||
-        state.unlockedTechs?.[techKey] === true;
+export function canResearch(gameState, techId) {
+    const currentState = getCurrentState(gameState);
+    const tech = TECHS_DATA[techId];
+    if (!tech || isTechnologyCompleted(currentState, techId)) return false;
+
+    const hasPrereqs = tech.requires.every(reqId => isTechnologyCompleted(currentState, reqId));
+    if (!hasPrereqs) return false;
+
+    const science = currentState?.resources?.science;
+    const currentScience = science?.value ?? science;
+    return currentScience >= tech.cost.science;
 }
 
-export function getTechnologyStatus(state, techKey) {
-    const tech = TECHS_DATA[techKey];
+export function getTechnologyStatus(gameState, techId) {
+    const currentState = getCurrentState(gameState);
+    const tech = TECHS_DATA[techId];
     if (!tech) {
         return { exists: false, completed: false, researchable: false, missingRequirements: [], missingResources: [] };
     }
 
-    const missingRequirements = tech.requires.filter(requirement => !isTechnologyCompleted(state, requirement));
-    const missingResources = Object.entries(tech.cost)
-        .filter(([resourceKey, amount]) => getResourceValue(state.resources?.[resourceKey]) < Number(amount))
-        .map(([resourceKey, amount]) => ({ resourceKey, amount: Number(amount), current: getResourceValue(state.resources?.[resourceKey]) }));
-
-    const completed = isTechnologyCompleted(state, techKey);
+    const science = currentState?.resources?.science;
+    const currentScience = science?.value ?? science ?? 0;
+    const missingRequirements = tech.requires.filter(requirement => !isTechnologyCompleted(currentState, requirement));
+    const missingResources = currentScience < tech.cost.science
+        ? [{ resourceKey: 'science', amount: tech.cost.science, current: currentScience }]
+        : [];
+    const completed = isTechnologyCompleted(currentState, techId);
     return {
         exists: true,
         completed,
@@ -116,72 +67,18 @@ export function getTechnologyStatus(state, techKey) {
     };
 }
 
-function ensureResource(state, resourceKey) {
-    if (!state.resources[resourceKey]) {
-        state.resources[resourceKey] = {
-            name: resourceKey,
-            value: 0,
-            max: 500,
-            production: 0,
-            consumption: 0,
-            unlocked: true
-        };
-    }
-    state.resources[resourceKey].unlocked = true;
-}
+export function researchTech(gameState, techId) {
+    const currentState = getCurrentState(gameState);
+    if (!canResearch(currentState, techId)) return false;
 
-export function canResearch(state, techKey) {
-    return getTechnologyStatus(state, techKey).researchable;
-}
+    const tech = TECHS_DATA[techId];
+    currentState.resources.science.value -= tech.cost.science;
 
-export function researchTech(state, techKey) {
-    const status = getTechnologyStatus(state, techKey);
-    if (!status.exists || status.completed || !status.researchable) return false;
+    if (!currentState.techs) currentState.techs = {};
+    if (!currentState.unlockedTechs) currentState.unlockedTechs = {};
 
-    const tech = TECHS_DATA[techKey];
-    state.techs = state.techs || {};
-    state.unlockedTechs = state.unlockedTechs || {};
-    state.military = state.military || { unlockedUnits: [] };
-
-    for (const [resourceKey, amount] of Object.entries(tech.cost)) {
-        const resource = state.resources[resourceKey];
-        if (!resource) continue;
-        if (typeof resource === 'object') {
-            resource.value = getResourceValue(resource) - Number(amount);
-        } else {
-            state.resources[resourceKey] = getResourceValue(resource) - Number(amount);
-        }
-    }
-
-    state.techs[techKey] = { completed: true, researchedAt: Date.now() };
-    state.unlockedTechs[techKey] = true;
-
-    for (const buildingKey of tech.unlocks?.buildings || []) {
-        state.buildings = state.buildings || {};
-        state.buildings[buildingKey] = state.buildings[buildingKey] || { count: 0, unlocked: true };
-        state.buildings[buildingKey].unlocked = true;
-    }
-
-    for (const resourceKey of tech.unlocks?.resources || []) ensureResource(state, resourceKey);
-
-    if (tech.effects?.productionMultiplier) {
-        for (const [resourceKey, multiplier] of Object.entries(tech.effects.productionMultiplier)) {
-            const resource = state.resources[resourceKey];
-            if (resource) resource.productionMultiplier = multiplier;
-        }
-    }
-
-    for (const unit of tech.unlocks?.units || []) {
-        if (!state.military.unlockedUnits.includes(unit)) {
-            state.military.unlockedUnits.push(unit);
-        }
-    }
-
-    if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('log:add', {
-            detail: { message: `Investigación completada: ${tech.name}.`, type: 'success' }
-        }));
-    }
+    currentState.techs[techId] = { completed: true };
+    currentState.unlockedTechs[techId] = true;
 
     return true;
 }

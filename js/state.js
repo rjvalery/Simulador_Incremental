@@ -1,43 +1,38 @@
-// state.js - Estado Global del Simulador Incremental
 import { BUILDINGS_DATA } from './buildings.js';
 import { ensureGovernance } from './governance.js';
 import { isTechnologyCompleted } from './techs.js';
 
-export const gameState = {
+export const state = {
     resources: {
-        food: { name: "Alimentos", value: 50, max: 200, baseMax: 200, production: 0, consumption: 0 },
-        wood: { name: "Madera", value: 30, max: 150, baseMax: 150, production: 0, consumption: 0 },
-        stone: { name: "Piedra", value: 10, max: 100, baseMax: 100, production: 0, consumption: 0 },
-        gold: { name: "Oro", value: 0, max: 1000, baseMax: 1000, production: 0, consumption: 0 },
-        science: { name: "Ciencia", value: 25, max: 500, baseMax: 500, production: 0, consumption: 0 }
+        food: { value: 293.29, max: 300 },
+        wood: { value: 174.52, max: 250 },
+        stone: { value: 2, max: 200 },
+        gold: { value: 0, max: 1000 },
+        science: { value: 25, max: 600 }
     },
     population: {
-        unskilled: 2,     // Población libre / desempleada disponible
-        workers: 0,       // Asignados a producción primaria
-        technicians: 0,   // Asignados a ciencia / industria avanzada
-        professionals: 0, // Profesionales / administración
-        assignments: {}
+        total: 5,
+        max: 5,
+        workers: 4,
+        scholars: 0
     },
     buildings: {
-        shelter: { count: 1, unlocked: true },
-        farm: { count: 0, unlocked: true },
-        woodcutter: { count: 0, unlocked: true },
-        quarry: { count: 0, unlocked: false },
-        warehouse: { count: 0, unlocked: true },
-        library: { count: 0, unlocked: false },
-        townHall: { count: 0, unlocked: false },
-        taxOffice: { count: 0, unlocked: false },
-        factory: { count: 0, unlocked: false },
-        oilRefinery: { count: 0, unlocked: false }
+        shelter: { count: 1 },
+        farm: { count: 1, workers: 2 },
+        sawmill: { count: 1, workers: 2 },
+        warehouse: { count: 1 },
+        library: { count: 0, workers: 0 },
+        townHall: { count: 0 }
     },
     techs: {},
-    unlockedTechs: {},
-    military: { unlockedUnits: [] },
-    governance: { unlocked: false, leader: null, policies: [] },
-    settings: {
-        gameSpeed: 1
-    }
+    unlockedTechs: {}
 };
+
+export const gameState = state;
+
+if (typeof window !== 'undefined') {
+    window.state = state;
+}
 
 const LOCKED_BY_DEFAULT = new Set(['quarry', 'library', 'townHall', 'taxOffice', 'factory', 'oilRefinery']);
 const DEFAULT_UNLOCKED_BUILDINGS = new Set(['farm', 'woodcutter', 'shelter']);
@@ -115,9 +110,12 @@ export function ensureBuildingStates(state) {
 
 export function ensurePopulationStates(state) {
     state.population = state.population || {};
-    state.population.unskilled = Number(state.population.unskilled) || 0;
+    state.population.total = Number(state.population.total) || 0;
+    state.population.max = Number(state.population.max) || 0;
     state.population.workers = Number(state.population.workers) || 0;
-    state.population.technicians = Number(state.population.technicians) || 0;
+    state.population.scholars = Number(state.population.scholars) || 0;
+    state.population.unskilled = Number(state.population.unskilled) || 0;
+    state.population.technicians = Number(state.population.technicians) || state.population.scholars;
     state.population.professionals = Number(state.population.professionals) || 0;
     state.population.assignments = state.population.assignments || {};
     ensureGovernance(state);
@@ -137,8 +135,9 @@ export function calculateMaxHousing(state) {
 
 // Función para obtener la población total actual
 export function getTotalPopulation(state) {
-    return state.population.unskilled +
-           state.population.workers +
-           state.population.technicians +
-           state.population.professionals;
+    const population = state.population;
+    if (Number.isFinite(Number(population.total)) && population.total > 0) {
+        return Number(population.total);
+    }
+    return population.unskilled + population.workers + population.technicians + population.professionals;
 }
