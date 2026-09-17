@@ -58,13 +58,26 @@ export function renderTechPanel(state) {
     const hasPrereqs = tech.requires.every(reqId => isTechnologyCompleted(state, reqId));
     if (!hasPrereqs && !completed) return;
 
+    // Construcción dinámica del texto de costo
+    const costEntries = Object.entries(tech.cost || {});
+    const costText = costEntries.map(([resKey, amount]) => {
+      const nameMap = {
+        food: 'Alimento',
+        wood: 'Madera',
+        stone: 'Piedra',
+        science: 'Ciencia',
+        gold: 'Oro'
+      };
+      return `${amount} ${nameMap[resKey] || resKey}`;
+    }).join(', ');
+
     const card = document.createElement('div');
     card.className = `tech-card ${completed ? 'completed' : ''}`;
 
     card.innerHTML = `
       <h4>${tech.name}</h4>
       <p>${tech.description}</p>
-      <p>Costo: ${tech.cost.science} Ciencia</p>
+      <p>Costo: ${costText || 'Gratis'}</p>
       <button 
         class="btn-tech" 
         data-tech="${techId}"
