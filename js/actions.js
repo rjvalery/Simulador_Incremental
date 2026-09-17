@@ -13,8 +13,7 @@ function addLog(message, type = 'info') {
 }
 
 export function handleManualHarvest(state) {
-    const harvestMultiplier = state.governance?.leader === 'hunter' ? 1.15 : 1;
-    const amounts = { food: 5 * harvestMultiplier, wood: 2 * harvestMultiplier, stone: 1 * harvestMultiplier };
+    const amounts = { food: 1, wood: 1, stone: 1 };
     const harvested = {};
 
     for (const [resourceKey, amount] of Object.entries(amounts)) {

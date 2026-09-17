@@ -72,8 +72,7 @@ export function runGameTick(state, deltaTime = 1) {
 }
 
 function isTaxationActive(state) {
-    return state.governance?.policies?.includes('capitationTax') &&
-    isTechnologyCompleted(state, 'taxation');
+    return isTechnologyCompleted(state, 'taxation');
 }
 
 export function startEngine(state, onTick) {

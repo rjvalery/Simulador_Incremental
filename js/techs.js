@@ -26,7 +26,7 @@ export const TECHS_DATA = Object.freeze({
         description: 'Organiza la recoleccion de tributos y la gestion de la tesoreria local.',
         cost: { science: 80 },
         requires: ['leadership'],
-        unlocks: { buildings: ['taxOffice'] }
+        unlocks: {}
     },
     laws: {
         id: 'laws',
@@ -44,7 +44,7 @@ export const TECHS_DATA = Object.freeze({
         description: 'Mejora la produccion de alimentos y formaliza las tecnicas agricolas.',
         cost: { science: 50 },
         requires: [],
-        unlocks: { buildings: ['farm'] },
+        unlocks: {},
         effects: { productionMultiplier: { food: 1.25 } }
     },
     bronzeWorking: {
@@ -85,6 +85,10 @@ function normalizeValue(value) {
     return Number(value) || 0;
 }
 
+function getResourceValue(resource) {
+    return normalizeValue(resource && typeof resource === 'object' ? resource.value : resource);
+}
+
 export function isTechnologyCompleted(state, techKey) {
     return state.techs?.[techKey] === true ||
         state.techs?.[techKey]?.completed === true ||
@@ -99,8 +103,8 @@ export function getTechnologyStatus(state, techKey) {
 
     const missingRequirements = tech.requires.filter(requirement => !isTechnologyCompleted(state, requirement));
     const missingResources = Object.entries(tech.cost)
-        .filter(([resourceKey, amount]) => normalizeValue(state.resources?.[resourceKey]?.value) < Number(amount))
-        .map(([resourceKey, amount]) => ({ resourceKey, amount: Number(amount), current: normalizeValue(state.resources?.[resourceKey]?.value) }));
+        .filter(([resourceKey, amount]) => getResourceValue(state.resources?.[resourceKey]) < Number(amount))
+        .map(([resourceKey, amount]) => ({ resourceKey, amount: Number(amount), current: getResourceValue(state.resources?.[resourceKey]) }));
 
     const completed = isTechnologyCompleted(state, techKey);
     return {
@@ -142,14 +146,20 @@ export function researchTech(state, techKey) {
     for (const [resourceKey, amount] of Object.entries(tech.cost)) {
         const resource = state.resources[resourceKey];
         if (!resource) continue;
-        resource.value = normalizeValue(resource.value) - Number(amount);
+        if (typeof resource === 'object') {
+            resource.value = getResourceValue(resource) - Number(amount);
+        } else {
+            state.resources[resourceKey] = getResourceValue(resource) - Number(amount);
+        }
     }
 
     state.techs[techKey] = { completed: true, researchedAt: Date.now() };
     state.unlockedTechs[techKey] = true;
 
     for (const buildingKey of tech.unlocks?.buildings || []) {
-        if (state.buildings?.[buildingKey]) state.buildings[buildingKey].unlocked = true;
+        state.buildings = state.buildings || {};
+        state.buildings[buildingKey] = state.buildings[buildingKey] || { count: 0, unlocked: true };
+        state.buildings[buildingKey].unlocked = true;
     }
 
     for (const resourceKey of tech.unlocks?.resources || []) ensureResource(state, resourceKey);
@@ -165,6 +175,12 @@ export function researchTech(state, techKey) {
         if (!state.military.unlockedUnits.includes(unit)) {
             state.military.unlockedUnits.push(unit);
         }
+    }
+
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('log:add', {
+            detail: { message: `Investigación completada: ${tech.name}.`, type: 'success' }
+        }));
     }
 
     return true;

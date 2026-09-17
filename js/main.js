@@ -12,7 +12,6 @@ import { researchTechnology, setLeader, togglePolicy } from './actions.js';
 import { Storage } from './storage.js';
 
 const BUILDING_TECH_REQUIREMENTS = {
-    farm: 'agriculture',
     quarry: 'bronzeWorking',
     library: 'writing',
     townHall: 'leadership',

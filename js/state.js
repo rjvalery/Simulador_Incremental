@@ -22,7 +22,7 @@ export const gameState = {
         shelter: { count: 1, unlocked: true },
         farm: { count: 0, unlocked: true },
         woodcutter: { count: 0, unlocked: true },
-        quarry: { count: 0, unlocked: true },
+        quarry: { count: 0, unlocked: false },
         warehouse: { count: 0, unlocked: true },
         library: { count: 0, unlocked: false },
         townHall: { count: 0, unlocked: false },
@@ -39,9 +39,9 @@ export const gameState = {
     }
 };
 
-const LOCKED_BY_DEFAULT = new Set(['farm', 'quarry', 'library', 'townHall', 'taxOffice', 'factory', 'oilRefinery']);
+const LOCKED_BY_DEFAULT = new Set(['quarry', 'library', 'townHall', 'taxOffice', 'factory', 'oilRefinery']);
+const DEFAULT_UNLOCKED_BUILDINGS = new Set(['farm', 'woodcutter', 'shelter']);
 const BUILDING_TECH_REQUIREMENTS = {
-    farm: 'agriculture',
     quarry: 'bronzeWorking',
     library: 'writing',
     townHall: 'leadership',
@@ -106,6 +106,10 @@ export function ensureBuildingStates(state) {
 
     for (const [buildingKey, requirement] of Object.entries(BUILDING_TECH_REQUIREMENTS)) {
         state.buildings[buildingKey].unlocked = isTechnologyCompleted(state, requirement);
+    }
+
+    for (const buildingKey of DEFAULT_UNLOCKED_BUILDINGS) {
+        state.buildings[buildingKey].unlocked = true;
     }
 }
 
