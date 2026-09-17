@@ -3,7 +3,7 @@
 import { canAfford, deductCost, refreshResourceCaps } from './resources.js';
 import { BUILDINGS_DATA, calculateBuildingCost } from './buildings.js';
 import { calculateMaxHousing, ensureBuildingStates, ensurePopulationStates, ensureResourceStates } from './state.js';
-import { constructionCostMultiplier, governanceIsAvailable, LEADERS, POLICIES } from './governance.js';
+import { constructionCostMultiplier, governanceIsAvailable, LEADERS, manualHarvestMultiplier, POLICIES } from './governance.js';
 import { getTechnologyStatus, isTechnologyCompleted, researchTech } from './techs.js';
 
 function addLog(message, type = 'info') {
@@ -21,7 +21,7 @@ export function handleManualHarvest(state) {
         const resource = state.resources[resourceKey];
         if (!resource) continue;
         const before = resource.value;
-        resource.value = Math.min(resource.max, resource.value + amount);
+        resource.value = Math.min(resource.max, resource.value + amount * manualHarvestMultiplier(state));
         harvested[resourceKey] = resource.value - before;
     }
 

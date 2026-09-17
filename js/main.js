@@ -7,9 +7,11 @@ import { startEngine } from './engine.js';
 import { renderSidebar, addGameLog } from './ui.js';
 import { canAfford, refreshResourceCaps } from './resources.js';
 import { canResearch, getTechnologyStatus, isTechnologyCompleted, researchTech, TECHS_DATA } from './techs.js';
-import { LEADERS, POLICIES, constructionCostMultiplier, governanceIsAvailable } from './governance.js';
+import { LEADERS, POLICIES, constructionCostMultiplier } from './governance.js';
 import { setLeader, togglePolicy } from './actions.js';
 import { Storage } from './storage.js';
+
+window.state = gameState;
 
 const BUILDING_TECH_REQUIREMENTS = {
     quarry: 'bronzeWorking',
@@ -165,13 +167,12 @@ function renderTechnologyAndGovernmentUI() {
         techPanel.appendChild(row);
     }
 
-    if (!isTechnologyCompleted(gameState, 'writing')) return;
-    if (!hasTownHall) {
-        governmentPanel.innerHTML = '<p class="muted-label">Construye una Casa Comunal para activar la gobernanza.</p>';
+    if (!isTechnologyCompleted(gameState, 'leadership')) {
+        governmentPanel.innerHTML = '<p class="muted-label">Investiga Liderazgo para habilitar la gobernanza.</p>';
         return;
     }
-    if (!governanceIsAvailable(gameState)) {
-        governmentPanel.innerHTML = '<p class="muted-label">Investiga Leyes basicas para activar las leyes y decretos.</p>';
+    if (!hasTownHall) {
+        governmentPanel.innerHTML = '<p class="muted-label">Construye una Casa Comunal para activar la gobernanza.</p>';
         return;
     }
 
@@ -296,7 +297,7 @@ function renderBuildingsUI() {
     const buildingEntries = Object.entries(BUILDINGS_DATA)
         .filter(([buildingKey, buildingInfo]) => {
             const requiredTech = getRequiredBuildingTech(buildingKey, buildingInfo);
-            return !requiredTech || isTechnologyCompleted(gameState, requiredTech) || canResearch(gameState, requiredTech);
+            return !requiredTech || isTechnologyCompleted(gameState, requiredTech);
         })
         .map(([buildingKey, buildingInfo]) => {
             const currentCount = gameState.buildings[buildingKey]?.count || 0;

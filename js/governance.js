@@ -24,7 +24,7 @@ export const POLICIES = Object.freeze({
     rationing: {
         id: 'rationing',
         name: 'Racionamiento de Emergencia',
-        description: '-20% al consumo de comida, con -10% de eficiencia laboral.',
+        description: '-20% al consumo de comida.',
         requires: 'laws'
     },
     extendedWorkday: {
@@ -53,7 +53,7 @@ export function ensureGovernance(state) {
 export function governanceIsAvailable(state) {
     return state.governance?.unlocked === true &&
         (state.buildings.townHall?.count || 0) > 0 &&
-    isTechnologyCompleted(state, 'laws');
+        isTechnologyCompleted(state, 'leadership');
 }
 
 export function constructionCostMultiplier(state) {
@@ -68,8 +68,11 @@ export function productionMultiplier(state, resourceKey, passive = false) {
     if (passive && resourceKey === 'science' && state.governance?.leader === 'scholar') {
         multiplier *= 1.2;
     }
-    if (state.governance?.policies?.includes('rationing')) multiplier *= 0.9;
     return multiplier;
+}
+
+export function manualHarvestMultiplier(state) {
+    return state.governance?.leader === 'hunter' ? 1.15 : 1;
 }
 
 export function foodConsumptionMultiplier(state) {
