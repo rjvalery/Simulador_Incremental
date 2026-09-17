@@ -166,7 +166,7 @@ export function renderBuildingCards(state) {
     { id: 'shelter', name: 'Refugio', desc: 'Aumenta la capacidad de población (+2).', costWood: 17, costFood: 11, popBonus: 2 },
     { id: 'farm', name: 'Granja', desc: 'Produce alimento constante con obreros.', costWood: 46 },
     { id: 'sawmill', name: 'Aserradero', desc: 'Produce madera constante con obreros.', costWood: 23 },
-    { id: 'warehouse', name: 'Almacén', desc: 'Aumenta la capacidad de almacenamiento.', costWood: 88, costStone: 28 },
+    { id: 'warehouse', name: 'Almacén', desc: 'Aumenta la capacidad de almacenamiento (+100 Alimento, +100 Madera, +50 Piedra).', costWood: 88, costStone: 28, storageBonus: { food: 100, wood: 100, stone: 50 } },
     { id: 'library', name: 'Biblioteca', desc: 'Produce puntos de Ciencia por segundo.', costWood: 100, costStone: 50, reqTech: 'writing' }
   ];
 
@@ -213,6 +213,15 @@ export function renderBuildingCards(state) {
 
         if (b.popBonus) {
           state.population.max += b.popBonus;
+        }
+
+        // Incremento de capacidad de almacenamiento para los recursos
+        if (b.storageBonus) {
+          for (const [resKey, bonusAmount] of Object.entries(b.storageBonus)) {
+            if (state.resources[resKey] && typeof state.resources[resKey] === 'object') {
+              state.resources[resKey].max += bonusAmount;
+            }
+          }
         }
 
         addLog(`Construiste: ${b.name}`);
