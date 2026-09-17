@@ -22,10 +22,12 @@ function gameTick() {
   state.resources.wood.value = Math.min(state.resources.wood.max, state.resources.wood.value + woodGenerated);
   state.resources.science.value = Math.min(state.resources.science.max, state.resources.science.value + scienceGenerated);
 
-  // 2. Crecimiento demográfico pasivo
-  if (state.population.total < state.population.max && state.resources.food.value > 50) {
-    // 5% de probabilidad por segundo de que nazca un nuevo aldeano
-    if (Math.random() < 0.05) {
+  // 2. Crecimiento demográfico pasivo (Equilibrado a 25 de alimento)
+  const foodAmount = state.resources.food.value ?? state.resources.food;
+
+  if (state.population.total < state.population.max && foodAmount >= 25) {
+    // 10% de probabilidad por segundo de que se una un nuevo habitante
+    if (Math.random() < 0.10) {
       state.population.total += 1;
       addLog('Un nuevo habitante se ha unido a la aldea.');
     }
