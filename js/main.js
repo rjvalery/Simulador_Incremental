@@ -8,7 +8,7 @@ import { renderSidebar, addGameLog } from './ui.js';
 import { canAfford, refreshResourceCaps } from './resources.js';
 import { canResearch, getTechnologyStatus, isTechnologyCompleted, researchTech, TECHS_DATA } from './techs.js';
 import { LEADERS, POLICIES, constructionCostMultiplier, governanceIsAvailable } from './governance.js';
-import { researchTechnology, setLeader, togglePolicy } from './actions.js';
+import { setLeader, togglePolicy } from './actions.js';
 import { Storage } from './storage.js';
 
 const BUILDING_TECH_REQUIREMENTS = {
@@ -154,9 +154,12 @@ function renderTechnologyAndGovernmentUI() {
         button.disabled = status.completed || !status.researchable;
         button.dataset.techKey = techKey;
         button.addEventListener('click', () => {
-            researchTechnology(gameState, techKey);
-            persistGame();
-            renderGame();
+            const success = researchTech(gameState, techKey);
+            if (success) {
+                persistGame();
+                renderGame();
+                window.dispatchEvent(new CustomEvent('state:updated'));
+            }
         });
         row.appendChild(button);
         techPanel.appendChild(row);
@@ -358,7 +361,13 @@ function renderBuildingsUI() {
         btnBuild.title = !unlocked ? researchable ? `Investigar ${requiredTechName}` : `Requiere la tecnología ${requiredTechName}` : atLimit ? 'Límite de construcción alcanzado' : affordable ? 'Construir edificio' : 'No tienes todos los materiales necesarios';
         btnBuild.addEventListener('click', () => {
             if (!unlocked && requiredTech) {
-                researchTech(gameState, requiredTech);
+                const success = researchTech(gameState, requiredTech);
+                if (!success) return;
+                persistGame();
+                buildingsRenderSignature = '';
+                renderGame();
+                window.dispatchEvent(new CustomEvent('state:updated'));
+                return;
             } else {
                 buildStructure(gameState, buildingKey);
             }
