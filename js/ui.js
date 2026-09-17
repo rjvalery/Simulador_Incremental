@@ -23,6 +23,60 @@ export function renderUI(gameState) {
   renderPopulationControls(state);
 }
 
+export function setupSettingsModal({ onExport, onImport, onReset }) {
+  const modal = document.getElementById('settings-modal');
+  const openButton = document.getElementById('btn-settings');
+  const closeButton = document.getElementById('close-settings');
+  const exportButton = document.getElementById('btn-export');
+  const importButton = document.getElementById('btn-import');
+  const resetButton = document.getElementById('btn-reset-game');
+  const confirmImportButton = document.getElementById('btn-confirm-import');
+  const importExportArea = document.getElementById('import-export-area');
+  const ioLabel = document.getElementById('io-label');
+  const ioTextarea = document.getElementById('io-textarea');
+
+  if (!modal || !openButton) return;
+
+  const closeModal = () => {
+    modal.style.display = 'none';
+  };
+
+  openButton.addEventListener('click', () => {
+    modal.style.display = 'flex';
+  });
+
+  closeButton?.addEventListener('click', closeModal);
+  modal.addEventListener('click', event => {
+    if (event.target === modal) closeModal();
+  });
+
+  exportButton?.addEventListener('click', () => {
+    importExportArea.style.display = 'block';
+    ioLabel.textContent = 'Código de Guardado:';
+    ioTextarea.value = onExport();
+    confirmImportButton.style.display = 'none';
+  });
+
+  importButton?.addEventListener('click', () => {
+    importExportArea.style.display = 'block';
+    ioLabel.textContent = 'Pega el Código de Guardado:';
+    ioTextarea.value = '';
+    confirmImportButton.style.display = 'inline-block';
+    ioTextarea.focus();
+  });
+
+  confirmImportButton?.addEventListener('click', () => {
+    if (onImport(ioTextarea.value)) closeModal();
+  });
+
+  resetButton?.addEventListener('click', () => {
+    if (window.confirm('¿Reiniciar toda la partida a 0?')) {
+      onReset();
+      closeModal();
+    }
+  });
+}
+
 function renderResourceMonitor(state) {
   const getVal = (res) => (typeof res === 'object' ? res.value : res);
   const getMax = (res) => (typeof res === 'object' ? res.max : 0);

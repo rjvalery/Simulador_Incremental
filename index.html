@@ -34,6 +34,7 @@
         <main class="main-content">
             <header class="main-header">
                 <h1 id="era-title">Hoguera | Pequeña aldea</h1>
+                <button id="btn-settings" class="btn-icon" title="Configuración">⚙️</button>
             </header>
 
             <nav class="tabs-bar">
@@ -82,6 +83,30 @@
             <button id="btn-clear-log" class="btn-secondary">Limpiar Log</button>
         </aside>
     </div>
+
+        <!-- Ventana Modal de Configuración -->
+        <div id="settings-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span id="close-settings" class="close-btn">&times;</span>
+                <h3>Configuración del Juego</h3>
+                <hr>
+
+                <div class="settings-section">
+                    <h4>Gestionar Partida</h4>
+                    <div class="modal-actions">
+                        <button id="btn-export" class="btn-action">Exportar Partida</button>
+                        <button id="btn-import" class="btn-action">Importar Partida</button>
+                        <button id="btn-reset-game" class="btn-danger">Reiniciar a 0</button>
+                    </div>
+                </div>
+
+                <div class="settings-section" id="import-export-area" style="display: none; margin-top: 15px;">
+                    <label id="io-label" for="io-textarea">Código de Guardado:</label>
+                    <textarea id="io-textarea" rows="4" style="width: 100%; resize: vertical; background: #1a1a1a; color: #fff; border: 1px solid #444; margin-top: 5px;"></textarea>
+                    <button id="btn-confirm-import" class="btn-action" style="display: none; margin-top: 5px;">Confirmar Carga</button>
+                </div>
+            </div>
+        </div>
 
     <script type="module" src="js/main.js"></script>
 </body>
