@@ -289,8 +289,8 @@ export function renderBuildingCards(state) {
   });
 }
 
-export function renderMilitaryPanel(state) {
-  const container = document.getElementById('military-container');
+export function renderMilitaryPanel(state, panelContainer) {
+  const container = panelContainer || document.getElementById('military-container');
   if (!container) return;
 
   if (!isTechnologyCompleted(state, 'tactics')) {
@@ -307,8 +307,8 @@ export function renderMilitaryPanel(state) {
   });
   const barracksCard = `
     <div class="building-card military-building-card">
-      <h4>${barracksInfo.name} (${barracks.count || 0})</h4>
-      <p>${barracksInfo.description}</p>
+      <h4>${barracksInfo?.name || 'Cuartel'} (${barracks.count || 0})</h4>
+      <p>${barracksInfo?.description || 'Permite entrenar unidades militares.'}</p>
       <p><strong>Costo:</strong> ${Object.entries(barracksCost).map(([key, amount]) => `${amount} ${key}`).join(', ')}</p>
       <button class="btn-build-military" ${canAffordBarracks ? '' : 'disabled'}>
         ${canAffordBarracks ? 'Construir Cuartel' : 'Faltan materiales'}
@@ -325,23 +325,27 @@ export function renderMilitaryPanel(state) {
   }
 
   const military = state.military || {};
-  const currentCapacity = Object.keys(UNITS_DATA)
+  const currentCapacity = Object.keys(military)
     .reduce((total, unitId) => total + (military[unitId] || 0), 0);
   const maxCapacity = getMaxMilitaryCapacity(state);
-  const unitCards = Object.values(MILITARY_UNITS).map(unit => {
+  const unitCards = Object.keys(military).map(unitKey => {
+    const unit = MILITARY_UNITS[unitKey];
+    if (!unit) return '';
     if (unit.reqTech && !isTechnologyCompleted(state, unit.reqTech)) return '';
-    const count = military[unit.id] || 0;
-    const tooltipText = `${unit.desc} | Atq: ${unit.stats.attack} Def: ${unit.stats.defense} HP: ${unit.stats.hp}`
+    const count = military[unitKey] || 0;
+    const unitName = unit.name || unitKey;
+    const tooltipText = `${unit.description || unit.desc || 'Unidad militar.'} | Atq: ${unit.stats?.attack ?? 0} Def: ${unit.stats?.defense ?? 0} HP: ${unit.stats?.hp ?? 0}`
       .replace(/"/g, '&quot;');
-    const costText = Object.entries(unit.cost)
+    const costText = Object.entries(unit.cost || {})
       .map(([resourceKey, amount]) => `${amount} ${resourceKey}`)
       .join(', ');
 
     return `
       <div class="unit-card" data-tooltip="${tooltipText}">
-        <h4>${unit.name} (${count})</h4>
+        <h4>${unitName} (Disponibles: ${count})</h4>
+        <p>${unit.description || ''}</p>
         <p><strong>Costo:</strong> ${costText}</p>
-        <button class="btn-train" data-unit="${unit.id}">Entrenar</button>
+        <button class="btn-train" data-unit="${unitKey}">Entrenar ${unitName}</button>
       </div>
     `;
   }).join('');

@@ -4,8 +4,7 @@ export const MILITARY_UNITS = {
         name: 'Explorador',
         cost: { food: 30, wood: 10 },
         reqTech: 'cartography',
-        description: 'Unidad necesaria para disipar la niebla del mapa y revelar casillas.',
-        desc: 'Unidad necesaria para disipar la niebla del mapa y revelar casillas.',
+        description: 'Unidad ligera necesaria para disipar la niebla del mapa.',
         stats: { attack: 0, defense: 1, hp: 10 },
         upkeep: { food: 0.05 }
     },
@@ -15,9 +14,26 @@ export const MILITARY_UNITS = {
         cost: { food: 50, iron: 20 },
         reqTech: 'tactics',
         description: 'Unidad de combate cuerpo a cuerpo.',
-        desc: 'Unidad de combate cuerpo a cuerpo.',
         stats: { attack: 5, defense: 8, hp: 20 },
         upkeep: { food: 0.1 }
+    },
+    archers: {
+        id: 'archers',
+        name: 'Arqueros',
+        cost: { food: 40, wood: 30 },
+        reqTech: 'archery',
+        description: 'Unidad de ataque a distancia.',
+        stats: { attack: 12, defense: 3, hp: 12 },
+        upkeep: { food: 0.1, gold: 0.05 }
+    },
+    cavalry: {
+        id: 'cavalry',
+        name: 'Caballería',
+        cost: { food: 80, iron: 40 },
+        reqTech: 'horseback_riding',
+        description: 'Unidad rápida y de alto impacto.',
+        stats: { attack: 20, defense: 15, hp: 40 },
+        upkeep: { food: 0.2, gold: 0.1 }
     }
 };
 
@@ -30,22 +46,6 @@ export const UNITS_DATA = {
         cost: { food: 30, iron: 10 },
         stats: { attack: 5, defense: 8, hp: 20 },
         upkeep: { food: 0.1 }
-    },
-    archers: {
-        id: 'archers',
-        name: 'Arqueros',
-        desc: 'Unidad a distancia con alto daño de ataque.',
-        cost: { food: 25, wood: 20, iron: 15 },
-        stats: { attack: 12, defense: 3, hp: 12 },
-        upkeep: { food: 0.1, gold: 0.05 }
-    },
-    cavalry: {
-        id: 'cavalry',
-        name: 'Caballería',
-        desc: 'Unidad pesada rápida y devastadora.',
-        cost: { food: 60, iron: 35, gold: 20 },
-        stats: { attack: 20, defense: 15, hp: 40 },
-        upkeep: { food: 0.2, gold: 0.1 }
     }
 };
 
