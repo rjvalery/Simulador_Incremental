@@ -35,22 +35,28 @@ export function renderResources(state) {
   const container = document.getElementById('resources-container');
   if (!container) return;
 
-  const resourceKeys = ['food', 'wood', 'stone', 'gold', 'science', 'iron', 'coal'];
-  const resourceNames = {
-    food: 'Comida', wood: 'Madera', stone: 'Piedra',
-    gold: 'Oro', science: 'Ciencia', iron: 'Hierro', coal: 'Carbón'
-  };
+  const resourceConfig = [
+    { key: 'food', name: 'Comida', reqTech: null },
+    { key: 'wood', name: 'Madera', reqTech: null },
+    { key: 'stone', name: 'Piedra', reqTech: null },
+    { key: 'gold', name: 'Oro', reqTech: 'leadership' },
+    { key: 'science', name: 'Ciencia', reqTech: 'writing' },
+    { key: 'coal', name: 'Carbón', reqTech: 'mining' },
+    { key: 'iron', name: 'Hierro', reqTech: 'mining' }
+  ];
 
   let html = '<h3>Recursos</h3><ul class="resource-list">';
 
-  resourceKeys.forEach(key => {
-    const res = state.resources[key];
+  resourceConfig.forEach(config => {
+    if (config.reqTech && !state.unlockedTechs?.[config.reqTech]) return;
+
+    const res = state.resources[config.key];
     if (!res) return;
 
     const value = Number(res.value ?? res);
     const val = value.toFixed(1);
     const max = res.max ?? '∞';
-    const rate = state.resourceRates?.[key] || 0;
+    const rate = state.resourceRates?.[config.key] || 0;
     const rateClass = rate > 0 ? 'rate-positive' : rate < 0 ? 'rate-negative' : 'rate-neutral';
     const rateSign = rate > 0 ? '+' : '';
     const rateText = rate !== 0
@@ -59,7 +65,7 @@ export function renderResources(state) {
 
     html += `
       <li class="resource-item">
-        <span class="res-name"><strong>${resourceNames[key]}:</strong></span>
+        <span class="res-name"><strong>${config.name}:</strong></span>
         <span class="res-value">${val} / ${max}</span>
         <span class="res-rate">${rateText}</span>
       </li>

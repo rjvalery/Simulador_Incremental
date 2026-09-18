@@ -108,23 +108,52 @@ export function getTechnologyStatus(gameState, techId) {
 
 export function researchTech(gameState, techId) {
     const currentState = getCurrentState(gameState);
-    if (!canResearch(currentState, techId)) return false;
-
     const tech = TECHS_DATA[techId];
-    for (const [resourceKey, requiredAmount] of Object.entries(tech.cost)) {
+    if (!tech || !currentState) return false;
+
+    if (isTechnologyCompleted(currentState, techId)) {
+        logResearchMessage(`La tecnología ${tech.name} ya ha sido investigada.`);
+        return false;
+    }
+
+    const cost = typeof tech.cost === 'object'
+        ? tech.cost
+        : { [tech.resourceType || tech.costType || (techId === 'writing' ? 'food' : 'science')]: tech.cost };
+    const missingRequirement = tech.requires.some(requirement => !isTechnologyCompleted(currentState, requirement));
+    if (missingRequirement) return false;
+
+    for (const [resourceKey, requiredAmount] of Object.entries(cost)) {
         const resource = currentState.resources[resourceKey];
-        if (typeof resource === 'object') {
-            resource.value -= requiredAmount;
-        } else {
-            currentState.resources[resourceKey] -= requiredAmount;
+        const currentValue = typeof resource === 'object' ? resource.value : resource;
+        if (resource === undefined || currentValue < requiredAmount) {
+            const resourceName = resourceKey === 'food' ? 'Comida' : resourceKey === 'science' ? 'Ciencia' : resourceKey;
+            logResearchMessage(`No tienes suficiente ${resourceName} para investigar ${tech.name}.`);
+            return false;
         }
     }
 
     if (!currentState.techs) currentState.techs = {};
     if (!currentState.unlockedTechs) currentState.unlockedTechs = {};
 
+    for (const [resourceKey, requiredAmount] of Object.entries(cost)) {
+        const resource = currentState.resources[resourceKey];
+        if (typeof resource === 'object') resource.value -= requiredAmount;
+        else currentState.resources[resourceKey] -= requiredAmount;
+    }
+
     currentState.techs[techId] = { completed: true };
     currentState.unlockedTechs[techId] = true;
+    tech.completed = true;
+    logResearchMessage(`¡Investigación completada: ${tech.name}!`);
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('state:updated'));
+    }
 
     return true;
+}
+
+function logResearchMessage(message) {
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('log:add', { detail: { message, type: 'info' } }));
+    }
 }
