@@ -35,28 +35,28 @@ export function renderResources(state) {
   const container = document.getElementById('resources-container');
   if (!container) return;
 
-  const resourceConfig = [
-    { key: 'food', name: 'Comida', reqTech: null },
+  const resourceRules = [
+    { key: 'food', name: 'Alimentos', reqTech: null },
     { key: 'wood', name: 'Madera', reqTech: null },
     { key: 'stone', name: 'Piedra', reqTech: null },
     { key: 'gold', name: 'Oro', reqTech: 'leadership' },
     { key: 'science', name: 'Ciencia', reqTech: 'writing' },
-    { key: 'coal', name: 'Carbón', reqTech: 'mining' },
-    { key: 'iron', name: 'Hierro', reqTech: 'mining' }
+    { key: 'iron', name: 'Hierro', reqTech: 'mining' },
+    { key: 'coal', name: 'Carbón', reqTech: 'mining' }
   ];
 
   let html = '<h3>Recursos</h3><ul class="resource-list">';
 
-  resourceConfig.forEach(config => {
-    if (config.reqTech && !state.unlockedTechs?.[config.reqTech]) return;
+  resourceRules.forEach(rule => {
+    if (rule.reqTech && !isTechnologyCompleted(state, rule.reqTech)) return;
 
-    const res = state.resources[config.key];
+    const res = state.resources[rule.key];
     if (!res) return;
 
     const value = Number(res.value ?? res);
     const val = value.toFixed(1);
     const max = res.max ?? '∞';
-    const rate = state.resourceRates?.[config.key] || 0;
+    const rate = state.resourceRates?.[rule.key] || 0;
     const rateClass = rate > 0 ? 'rate-positive' : rate < 0 ? 'rate-negative' : 'rate-neutral';
     const rateSign = rate > 0 ? '+' : '';
     const rateText = rate !== 0
@@ -65,7 +65,7 @@ export function renderResources(state) {
 
     html += `
       <li class="resource-item">
-        <span class="res-name"><strong>${config.name}:</strong></span>
+        <span class="res-name"><strong>${rule.name}:</strong></span>
         <span class="res-value">${val} / ${max}</span>
         <span class="res-rate">${rateText}</span>
       </li>

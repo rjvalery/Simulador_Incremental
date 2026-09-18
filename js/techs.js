@@ -3,7 +3,7 @@ export const TECHS_DATA = {
     writing: {
         id: 'writing',
         name: 'Escritura',
-        cost: { science: 50 },
+        cost: { food: 50 },
         requires: [],
         description: 'Permite el registro de conocimientos y habilita la construcción de Bibliotecas.'
     },
