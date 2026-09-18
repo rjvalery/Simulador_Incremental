@@ -423,7 +423,8 @@ export function renderPopulationControls(state) {
   const jobBuildings = [
     { id: 'farm', name: 'Granja', jobName: 'Agricultores', maxPerBuilding: 2 },
     { id: 'sawmill', name: 'Aserradero', jobName: 'Leñadores', maxPerBuilding: 2 },
-    { id: 'library', name: 'Biblioteca', jobName: 'Eruditos', maxPerBuilding: 1, reqTech: 'writing' }
+    { id: 'library', name: 'Biblioteca', jobName: 'Eruditos', maxPerBuilding: 1, reqTech: 'writing' },
+    { id: 'mine', name: 'Mina', jobName: 'Mineros', maxPerBuilding: 2 }
   ];
 
   jobBuildings.forEach(job => {
