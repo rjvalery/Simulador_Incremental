@@ -152,7 +152,6 @@ export function renderTechPanel(state) {
         ${completed ? '✓ Investigado' : 'Investigar'}
       </button>
     `;
-    `;
 
     const button = card.querySelector('.btn-tech');
     if (button && !completed) {
