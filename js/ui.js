@@ -167,7 +167,8 @@ export function renderBuildingCards(state) {
     { id: 'farm', name: 'Granja', desc: 'Produce alimento constante con obreros.', costWood: 46 },
     { id: 'sawmill', name: 'Aserradero', desc: 'Produce madera constante con obreros.', costWood: 23 },
     { id: 'warehouse', name: 'Almacén', desc: 'Aumenta la capacidad de almacenamiento (+100 Alimento, +100 Madera, +50 Piedra).', costWood: 88, costStone: 28, storageBonus: { food: 100, wood: 100, stone: 50 } },
-    { id: 'library', name: 'Biblioteca', desc: 'Produce puntos de Ciencia por segundo.', costWood: 100, costStone: 50, reqTech: 'writing' }
+    { id: 'library', name: 'Biblioteca', desc: 'Produce puntos de Ciencia por segundo.', costWood: 100, costStone: 50, reqTech: 'writing' },
+    { id: 'communal_house', name: 'Casa Comunal', desc: 'Centro de mando para la gestión de la aldea y elección de un Líder.', costWood: 150, costStone: 80, reqTech: 'leadership' }
   ];
 
   buildingsData.forEach(b => {
