@@ -14,11 +14,24 @@ export const BUILDINGS_DATA = {
     farm: {
         id: "farm",
         name: "Granja",
-        description: "Produce alimento de manera constante gracias al trabajo de los obreros.",
-        baseCost: { wood: 40 },
+        description: "Aumenta la eficiencia de los agricultores (+20% por nivel).",
+        baseCost: { food: 10, wood: 20 },
         costMultiplier: 1.15,
+        maxLevel: 20,
+        workerOutputBonus: 0.20,
         jobsPerBuilding: 2,
         workerOutput: { food: 1 }
+    },
+    sawmill: {
+        id: "sawmill",
+        name: "Aserradero",
+        description: "Aumenta la eficiencia de los leñadores (+20% por nivel).",
+        baseCost: { wood: 30, stone: 10 },
+        costMultiplier: 1.15,
+        maxLevel: 20,
+        workerOutputBonus: 0.20,
+        jobsPerBuilding: 2,
+        workerOutput: { wood: 0.8 }
     },
     woodcutter: {
         id: "woodcutter",
@@ -51,12 +64,25 @@ export const BUILDINGS_DATA = {
     library: {
         id: "library",
         name: "Biblioteca",
-        description: "Genera ciencia cuando tiene tecnicos asignados.",
-        baseCost: { wood: 60, stone: 40 },
-        costMultiplier: 1.15,
+        description: "Aumenta la producción de Ciencia por erudito (+30% por nivel).",
+        baseCost: { wood: 80, stone: 40 },
+        costMultiplier: 1.25,
+        maxLevel: 20,
+        workerOutputBonus: 0.30,
         jobsPerBuilding: 1,
         workerType: 'technicians',
         workerOutput: { science: 0.25 }
+    },
+    mine: {
+        id: "mine",
+        name: "Mina",
+        description: "Aumenta la extracción de Piedra, Hierro y Carbón (+25% por nivel).",
+        baseCost: { wood: 50, stone: 50 },
+        costMultiplier: 1.20,
+        maxLevel: 20,
+        workerOutputBonus: 0.25,
+        jobsPerBuilding: 2,
+        workerOutput: { stone: 0.5 }
     },
     townHall: {
         id: "townHall",
@@ -110,4 +136,9 @@ export function calculateBuildingCost(buildingKey, currentCount) {
         calculatedCost[resource] = Math.floor(baseAmount * Math.pow(building.costMultiplier, currentCount));
     }
     return calculatedCost;
+}
+
+export function canBuildBuilding(buildingId, currentCount) {
+    const building = BUILDINGS_DATA[buildingId];
+    return building ? currentCount < (building.maxLevel ?? Infinity) : false;
 }

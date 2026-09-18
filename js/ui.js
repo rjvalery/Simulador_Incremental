@@ -1,8 +1,9 @@
 import { TECHS_DATA, canResearch, researchTech, isTechnologyCompleted } from './techs.js';
-import { setLeader } from './actions.js';
+import { buildStructure, setLeader } from './actions.js';
+import { BUILDINGS_DATA, calculateBuildingCost } from './buildings.js';
 import { LEADERS, ensureGovernance } from './governance.js';
-import { UNITS_DATA, getMaxMilitaryCapacity, trainUnit } from './military.js';
-import { initMap, attackCamp, exploreCell, MAP_SIZE } from './map.js';
+import { MILITARY_UNITS, UNITS_DATA, getMaxMilitaryCapacity, trainUnit } from './military.js';
+import { initMap, attackCamp, exploreTile, MAP_SIZE } from './map.js';
 
 export function addLog(message) {
   const logContainer = document.getElementById('game-log');
@@ -117,10 +118,17 @@ function renderResourceMonitor(state) {
 }
 
 export function renderTechPanel(state) {
-  const container = document.getElementById('tech-container');
-  if (!container) return;
+  const containers = {
+    civil: document.getElementById('tech-civil-container') || document.getElementById('tech-container'),
+    military: document.getElementById('tech-military-container')
+  };
+  if (!containers.civil && !containers.military) return;
 
-  container.innerHTML = '';
+  Object.values(containers).forEach(container => {
+    if (container) container.innerHTML = '';
+  });
+
+  const militaryTechs = new Set(['tactics', 'cartography']);
 
   Object.keys(TECHS_DATA).forEach(techId => {
     const tech = TECHS_DATA[techId];
@@ -171,7 +179,8 @@ export function renderTechPanel(state) {
       });
     }
 
-    container.appendChild(card);
+    const target = militaryTechs.has(techId) ? containers.military : containers.civil;
+    target?.appendChild(card);
   });
 }
 
@@ -197,6 +206,8 @@ export function renderBuildingCards(state) {
   ];
 
   buildingsData.forEach(b => {
+    if (b.id === 'barracks') return;
+
     // Si requiere tecnología y no está investigada, no lo mostramos aún
     if (b.reqTech && !isTechnologyCompleted(state, b.reqTech)) return;
 
@@ -287,8 +298,29 @@ export function renderMilitaryPanel(state) {
     return;
   }
 
+  const barracks = state.buildings.barracks || { count: 0 };
+  const barracksInfo = BUILDINGS_DATA.barracks;
+  const barracksCost = calculateBuildingCost('barracks', barracks.count || 0);
+  const canAffordBarracks = Object.entries(barracksCost).every(([resourceKey, amount]) => {
+    const resource = state.resources[resourceKey];
+    return (resource?.value ?? resource ?? 0) >= amount;
+  });
+  const barracksCard = `
+    <div class="building-card military-building-card">
+      <h4>${barracksInfo.name} (${barracks.count || 0})</h4>
+      <p>${barracksInfo.description}</p>
+      <p><strong>Costo:</strong> ${Object.entries(barracksCost).map(([key, amount]) => `${amount} ${key}`).join(', ')}</p>
+      <button class="btn-build-military" ${canAffordBarracks ? '' : 'disabled'}>
+        ${canAffordBarracks ? 'Construir Cuartel' : 'Faltan materiales'}
+      </button>
+    </div>
+  `;
+
   if (!state.buildings.barracks?.count) {
-    container.innerHTML = '<p class="text-muted">Construye un Cuartel para entrenar tropas.</p>';
+    container.innerHTML = `${barracksCard}<p class="text-muted">Construye un Cuartel para entrenar tropas.</p>`;
+    container.querySelector('.btn-build-military')?.addEventListener('click', () => {
+      if (buildStructure(state, 'barracks')) renderUI(state);
+    });
     return;
   }
 
@@ -296,7 +328,8 @@ export function renderMilitaryPanel(state) {
   const currentCapacity = Object.keys(UNITS_DATA)
     .reduce((total, unitId) => total + (military[unitId] || 0), 0);
   const maxCapacity = getMaxMilitaryCapacity(state);
-  const unitCards = Object.values(UNITS_DATA).map(unit => {
+  const unitCards = Object.values(MILITARY_UNITS).map(unit => {
+    if (unit.reqTech && !isTechnologyCompleted(state, unit.reqTech)) return '';
     const count = military[unit.id] || 0;
     const tooltipText = `${unit.desc} | Atq: ${unit.stats.attack} Def: ${unit.stats.defense} HP: ${unit.stats.hp}`
       .replace(/"/g, '&quot;');
@@ -314,11 +347,16 @@ export function renderMilitaryPanel(state) {
   }).join('');
 
   container.innerHTML = `
+    ${barracksCard}
     <h3>Gestión Militar (${currentCapacity}/${maxCapacity} Soldados)</h3>
     <div class="military-units-grid">
     ${unitCards}
     </div>
   `;
+
+  container.querySelector('.btn-build-military')?.addEventListener('click', () => {
+    if (buildStructure(state, 'barracks')) renderUI(state);
+  });
 
   container.querySelectorAll('.btn-train').forEach(button => {
     button.addEventListener('click', () => {
@@ -380,7 +418,7 @@ export function renderMapPanel(state) {
 
       const cell = state.mapData[rowIndex][columnIndex];
       if (!cell.revealed) {
-        exploreCell(state, rowIndex, columnIndex);
+        exploreTile(state, columnIndex, rowIndex);
         renderUI(state);
       } else if (cell.type === 'barbarian_camp'
         && window.confirm(`¿Desplegar tropas para atacar el Campamento Bárbaro? (Poder Enemigo: ${cell.enemy.power})`)) {
@@ -403,7 +441,8 @@ function renderDefenseAlerts(state) {
   }
 
   const military = state.military || {};
-  const defensePower = (military.recruits || 0) * 8
+  const defensePower = (military.infantry || 0) * 8
+    + (military.recruits || 0) * 8
     + (military.archers || 0) * 3
     + (military.cavalry || 0) * 15;
   const threats = state.mapData.flat().filter(cell => cell.type === 'barbarian_camp' && cell.enemy);

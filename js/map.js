@@ -16,6 +16,9 @@ function addLog(message) {
 
 export function initMap(state) {
     if (state.mapData && state.mapData.length > 0) {
+        state.mapData.forEach(row => row.forEach(cell => {
+            cell.isFog = cell.isFog ?? !cell.revealed;
+        }));
         mapGrid.length = 0;
         mapGrid.push(...state.mapData);
         return;
@@ -32,6 +35,7 @@ export function initMap(state) {
                     biome: 'grass',
                     type: 'player_village',
                     revealed: true,
+                    isFog: false,
                     name: 'Nuestra Aldea'
                 });
                 continue;
@@ -57,6 +61,7 @@ export function initMap(state) {
                 biome,
                 type,
                 revealed: Math.abs(rowIndex - 3) <= 1 && Math.abs(columnIndex - 3) <= 1,
+                isFog: Math.abs(rowIndex - 3) > 1 || Math.abs(columnIndex - 3) > 1,
                 enemy: enemyData
             });
         }
@@ -94,7 +99,8 @@ export function attackCamp(state, rowIndex, columnIndex) {
     if (!cell || cell.type !== 'barbarian_camp' || !cell.enemy) return false;
 
     const military = state.military || {};
-    const playerPower = (military.recruits || 0) * 5
+    const playerPower = (military.infantry || 0) * 5
+        + (military.recruits || 0) * 5
         + (military.archers || 0) * 12
         + (military.cavalry || 0) * 20;
 
@@ -113,7 +119,8 @@ export function attackCamp(state, rowIndex, columnIndex) {
         cell.type = 'ruins';
         cell.enemy = null;
 
-        if (military.recruits > 0) military.recruits -= 1;
+        if (military.infantry > 0) military.infantry -= 1;
+        else if (military.recruits > 0) military.recruits -= 1;
         addLog(`¡Victoria! Has destruido el campamento bárbaro. Botín: +${goldLoot} Oro, +${ironLoot} Hierro.`);
     } else {
         military.recruits = Math.floor((military.recruits || 0) * 0.5);
@@ -127,19 +134,31 @@ export function attackCamp(state, rowIndex, columnIndex) {
 }
 
 export function exploreCell(state, rowIndex, columnIndex) {
-    const cell = state.mapData?.[rowIndex]?.[columnIndex];
-    if (!cell || cell.revealed) return false;
+    return exploreTile(state, columnIndex, rowIndex);
+}
 
-    const costGold = 20;
-    const currentGold = state.resources.gold.value ?? state.resources.gold;
-    if (currentGold < costGold) {
-        addLog('Necesitas 20 de Oro para enviar una expedición cartográfica.');
+export function exploreTile(state, x, y) {
+    const tile = state.map?.[y]?.[x] || state.mapData?.[y]?.[x];
+    if (!tile) return false;
+
+    const isFog = tile.isFog ?? !tile.revealed;
+    if (!isFog) return false;
+
+    const scoutsAvailable = state.military?.scout || 0;
+    if (scoutsAvailable < 1) {
+        window.dispatchEvent(new CustomEvent('log:add', {
+            detail: { message: 'Necesitas al menos 1 Explorador para adentrarte en la niebla.', type: 'warning' }
+        }));
         return false;
     }
 
-    state.resources.gold.value -= costGold;
-    cell.revealed = true;
-    addLog(`Expedición completada: Casilla (${rowIndex}, ${columnIndex}) explorada.`);
+    tile.isFog = false;
+    tile.revealed = true;
+    state.military.scout -= 1;
+
+    window.dispatchEvent(new CustomEvent('log:add', {
+        detail: { message: `¡Casilla (${x}, ${y}) explorada!`, type: 'info' }
+    }));
     window.dispatchEvent(new CustomEvent('state:updated'));
     return true;
 }

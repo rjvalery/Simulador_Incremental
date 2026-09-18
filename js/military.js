@@ -1,4 +1,28 @@
+export const MILITARY_UNITS = {
+    scout: {
+        id: 'scout',
+        name: 'Explorador',
+        cost: { food: 30, wood: 10 },
+        reqTech: 'cartography',
+        description: 'Unidad necesaria para disipar la niebla del mapa y revelar casillas.',
+        desc: 'Unidad necesaria para disipar la niebla del mapa y revelar casillas.',
+        stats: { attack: 0, defense: 1, hp: 10 },
+        upkeep: { food: 0.05 }
+    },
+    infantry: {
+        id: 'infantry',
+        name: 'Infantería',
+        cost: { food: 50, iron: 20 },
+        reqTech: 'tactics',
+        description: 'Unidad de combate cuerpo a cuerpo.',
+        desc: 'Unidad de combate cuerpo a cuerpo.',
+        stats: { attack: 5, defense: 8, hp: 20 },
+        upkeep: { food: 0.1 }
+    }
+};
+
 export const UNITS_DATA = {
+    ...MILITARY_UNITS,
     recruits: {
         id: 'recruits',
         name: 'Infantería',
@@ -44,6 +68,11 @@ export function getMaxMilitaryCapacity(state) {
 export function trainUnit(state, unitId) {
     const unit = UNITS_DATA[unitId];
     if (!unit) return false;
+
+    if (unit.reqTech && !state.unlockedTechs?.[unit.reqTech]) {
+        addLog(`Investiga ${unit.reqTech} para entrenar ${unit.name}.`);
+        return false;
+    }
 
     state.military = state.military || { recruits: 0, archers: 0, cavalry: 0 };
     const currentCapacity = Object.keys(UNITS_DATA)

@@ -40,8 +40,9 @@ export function runGameTick(state, deltaTime = 1) {
         for (const [resourceKey, baseRate] of Object.entries(buildingInfo.workerOutput || {})) {
             const resource = state.resources[resourceKey];
             const multiplier = resource?.productionMultiplier || 1;
+            const workerOutputBonus = 1 + (buildingInfo.workerOutputBonus || 0) * count;
             const populationFactor = buildingKey === 'taxOffice' ? totalPopulation : 1;
-            const rate = baseRate * assigned * populationFactor * multiplier * productionMultiplier(state, resourceKey, resourceKey === 'science');
+            const rate = baseRate * assigned * workerOutputBonus * populationFactor * multiplier * productionMultiplier(state, resourceKey, resourceKey === 'science');
             if (!resource) continue;
             resource.production += rate;
             addResource(resource, rate * deltaTime);

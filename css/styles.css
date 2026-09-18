@@ -302,6 +302,54 @@ body {
     margin-left: 5px;
 }
 
+#map-container {
+    background: #171b1d;
+    border: 1px solid #30383b;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.map-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 50px);
+    gap: 6px;
+    background: #111827;
+    padding: 12px;
+    border-radius: 8px;
+    width: fit-content;
+}
+
+.map-tile {
+    width: 50px;
+    height: 50px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.map-tile.fog {
+    background: linear-gradient(135deg, #1f2937, #374151);
+    color: #9ca3af;
+    border: 1px dashed #4b5563;
+}
+
+.map-tile.fog:hover {
+    border-color: #eab308;
+    transform: scale(1.05);
+}
+
+.map-tile.biome-grass { background: #31523e; }
+.map-tile.biome-forest { background: #1f463b; }
+.map-tile.biome-mountain { background: #4b4b47; }
+.map-tile.biome-water { background: #24516a; }
+.map-tile.village { background: #78633c; border-color: #d5ae61; }
+.map-tile.enemy { background: #713c3c; border-color: #c9685f; cursor: pointer; }
+.map-tile.ruins { background: #554a48; border-color: #a99a84; }
+
 /* Contenedor relativo para el tooltip */
 [data-tooltip] {
     position: relative;

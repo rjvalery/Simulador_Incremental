@@ -41,6 +41,7 @@
                 <button class="tab-btn active" data-tab="sec-produccion">Producción</button>
                 <button class="tab-btn" data-tab="sec-poblacion">Población</button>
                 <button class="tab-btn" data-tab="sec-edificios">Edificios</button>
+                <button class="tab-btn" data-tab="sec-militar">Militar</button>
                 <button class="tab-btn" data-tab="sec-mapa">Mapa</button>
                 <button class="tab-btn" data-tab="sec-investigacion">Investigación</button>
             </nav>
@@ -66,6 +67,12 @@
                     <h3>Edificios e Infraestructura</h3>
                     <p>Construye estructuras para aumentar la capacidad y producción.</p>
                     <div id="buildings-container"></div>
+                </section>
+
+                <section id="sec-militar" class="tab-content" style="display: none;">
+                    <h3>Militar</h3>
+                    <p>Investiga tecnologías militares, construye un Cuartel y gestiona tus tropas.</p>
+                    <div id="tech-military-container"></div>
                     <div id="military-container"></div>
                 </section>
 
@@ -77,7 +84,7 @@
                 <section id="sec-investigacion" class="tab-content" style="display: none;">
                     <h3>Tecnologías Disponibles</h3>
                     <p>Investiga progresos para desbloquear la era y nuevas estructuras.</p>
-                    <div id="tech-container"></div>
+                    <div id="tech-civil-container"></div>
                 </section>
             </div>
         </main>

@@ -1,7 +1,7 @@
 // actions.js - Acciones del jugador y gestión de población
 
 import { canAfford, deductCost, refreshResourceCaps } from './resources.js';
-import { BUILDINGS_DATA, calculateBuildingCost } from './buildings.js';
+import { BUILDINGS_DATA, calculateBuildingCost, canBuildBuilding } from './buildings.js';
 import { calculateMaxHousing, ensureBuildingStates, ensurePopulationStates, ensureResourceStates } from './state.js';
 import { constructionCostMultiplier, governanceIsAvailable, LEADERS, manualHarvestMultiplier, POLICIES } from './governance.js';
 import { getTechnologyStatus, isTechnologyCompleted, researchTech } from './techs.js';
@@ -47,6 +47,11 @@ export function buildStructure(state, buildingKey) {
 
     if (buildingInfo.maxCount !== undefined && currentCount >= buildingInfo.maxCount) {
         addLog(`${buildingInfo.name} solo puede construirse una vez.`, 'warning');
+        return false;
+    }
+
+    if (!canBuildBuilding(buildingKey, currentCount)) {
+        addLog(`${buildingInfo.name} ha alcanzado el nivel máximo de ${buildingInfo.maxLevel}.`, 'warning');
         return false;
     }
 
