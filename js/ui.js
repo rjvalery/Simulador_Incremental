@@ -246,6 +246,10 @@ export function renderPopulationControls(state) {
   const container = document.getElementById('population-controls');
   if (!container) return;
 
+  // No reconstruir el panel mientras el usuario interactúa con el selector.
+  const selectElement = document.getElementById('leader-select');
+  if (selectElement && document.activeElement === selectElement) return;
+
   container.innerHTML = '';
 
   const communalHouses = state.buildings.communal_house?.count || 0;
@@ -258,8 +262,8 @@ export function renderPopulationControls(state) {
     governanceCard.innerHTML = `
       <h4>Gestión de la Aldea</h4>
       <p>Selecciona el rasgo del Líder para mejorar una línea de producción.</p>
-      <label for="leader-trait">Rasgo del Líder</label>
-      <select id="leader-trait">
+      <label for="leader-select">Rasgo del Líder</label>
+      <select id="leader-select">
         <option value="">Sin líder</option>
         ${Object.values(LEADERS).filter(leader => ['agrarian', 'industrial', 'scientific'].includes(leader.id)).map(leader => `
           <option value="${leader.id}" ${state.governance.leader === leader.id ? 'selected' : ''}>
@@ -269,13 +273,12 @@ export function renderPopulationControls(state) {
       </select>
     `;
 
-    const leaderSelect = governanceCard.querySelector('#leader-trait');
+    const leaderSelect = governanceCard.querySelector('#leader-select');
     leaderSelect?.addEventListener('change', event => {
       const leaderKey = event.target.value;
+      state.governance.leader = leaderKey || null;
       if (leaderKey) {
         setLeader(state, leaderKey);
-      } else {
-        state.governance.leader = null;
       }
       renderUI(state);
       window.dispatchEvent(new CustomEvent('state:updated'));
