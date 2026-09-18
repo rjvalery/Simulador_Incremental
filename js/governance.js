@@ -75,6 +75,15 @@ export function constructionCostMultiplier(state) {
     return state.governance?.leader === 'builder' ? 0.95 : 1;
 }
 
+export function getLeaderBonusMultiplier(state) {
+    const communalCount = state.buildings.communal_house?.count || 0;
+    const leader = state.leader ?? state.governance?.leader;
+    if (communalCount === 0 || !leader || leader === 'none') return 1.0;
+
+    const bonus = 0.10 + (communalCount - 1) * 0.05;
+    return 1.0 + bonus;
+}
+
 export function productionMultiplier(state, resourceKey, passive = false) {
     let multiplier = 1;
     if (state.governance?.policies?.includes('extendedWorkday') && ['wood', 'stone'].includes(resourceKey)) {

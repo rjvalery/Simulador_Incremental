@@ -176,17 +176,17 @@ export function renderBuildingCards(state) {
 
   const buildingsData = [
     // --- ERA ANTIGUA ---
-    { id: 'shelter', name: 'Refugio', desc: 'Aumenta la capacidad de población (+2).', costWood: 17, costFood: 11, popBonus: 2 },
-    { id: 'farm', name: 'Granja', desc: 'Produce alimento constante con obreros.', costWood: 46 },
-    { id: 'sawmill', name: 'Aserradero', desc: 'Produce madera constante con obreros.', costWood: 23 },
-    { id: 'warehouse', name: 'Almacén', desc: 'Aumenta la capacidad de almacenamiento.', costWood: 88, costStone: 28, storageBonus: { food: 100, wood: 100, stone: 50, iron: 25, coal: 25 } },
-    { id: 'library', name: 'Biblioteca', desc: 'Produce puntos de Ciencia por segundo.', costWood: 100, costStone: 50, reqTech: 'writing' },
-    { id: 'communal_house', name: 'Casa Comunal', desc: 'Centro de mando para la gestión de la aldea y elección de un Líder.', costWood: 150, costStone: 80, reqTech: 'leadership' },
+    { id: 'shelter', name: 'Refugio', desc: 'Beneficios: +2 Capacidad de Población.', costWood: 17, costFood: 11, popBonus: 2 },
+    { id: 'farm', name: 'Granja', desc: 'Beneficios: Habilita el empleo de Granjeros para producir Alimento constante.', costWood: 46 },
+    { id: 'sawmill', name: 'Aserradero', desc: 'Beneficios: Habilita el empleo de Leñadores para producir Madera constante.', costWood: 23 },
+    { id: 'warehouse', name: 'Almacén', desc: 'Beneficios: +100 Alimento, +100 Madera, +50 Piedra, +25 Hierro, +25 Carbón a la capacidad máxima.', costWood: 88, costStone: 28, storageBonus: { food: 100, wood: 100, stone: 50, iron: 25, coal: 25 } },
+    { id: 'library', name: 'Biblioteca', desc: 'Beneficios: Habilita el empleo de Sabios para generar Ciencia pasiva.', costWood: 100, costStone: 50, reqTech: 'writing' },
+    { id: 'communal_house', name: 'Casa Comunal', desc: 'Beneficios: Desbloquea elección de Líder, +50 Capacidad de Oro y +5% de eficacia al bono del Líder por nivel.', costWood: 150, costStone: 80, reqTech: 'leadership', storageBonus: { gold: 50 } },
 
     // --- ERA CLÁSICA ---
-    { id: 'mine', name: 'Mina', desc: 'Permite extraer Piedra, Carbón e Hierro con obreros.', costWood: 120, costStone: 60, reqTech: 'mining' },
-    { id: 'forge', name: 'Forja', desc: 'Convierte Carbón y Piedra en Hierro refinado.', costWood: 150, costStone: 100, reqTech: 'metallurgy' },
-    { id: 'barracks', name: 'Cuartel', desc: 'Base militar para entrenar y alojar tropas.', costWood: 200, costStone: 150, costIron: 30, reqTech: 'tactics' }
+    { id: 'mine', name: 'Mina', desc: 'Beneficios: Habilita el empleo de Mineros para extraer Piedra, Carbón e Hierro.', costWood: 120, costStone: 60, reqTech: 'mining' },
+    { id: 'forge', name: 'Forja', desc: 'Beneficios: Procesa automaticamente Carbón y Piedra en Hierro refinado.', costWood: 150, costStone: 100, reqTech: 'metallurgy' },
+    { id: 'barracks', name: 'Cuartel', desc: 'Beneficios: +10 Espacio para tropas militares y desbloquea el entrenamiento de unidades.', costWood: 200, costStone: 150, costIron: 30, reqTech: 'tactics' }
   ];
 
   buildingsData.forEach(b => {
@@ -220,8 +220,9 @@ export function renderBuildingCards(state) {
     if (b.costCoal) costText += `${b.costCoal} Carbón `;
     if (b.costGold) costText += `${b.costGold} Oro `;
 
+    const levelText = b.id === 'communal_house' ? ` - Nivel ${count}` : '';
     card.innerHTML = `
-      <h4>${b.name} (Poseídos: ${count})</h4>
+      <h4>${b.name}${levelText} (Poseídos: ${count})</h4>
       <p>${b.desc}</p>
       <p>Costo: ${costText}</p>
       <button class="btn-build" ${!hasResources ? 'disabled' : ''}>

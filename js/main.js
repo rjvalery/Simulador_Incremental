@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { renderUI, addLog } from './ui.js';
-import { productionMultiplier } from './governance.js';
+import { getLeaderBonusMultiplier, productionMultiplier } from './governance.js';
 import { processMilitaryUpkeep } from './military.js';
 import { initMap, processEnemyAI } from './map.js';
 
@@ -27,6 +27,7 @@ function gameTick() {
 
   // Generación pasiva de Oro por las Casas Comunales
   const communalHouses = state.buildings.communal_house?.count || 0;
+  const leaderEffectiveness = getLeaderBonusMultiplier(state);
   if (communalHouses > 0 && state.population.total > 0) {
     const goldIncome = state.population.total * 0.02 * communalHouses;
     state.resources.gold.value = Math.min(
@@ -34,6 +35,19 @@ function gameTick() {
       state.resources.gold.value + goldIncome
     );
   }
+
+  state.resources.food.value = Math.max(0, Math.min(
+    state.resources.food.max,
+    state.resources.food.value + (foodGenerated * leaderEffectiveness) - foodGenerated
+  ));
+  state.resources.wood.value = Math.min(
+    state.resources.wood.max,
+    state.resources.wood.value + (woodGenerated * leaderEffectiveness) - woodGenerated
+  );
+  state.resources.science.value = Math.min(
+    state.resources.science.max,
+    state.resources.science.value + (scienceGenerated * leaderEffectiveness) - scienceGenerated
+  );
 
   processMilitaryUpkeep(state);
   processEnemyAI(state);
