@@ -1,5 +1,6 @@
 import { state } from './state.js';
 import { renderUI, addLog } from './ui.js';
+import { productionMultiplier } from './governance.js';
 
 window.state = state;
 
@@ -10,9 +11,9 @@ function gameTick() {
   const libraryWorkers = state.buildings.library?.workers || 0;
 
   // Tasas de producción
-  const foodGenerated = farmWorkers * 1.0;  // +1 alimento/s por agricultor
-  const woodGenerated = sawmillWorkers * 0.8; // +0.8 madera/s por leñador
-  const scienceGenerated = libraryWorkers * 0.5; // +0.5 ciencia/s por erudito
+  const foodGenerated = farmWorkers * 1.0 * productionMultiplier(state, 'food', true);  // +1 alimento/s por agricultor
+  const woodGenerated = sawmillWorkers * 0.8 * productionMultiplier(state, 'wood', true); // +0.8 madera/s por leñador
+  const scienceGenerated = libraryWorkers * 0.5 * productionMultiplier(state, 'science', true); // +0.5 ciencia/s por erudito
 
   // Consumo por población
   const foodConsumed = state.population.total * 0.1; // -0.1 alimento/s por poblador
@@ -21,6 +22,16 @@ function gameTick() {
   state.resources.food.value = Math.max(0, Math.min(state.resources.food.max, state.resources.food.value + foodGenerated - foodConsumed));
   state.resources.wood.value = Math.min(state.resources.wood.max, state.resources.wood.value + woodGenerated);
   state.resources.science.value = Math.min(state.resources.science.max, state.resources.science.value + scienceGenerated);
+
+  // Generación pasiva de Oro por las Casas Comunales
+  const communalHouses = state.buildings.communal_house?.count || 0;
+  if (communalHouses > 0 && state.population.total > 0) {
+    const goldIncome = state.population.total * 0.02 * communalHouses;
+    state.resources.gold.value = Math.min(
+      state.resources.gold.max,
+      state.resources.gold.value + goldIncome
+    );
+  }
 
   // 2. Crecimiento demográfico pasivo (Equilibrado a 25 de alimento)
   const foodAmount = state.resources.food.value ?? state.resources.food;

@@ -1,4 +1,6 @@
 import { TECHS_DATA, canResearch, researchTech, isTechnologyCompleted } from './techs.js';
+import { setLeader } from './actions.js';
+import { LEADERS, ensureGovernance } from './governance.js';
 
 export function addLog(message) {
   const logContainer = document.getElementById('game-log');
@@ -212,6 +214,11 @@ export function renderBuildingCards(state) {
         if (!state.buildings[b.id]) state.buildings[b.id] = { count: 0, workers: 0 };
         state.buildings[b.id].count += 1;
 
+        if (b.id === 'communal_house') {
+          state.governance = state.governance || { unlocked: false, leader: null, policies: [] };
+          state.governance.unlocked = true;
+        }
+
         if (b.popBonus) {
           state.population.max += b.popBonus;
         }
@@ -240,6 +247,42 @@ export function renderPopulationControls(state) {
   if (!container) return;
 
   container.innerHTML = '';
+
+  const communalHouses = state.buildings.communal_house?.count || 0;
+  if (communalHouses > 0) {
+    ensureGovernance(state);
+    state.governance.unlocked = true;
+
+    const governanceCard = document.createElement('div');
+    governanceCard.className = 'building-card';
+    governanceCard.innerHTML = `
+      <h4>Gestión de la Aldea</h4>
+      <p>Selecciona el rasgo del Líder para mejorar una línea de producción.</p>
+      <label for="leader-trait">Rasgo del Líder</label>
+      <select id="leader-trait">
+        <option value="">Sin líder</option>
+        ${Object.values(LEADERS).filter(leader => ['agrarian', 'industrial', 'scientific'].includes(leader.id)).map(leader => `
+          <option value="${leader.id}" ${state.governance.leader === leader.id ? 'selected' : ''}>
+            ${leader.name} - ${leader.description}
+          </option>
+        `).join('')}
+      </select>
+    `;
+
+    const leaderSelect = governanceCard.querySelector('#leader-trait');
+    leaderSelect?.addEventListener('change', event => {
+      const leaderKey = event.target.value;
+      if (leaderKey) {
+        setLeader(state, leaderKey);
+      } else {
+        state.governance.leader = null;
+      }
+      renderUI(state);
+      window.dispatchEvent(new CustomEvent('state:updated'));
+    });
+
+    container.appendChild(governanceCard);
+  }
 
   const jobBuildings = [
     { id: 'farm', name: 'Granja', jobName: 'Agricultores', maxPerBuilding: 2 },

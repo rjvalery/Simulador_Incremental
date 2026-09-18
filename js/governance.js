@@ -3,6 +3,21 @@
 import { isTechnologyCompleted } from './techs.js';
 
 export const LEADERS = Object.freeze({
+    agrarian: {
+        id: 'agrarian',
+        name: 'Agrario',
+        description: '+15% a la produccion de alimento.'
+    },
+    industrial: {
+        id: 'industrial',
+        name: 'Industrial',
+        description: '+15% a la produccion de madera.'
+    },
+    scientific: {
+        id: 'scientific',
+        name: 'Científico',
+        description: '+20% a la produccion de ciencia.'
+    },
     hunter: {
         id: 'hunter',
         name: 'Lider Capataz',
@@ -52,7 +67,7 @@ export function ensureGovernance(state) {
 
 export function governanceIsAvailable(state) {
     return state.governance?.unlocked === true &&
-        (state.buildings.townHall?.count || 0) > 0 &&
+        ((state.buildings.communal_house?.count || 0) > 0 || (state.buildings.townHall?.count || 0) > 0) &&
         isTechnologyCompleted(state, 'leadership');
 }
 
@@ -65,9 +80,9 @@ export function productionMultiplier(state, resourceKey, passive = false) {
     if (state.governance?.policies?.includes('extendedWorkday') && ['wood', 'stone'].includes(resourceKey)) {
         multiplier *= 1.1;
     }
-    if (passive && resourceKey === 'science' && state.governance?.leader === 'scholar') {
-        multiplier *= 1.2;
-    }
+    if (resourceKey === 'food' && state.governance?.leader === 'agrarian') multiplier *= 1.15;
+    if (resourceKey === 'wood' && state.governance?.leader === 'industrial') multiplier *= 1.15;
+    if (passive && resourceKey === 'science' && ['scientific', 'scholar'].includes(state.governance?.leader)) multiplier *= 1.2;
     return multiplier;
 }
 
