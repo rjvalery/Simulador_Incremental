@@ -44,7 +44,7 @@ function gameTick() {
     }
   }
 
-  const communalHouses = state.buildings.communal_house?.count || 0;
+  const communalHouses = state.buildings.townHall?.count || 0;
   if (communalHouses > 0 && state.population.total > 0) {
     rates.gold += state.population.total * 0.02 * communalHouses;
   }

@@ -25,6 +25,10 @@ export function renderUI(gameState) {
   renderResourceMonitor(state);
   renderTechPanel(state);
   renderBuildingCards(state);
+  renderMilitaryPanel(state);
+  renderMapPanel(state);
+  renderDefenseAlerts(state);
+  renderPopulationControls(state);
 }
 
 export function renderResources(state) {
@@ -137,17 +141,17 @@ export function renderTechPanel(state) {
 
     const card = document.createElement('div');
     card.className = `tech-card ${completed ? 'completed' : ''}`;
-    card.dataset.tooltip = tech.description;
-        card.innerHTML = \`
-          <h4>${tech.name}</h4>
-          <p><strong>Costo:</strong> ${costText || 'Gratis'} Ciencia</p>
-          <button 
-            class="btn-tech" 
-            data-tech="${tech.id}"
-            ${!available || completed ? 'disabled' : ''}>
-            ${completed ? '✓ Investigado' : 'Investigar'}
-          </button>
-        \`;
+    card.dataset.tooltip = (tech.description || '').replace(/"/g, '&quot;');
+    card.innerHTML = `
+      <h4>${tech.name}</h4>
+      <p><strong>Costo:</strong> ${costText || 'Gratis'}</p>
+      <button 
+        class="btn-tech" 
+        data-tech="${tech.id}"
+        ${!available || completed ? 'disabled' : ''}>
+        ${completed ? '✓ Investigado' : 'Investigar'}
+      </button>
+    `;
     `;
 
     const button = card.querySelector('.btn-tech');
@@ -179,7 +183,7 @@ export function renderBuildingCards(state) {
     { id: 'sawmill', name: 'Aserradero', desc: 'Beneficios: Habilita el empleo de Leñadores para producir Madera constante.', costWood: 23 },
     { id: 'warehouse', name: 'Almacén', desc: 'Beneficios: +100 Alimento, +100 Madera, +50 Piedra, +25 Hierro, +25 Carbón a la capacidad máxima.', costWood: 88, costStone: 28, storageBonus: { food: 100, wood: 100, stone: 50, iron: 25, coal: 25 } },
     { id: 'library', name: 'Biblioteca', desc: 'Beneficios: Habilita el empleo de Sabios para generar Ciencia pasiva.', costWood: 100, costStone: 50, reqTech: 'writing' },
-    { id: 'communal_house', name: 'Casa Comunal', desc: 'Beneficios: Desbloquea elección de Líder, +50 Capacidad de Oro y +5% de eficacia al bono del Líder por nivel.', costWood: 150, costStone: 80, reqTech: 'leadership', storageBonus: { gold: 50 } },
+    { id: 'townHall', name: 'Casa Comunal', desc: 'Beneficios: Desbloquea elección de Líder, +50 Capacidad de Oro y +5% de eficacia al bono del Líder por nivel.', costWood: 150, costStone: 80, reqTech: 'leadership', storageBonus: { gold: 50 } },
 
     // --- ERA CLÁSICA ---
     { id: 'mine', name: 'Mina', desc: 'Beneficios: Habilita el empleo de Mineros para extraer Piedra, Carbón e Hierro.', costWood: 120, costStone: 60, reqTech: 'mining' },
@@ -209,7 +213,7 @@ export function renderBuildingCards(state) {
 
     const card = document.createElement('div');
     card.className = 'building-card';
-    card.dataset.tooltip = b.desc;
+    card.dataset.tooltip = (b.desc || '').replace(/"/g, '&quot;');
 
     let costText = '';
     if (b.costWood) costText += `${b.costWood} Madera `;
@@ -219,7 +223,7 @@ export function renderBuildingCards(state) {
     if (b.costCoal) costText += `${b.costCoal} Carbón `;
     if (b.costGold) costText += `${b.costGold} Oro `;
 
-    const levelText = b.id === 'communal_house' ? ` - Nivel ${count}` : '';
+    const levelText = b.id === 'townHall' ? ` - Nivel ${count}` : '';
     card.innerHTML = `
       <h4>${b.name}${levelText} (Poseídos: ${count})</h4>
       <p><strong>Costo:</strong> ${costText}</p>
@@ -241,7 +245,7 @@ export function renderBuildingCards(state) {
         if (!state.buildings[b.id]) state.buildings[b.id] = { count: 0, workers: 0 };
         state.buildings[b.id].count += 1;
 
-        if (b.id === 'communal_house') {
+        if (b.id === 'townHall') {
           state.governance = state.governance || { unlocked: false, leader: null, policies: [] };
           state.governance.unlocked = true;
         }
@@ -287,17 +291,27 @@ export function renderMilitaryPanel(state) {
   const currentCapacity = Object.keys(UNITS_DATA)
     .reduce((total, unitId) => total + (military[unitId] || 0), 0);
   const maxCapacity = getMaxMilitaryCapacity(state);
+  const unitCards = Object.values(UNITS_DATA).map(unit => {
+    const count = military[unit.id] || 0;
+    const tooltipText = `${unit.desc} | Atq: ${unit.stats.attack} Def: ${unit.stats.defense} HP: ${unit.stats.hp}`
+      .replace(/"/g, '&quot;');
+    const costText = Object.entries(unit.cost)
+      .map(([resourceKey, amount]) => `${amount} ${resourceKey}`)
+      .join(', ');
+
+    return `
+      <div class="unit-card" data-tooltip="${tooltipText}">
+        <h4>${unit.name} (${count})</h4>
+        <p><strong>Costo:</strong> ${costText}</p>
+        <button class="btn-train" data-unit="${unit.id}">Entrenar</button>
+      </div>
+    `;
+  }).join('');
 
   container.innerHTML = `
     <h3>Gestión Militar (${currentCapacity}/${maxCapacity} Soldados)</h3>
     <div class="military-units-grid">
-    ${Object.values(UNITS_DATA).map(unit => `
-      <div class="unit-card" data-tooltip="${unit.desc} | Atq: ${unit.stats.attack} Def: ${unit.stats.defense}">
-        <h4>${unit.name} (${military[unit.id] || 0})</h4>
-        <p><strong>Costo:</strong> ${Object.entries(unit.cost).map(([resourceKey, amount]) => `${amount} ${resourceKey}`).join(', ')}</p>
-        <button class="btn-train" data-unit="${unit.id}">Entrenar</button>
-      </div>
-    `).join('')}
+    ${unitCards}
     </div>
   `;
 
@@ -452,8 +466,6 @@ export function renderPopulationControls(state) {
     { id: 'sawmill', name: 'Aserradero', jobName: 'Leñadores', maxPerBuilding: 2 },
     { id: 'library', name: 'Biblioteca', jobName: 'Eruditos', maxPerBuilding: 1, reqTech: 'writing' },
     { id: 'mine', name: 'Mina', jobName: 'Mineros', maxPerBuilding: 2 }
-  ];
-
   jobBuildings.forEach(job => {
     const building = state.buildings[job.id];
     if (!building || building.count <= 0) return;
