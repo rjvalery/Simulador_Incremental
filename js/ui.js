@@ -21,89 +21,87 @@ export function renderUI(gameState) {
   const state = gameState || window.state;
   if (!state) return;
 
+  renderResources(state);
   renderResourceMonitor(state);
   renderTechPanel(state);
   renderBuildingCards(state);
-  renderMilitaryPanel(state);
-  renderMapPanel(state);
-  renderPopulationControls(state);
 }
 
-export function setupSettingsModal({ onExport, onImport, onReset }) {
-  const modal = document.getElementById('settings-modal');
-  const openButton = document.getElementById('btn-settings');
-  const closeButton = document.getElementById('close-settings');
-  const exportButton = document.getElementById('btn-export');
-  const importButton = document.getElementById('btn-import');
-  const resetButton = document.getElementById('btn-reset-game');
-  const confirmImportButton = document.getElementById('btn-confirm-import');
-  const importExportArea = document.getElementById('import-export-area');
-  const ioLabel = document.getElementById('io-label');
-  const ioTextarea = document.getElementById('io-textarea');
+export function renderResources(state) {
+  const container = document.getElementById('resources-container');
+  if (!container) return;
 
-  if (!modal || !openButton) return;
-
-  const closeModal = () => {
-    modal.style.display = 'none';
+  const resourceKeys = ['food', 'wood', 'stone', 'gold', 'science', 'iron', 'coal'];
+  const resourceNames = {
+    food: 'Comida', wood: 'Madera', stone: 'Piedra',
+    gold: 'Oro', science: 'Ciencia', iron: 'Hierro', coal: 'Carbón'
   };
 
-  openButton.addEventListener('click', () => {
-    modal.style.display = 'flex';
+  let html = '<h3>Recursos</h3><ul class="resource-list">';
+
+  resourceKeys.forEach(key => {
+    const res = state.resources[key];
+    if (!res) return;
+
+    const value = Number(res.value ?? res);
+    const val = value.toFixed(1);
+    const max = res.max ?? '∞';
+    const rate = state.resourceRates?.[key] || 0;
+    const rateClass = rate > 0 ? 'rate-positive' : rate < 0 ? 'rate-negative' : 'rate-neutral';
+    const rateSign = rate > 0 ? '+' : '';
+    const rateText = rate !== 0
+      ? `<span class="${rateClass}">(${rateSign}${rate.toFixed(1)}/s)</span>`
+      : '';
+
+    html += `
+      <li class="resource-item">
+        <span class="res-name"><strong>${resourceNames[key]}:</strong></span>
+        <span class="res-value">${val} / ${max}</span>
+        <span class="res-rate">${rateText}</span>
+      </li>
+    `;
   });
 
-  closeButton?.addEventListener('click', closeModal);
-  modal.addEventListener('click', event => {
-    if (event.target === modal) closeModal();
-  });
-
-  exportButton?.addEventListener('click', () => {
-    importExportArea.style.display = 'block';
-    ioLabel.textContent = 'Código de Guardado:';
-    ioTextarea.value = onExport();
-    confirmImportButton.style.display = 'none';
-  });
-
-  importButton?.addEventListener('click', () => {
-    importExportArea.style.display = 'block';
-    ioLabel.textContent = 'Pega el Código de Guardado:';
-    ioTextarea.value = '';
-    confirmImportButton.style.display = 'inline-block';
-    ioTextarea.focus();
-  });
-
-  confirmImportButton?.addEventListener('click', () => {
-    if (onImport(ioTextarea.value)) closeModal();
-  });
-
-  resetButton?.addEventListener('click', () => {
-    if (window.confirm('¿Reiniciar toda la partida a 0?')) {
-      onReset();
-      closeModal();
-    }
-  });
+  html += '</ul>';
+  container.innerHTML = html;
 }
 
 function renderResourceMonitor(state) {
   const getVal = (res) => (typeof res === 'object' ? res.value : res);
   const getMax = (res) => (typeof res === 'object' ? res.max : 0);
-
-  const foodEl = document.getElementById('res-food');
-  const woodEl = document.getElementById('res-wood');
-  const stoneEl = document.getElementById('res-stone');
-  const goldEl = document.getElementById('res-gold');
-  const scienceEl = document.getElementById('res-science');
-  const ironEl = document.getElementById('res-iron');
-  const coalEl = document.getElementById('res-coal');
+  const resourcesToDisplay = ['food', 'wood', 'stone', 'gold', 'science', 'iron', 'coal'];
+  const resourceNames = {
+    food: 'Alimentos',
+    wood: 'Madera',
+    stone: 'Piedra',
+    gold: 'Oro',
+    science: 'Ciencia',
+    iron: 'Hierro',
+    coal: 'Carbón'
+  };
   const popEl = document.getElementById('res-pop');
   const workersEl = document.getElementById('res-workers');
 
-  if (foodEl) foodEl.textContent = `${getVal(state.resources.food).toFixed(1)} / ${getMax(state.resources.food)}`;
-  if (woodEl) woodEl.textContent = `${getVal(state.resources.wood).toFixed(1)} / ${getMax(state.resources.wood)}`;
-  if (stoneEl) stoneEl.textContent = `${getVal(state.resources.stone).toFixed(0)} / ${getMax(state.resources.stone)}`;
-  if (goldEl) goldEl.textContent = `${getVal(state.resources.gold).toFixed(0)} / ${getMax(state.resources.gold)}`;
-  if (scienceEl) scienceEl.textContent = `${getVal(state.resources.science).toFixed(0)} / ${getMax(state.resources.science)}`;
-  if (ironEl) ironEl.textContent = `${getVal(state.resources.iron).toFixed(0)} / ${getMax(state.resources.iron)}`;
-  if (coalEl) coalEl.textContent = `${getVal(state.resources.coal).toFixed(0)} / ${getMax(state.resources.coal)}`;
+  const resourceList = document.querySelector('.resource-group ul');
+  if (resourceList) {
+    for (const resourceKey of resourcesToDisplay) {
+      let resourceElement = document.getElementById(`res-${resourceKey}`);
+      if (!resourceElement) {
+        const item = document.createElement('li');
+        item.innerHTML = `${resourceNames[resourceKey]}: <span id="res-${resourceKey}"></span>`;
+        resourceList.appendChild(item);
+        resourceElement = item.querySelector(`#res-${resourceKey}`);
+      }
+
+      const resource = state.resources[resourceKey];
+      if (resourceElement && resource) {
+        const decimals = ['food', 'wood'].includes(resourceKey) ? 1 : 0;
+        const rate = state.resourceRates?.[resourceKey] || 0;
+        const rateText = `${rate >= 0 ? '+' : ''}${rate.toFixed(2)}/s`;
+        resourceElement.textContent = `${getVal(resource).toFixed(decimals)} / ${getMax(resource)} (${rateText})`;
+      }
+    }
+  }
   if (popEl) popEl.textContent = `${state.population.total} / ${state.population.max}`;
   if (workersEl) workersEl.textContent = `${state.population.workers} / ${state.population.total}`;
 }
@@ -139,17 +137,17 @@ export function renderTechPanel(state) {
 
     const card = document.createElement('div');
     card.className = `tech-card ${completed ? 'completed' : ''}`;
-
-    card.innerHTML = `
-      <h4>${tech.name}</h4>
-      <p>${tech.description}</p>
-      <p>Costo: ${costText || 'Gratis'}</p>
-      <button 
-        class="btn-tech" 
-        data-tech="${techId}"
-        ${!available || completed ? 'disabled' : ''}>
-        ${completed ? '✓ Investigado' : 'Investigar'}
-      </button>
+    card.dataset.tooltip = tech.description;
+        card.innerHTML = \`
+          <h4>${tech.name}</h4>
+          <p><strong>Costo:</strong> ${costText || 'Gratis'} Ciencia</p>
+          <button 
+            class="btn-tech" 
+            data-tech="${tech.id}"
+            ${!available || completed ? 'disabled' : ''}>
+            ${completed ? '✓ Investigado' : 'Investigar'}
+          </button>
+        \`;
     `;
 
     const button = card.querySelector('.btn-tech');
@@ -211,6 +209,7 @@ export function renderBuildingCards(state) {
 
     const card = document.createElement('div');
     card.className = 'building-card';
+    card.dataset.tooltip = b.desc;
 
     let costText = '';
     if (b.costWood) costText += `${b.costWood} Madera `;
@@ -223,9 +222,8 @@ export function renderBuildingCards(state) {
     const levelText = b.id === 'communal_house' ? ` - Nivel ${count}` : '';
     card.innerHTML = `
       <h4>${b.name}${levelText} (Poseídos: ${count})</h4>
-      <p>${b.desc}</p>
-      <p>Costo: ${costText}</p>
-      <button class="btn-build" ${!hasResources ? 'disabled' : ''}>
+      <p><strong>Costo:</strong> ${costText}</p>
+      <button class="btn-build" data-building="${b.id}" ${!hasResources ? 'disabled' : ''}>
         ${hasResources ? 'Construir' : 'Faltan materiales'}
       </button>
     `;
@@ -294,10 +292,8 @@ export function renderMilitaryPanel(state) {
     <h3>Gestión Militar (${currentCapacity}/${maxCapacity} Soldados)</h3>
     <div class="military-units-grid">
     ${Object.values(UNITS_DATA).map(unit => `
-      <div class="unit-card">
-        <h4>${unit.name} (Poseídos: ${military[unit.id] || 0})</h4>
-        <p>${unit.desc}</p>
-        <p><small>Atq: ${unit.stats.attack} | Def: ${unit.stats.defense} | HP: ${unit.stats.hp}</small></p>
+      <div class="unit-card" data-tooltip="${unit.desc} | Atq: ${unit.stats.attack} Def: ${unit.stats.defense}">
+        <h4>${unit.name} (${military[unit.id] || 0})</h4>
         <p><strong>Costo:</strong> ${Object.entries(unit.cost).map(([resourceKey, amount]) => `${amount} ${resourceKey}`).join(', ')}</p>
         <button class="btn-train" data-unit="${unit.id}">Entrenar</button>
       </div>
@@ -374,6 +370,36 @@ export function renderMapPanel(state) {
       }
     });
   });
+}
+
+function renderDefenseAlerts(state) {
+  if (!state.mapData) return;
+
+  let container = document.getElementById('defense-alerts');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'defense-alerts';
+    container.className = 'building-card';
+    document.querySelector('.main-content')?.prepend(container);
+  }
+
+  const military = state.military || {};
+  const defensePower = (military.recruits || 0) * 8
+    + (military.archers || 0) * 3
+    + (military.cavalry || 0) * 15;
+  const threats = state.mapData.flat().filter(cell => cell.type === 'barbarian_camp' && cell.enemy);
+
+  if (threats.length === 0) {
+    container.innerHTML = '<strong>Defensa:</strong> No hay amenazas detectadas.';
+    container.className = 'building-card defense-alert defense-clear';
+    return;
+  }
+
+  const dangerousThreats = threats.filter(cell => cell.enemy.power > defensePower);
+  container.className = `building-card defense-alert ${dangerousThreats.length ? 'defense-warning' : 'defense-ready'}`;
+  container.innerHTML = dangerousThreats.length
+    ? `<strong>⚠️ Alerta de defensa:</strong> ${dangerousThreats.length} campamento(s) superan tu defensa (${defensePower}).`
+    : `<strong>Defensa:</strong> Tus fuerzas pueden enfrentarse a las amenazas detectadas (${defensePower}).`;
 }
 
 export function renderPopulationControls(state) {
