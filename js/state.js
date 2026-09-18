@@ -125,3 +125,40 @@ export class GameStateManager {
 // Instancia única (Singleton) exportada para la aplicación
 export const gameState = new GameStateManager();
 export const state = gameState.state; // Compatibilidad hacia atrás
+
+/**
+ * Calcula la capacidad máxima de viviendas disponibles.
+ */
+export function calculateMaxHousing(state) {
+    const baseHousing = 5;
+    const houseCount = state.buildings?.communal_house?.count || state.buildings?.shelter?.count || 0;
+    const capacityPerHouse = 5;
+
+    return baseHousing + (houseCount * capacityPerHouse);
+}
+
+/**
+ * Valida y asegura la estructura del objeto de edificios en el estado.
+ */
+export function ensureBuildingStates(state) {
+    if (!state.buildings) state.buildings = {};
+    return state.buildings;
+}
+
+/**
+ * Valida y asegura la estructura del objeto de población en el estado.
+ */
+export function ensurePopulationStates(state) {
+    if (!state.population) {
+        state.population = { total: 0, workers: 0, max: calculateMaxHousing(state) };
+    }
+    return state.population;
+}
+
+/**
+ * Valida y asegura la estructura del objeto de recursos en el estado.
+ */
+export function ensureResourceStates(state) {
+    if (!state.resources) state.resources = {};
+    return state.resources;
+}
