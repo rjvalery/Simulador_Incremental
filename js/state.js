@@ -4,9 +4,9 @@ import { isTechnologyCompleted } from './techs.js';
 
 export const state = {
     resources: {
-        food: { value: 293.29, max: 300 },
-        wood: { value: 174.52, max: 250 },
-        stone: { value: 2, max: 200 },
+        food: { value: 0, max: 300 },
+        wood: { value: 0, max: 250 },
+        stone: { value: 0, max: 200 },
         gold: { value: 0, max: 1000 },
         science: { value: 25, max: 600 },
         iron: { value: 0, max: 50 },
