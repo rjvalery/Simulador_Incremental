@@ -116,7 +116,6 @@ function gameTick() {
   }
 
   // Generación pasiva de Oro por las Casas Comunales
-  const communalHouses = state.buildings.communal_house?.count || 0;
   const leaderEffectiveness = getLeaderBonusMultiplier(state);
   if (communalHouses > 0 && state.population.total > 0) {
     const goldIncome = state.population.total * 0.02 * communalHouses;
