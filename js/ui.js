@@ -465,14 +465,21 @@ export function renderPopulationControls(state) {
     { id: 'sawmill', name: 'Aserradero', jobName: 'Leñadores', maxPerBuilding: 2 },
     { id: 'library', name: 'Biblioteca', jobName: 'Eruditos', maxPerBuilding: 1, reqTech: 'writing' },
     { id: 'mine', name: 'Mina', jobName: 'Mineros', maxPerBuilding: 2 }
+  ];
+
   jobBuildings.forEach(job => {
+    if (!state || !state.buildings) return;
+
     const building = state.buildings[job.id];
-    if (!building || building.count <= 0) return;
-    if (job.reqTech && !isTechnologyCompleted(state, job.reqTech)) return;
+    if (!building || !building.count || building.count <= 0) return;
+
+    if (job.reqTech && typeof isTechnologyCompleted === 'function') {
+      if (!isTechnologyCompleted(state, job.reqTech)) return;
+    }
 
     const currentWorkers = building.workers || 0;
     const maxCapacity = building.count * job.maxPerBuilding;
-    const unassigned = state.population.total - state.population.workers;
+    const unassigned = (state.population.total || 0) - (state.population.workers || 0);
 
     const card = document.createElement('div');
     card.className = 'building-card';
@@ -480,31 +487,31 @@ export function renderPopulationControls(state) {
       <h4>${job.name} - ${job.jobName}</h4>
       <p>Asignados: ${currentWorkers} / ${maxCapacity}</p>
       <div style="display: flex; gap: 10px;">
-        <button class="btn-add-worker" ${unassigned <= 0 || currentWorkers >= maxCapacity ? 'disabled' : ''}>+ Asignar</button>
-        <button class="btn-remove-worker" ${currentWorkers <= 0 ? 'disabled' : ''}>- Quitar</button>
+        <button class="btn-add-worker" ${unassigned <= 0 || currentWorkers >= maxCapacity ? 'disabled' : ''}>+</button>
+        <button class="btn-remove-worker" ${currentWorkers <= 0 ? 'disabled' : ''}>-</button>
       </div>
     `;
 
     const btnAdd = card.querySelector('.btn-add-worker');
     const btnRemove = card.querySelector('.btn-remove-worker');
 
-    if (btnAdd && unassigned > 0 && currentWorkers < maxCapacity) {
+    if (btnAdd) {
       btnAdd.addEventListener('click', () => {
-        state.buildings[job.id].workers = currentWorkers + 1;
-        state.population.workers += 1;
-        addLog(`Asignaste 1 obrero a ${job.name}`);
-        renderUI(state);
-        window.dispatchEvent(new CustomEvent('state:updated'));
+        if (unassigned > 0 && currentWorkers < maxCapacity) {
+          building.workers = (building.workers || 0) + 1;
+          state.population.workers = (state.population.workers || 0) + 1;
+          if (typeof renderUI === 'function') renderUI(state);
+        }
       });
     }
 
-    if (btnRemove && currentWorkers > 0) {
+    if (btnRemove) {
       btnRemove.addEventListener('click', () => {
-        state.buildings[job.id].workers = currentWorkers - 1;
-        state.population.workers -= 1;
-        addLog(`Quitaste 1 obrero de ${job.name}`);
-        renderUI(state);
-        window.dispatchEvent(new CustomEvent('state:updated'));
+        if (currentWorkers > 0) {
+          building.workers -= 1;
+          state.population.workers -= 1;
+          if (typeof renderUI === 'function') renderUI(state);
+        }
       });
     }
 
