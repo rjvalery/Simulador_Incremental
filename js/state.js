@@ -1,155 +1,127 @@
-import { BUILDINGS_DATA } from './buildings.js';
-import { ensureGovernance } from './governance.js';
-import { isTechnologyCompleted } from './techs.js';
-
-export const state = {
-    resources: {
-        food: { value: 0, max: 300 },
-        wood: { value: 0, max: 250 },
-        stone: { value: 0, max: 200 },
-        gold: { value: 0, max: 1000 },
-        science: { value: 25, max: 600 },
-        iron: { value: 0, max: 50 },
-        coal: { value: 0, max: 50 }
-    },
-    population: {
-        total: 5,
-        max: 5,
-        workers: 4,
-        scholars: 0
-    },
-    buildings: {
-        shelter: { count: 1 },
-        farm: { count: 1, workers: 2 },
-        sawmill: { count: 1, workers: 2 },
-        warehouse: { count: 1 },
-        library: { count: 0, workers: 0 },
-        townHall: { count: 0 },
-        mine: { count: 0, workers: 0 },
-        forge: { count: 0, workers: 0 },
-        barracks: { count: 0 }
-    },
-    military: {
-        recruits: 0,
-        archers: 0,
-        cavalry: 0
-    },
-    techs: {},
-    unlockedTechs: {}
-};
-
-export const gameState = state;
-
-if (typeof window !== 'undefined') {
-    window.state = state;
-}
-
-const LOCKED_BY_DEFAULT = new Set(['quarry', 'library', 'townHall', 'taxOffice', 'factory', 'oilRefinery']);
-const DEFAULT_UNLOCKED_BUILDINGS = new Set(['farm', 'woodcutter', 'shelter']);
-const BUILDING_TECH_REQUIREMENTS = {
-    quarry: 'bronzeWorking',
-    library: 'writing',
-    townHall: 'leadership',
-    taxOffice: 'taxation',
-    factory: 'industrialization',
-    oilRefinery: 'mechanizedWarfare'
-};
-const RESOURCE_DEFAULTS = {
-    food: { name: 'Alimentos', max: 200 },
-    wood: { name: 'Madera', max: 150 },
-    stone: { name: 'Piedra', max: 100 },
-    gold: { name: 'Oro', max: 1000 },
-    science: { name: 'Ciencia', max: 500 },
-    iron: { name: 'Hierro', max: 50 },
-    coal: { name: 'Carbón', max: 50 }
-};
-
-export function ensureResourceStates(state) {
-    state.resources = state.resources || {};
-
-    if (!state.resources.gold && state.resources.money) {
-        state.resources.gold = state.resources.money;
-        state.resources.gold.name = 'Oro';
-        delete state.resources.money;
+/**
+ * Clase que gestiona el estado global del juego (ES6+)
+ */
+export class GameStateManager {
+    constructor() {
+        this.SAVE_KEY = 'simulador_incremental_save';
+        this.state = this.getInitialState();
+        this.load();
     }
 
-    for (const [resourceKey, defaults] of Object.entries(RESOURCE_DEFAULTS)) {
-        const resource = state.resources[resourceKey] || {};
-        const parseValue = value => {
-            if (typeof value === 'string') {
-                const normalizedText = value.trim();
-                const normalizedValue = /^[\d.,]+$/.test(normalizedText) && /[.,]\d{3}$/.test(normalizedText)
-                    ? normalizedText.replace(/[.,]/g, '')
-                    : normalizedText.replace(',', '.');
-                return Number(normalizedValue);
-            }
-            return Number(value);
+    /**
+     * Estado base inicial con todos los valores en 0
+     */
+    getInitialState() {
+        return {
+            resources: {
+                food: { value: 0, max: 300 },
+                wood: { value: 0, max: 250 },
+                stone: { value: 0, max: 200 },
+                gold: { value: 0, max: 1000 },
+                science: { value: 0, max: 600 },
+                iron: { value: 0, max: 50 },
+                coal: { value: 0, max: 50 }
+            },
+            resourceRates: {
+                food: 0, wood: 0, stone: 0, gold: 0, science: 0, iron: 0, coal: 0
+            },
+            buildings: {
+                farm: { count: 0, workers: 0 },
+                sawmill: { count: 0, workers: 0 },
+                communal_house: { count: 0 },
+                library: { count: 0, workers: 0 },
+                mine: { count: 0, workers: 0 },
+                forge: { count: 0, workers: 0 },
+                barracks: { count: 0 }
+            },
+            population: { total: 0, workers: 0, max: 5 },
+            unlockedTechs: {},
+            military: { scout: 0, infantry: 0, archers: 0, cavalry: 0 },
+            governance: { leader: null }
         };
-        const legacyValue = parseValue(resource.val);
-        const currentValue = parseValue(resource.value);
-
-        resource.name = resource.name || defaults.name;
-        resource.value = Number.isFinite(currentValue)
-            ? currentValue
-            : Number.isFinite(legacyValue) ? legacyValue : 0;
-        resource.value = Number.isFinite(resource.value) ? resource.value : 0;
-        resource.max = Number.isFinite(Number(resource.max)) ? Number(resource.max) : defaults.max;
-        state.resources[resourceKey] = resource;
     }
 
-}
+    /**
+     * Modifica el valor de un recurso de forma segura y respeta el límite máximo
+     */
+    addResource(key, amount) {
+        const res = this.state.resources[key];
+        if (!res) return;
 
-export function ensureBuildingStates(state) {
-    state.buildings = state.buildings || {};
+        if (typeof res === 'object') {
+            res.value = Math.min(res.max ?? Infinity, Math.max(0, res.value + amount));
+        } else {
+            this.state.resources[key] = Math.max(0, res + amount);
+        }
+        this.notifyUpdate();
+    }
 
-    for (const buildingKey of Object.keys(BUILDINGS_DATA)) {
-        if (!state.buildings[buildingKey]) {
-            state.buildings[buildingKey] = {
-                count: 0,
-                unlocked: !LOCKED_BY_DEFAULT.has(buildingKey)
-            };
+    /**
+     * Descuenta recursos si el jugador tiene suficiente saldo
+     */
+    consumeResources(costs) {
+        // 1. Validar si dispone de todos los recursos requeridos
+        for (const [key, amount] of Object.entries(costs)) {
+            const currentVal = this.state.resources[key]?.value ?? this.state.resources[key] ?? 0;
+            if (currentVal < amount) return false;
+        }
+
+        // 2. Restar los recursos
+        for (const [key, amount] of Object.entries(costs)) {
+            this.addResource(key, -amount);
+        }
+
+        this.notifyUpdate();
+        return true;
+    }
+
+    /**
+     * Guarda el estado actual en localStorage
+     */
+    save() {
+        try {
+            localStorage.setItem(this.SAVE_KEY, JSON.stringify(this.state));
+        } catch (e) {
+            console.error('Error al guardar en localStorage:', e);
         }
     }
 
-    for (const [buildingKey, requirement] of Object.entries(BUILDING_TECH_REQUIREMENTS)) {
-        state.buildings[buildingKey].unlocked = isTechnologyCompleted(state, requirement);
-    }
-
-    for (const buildingKey of DEFAULT_UNLOCKED_BUILDINGS) {
-        state.buildings[buildingKey].unlocked = true;
-    }
-}
-
-export function ensurePopulationStates(state) {
-    state.population = state.population || {};
-    state.population.total = Number(state.population.total) || 0;
-    state.population.max = Number(state.population.max) || 0;
-    state.population.workers = Number(state.population.workers) || 0;
-    state.population.scholars = Number(state.population.scholars) || 0;
-    state.population.unskilled = Number(state.population.unskilled) || 0;
-    state.population.technicians = Number(state.population.technicians) || state.population.scholars;
-    state.population.professionals = Number(state.population.professionals) || 0;
-    state.population.assignments = state.population.assignments || {};
-    ensureGovernance(state);
-}
-
-// Función auxiliar para calcular la capacidad máxima de vivienda de forma dinámica
-export function calculateMaxHousing(state) {
-    let totalCapacity = 0;
-    for (const [key, building] of Object.entries(state.buildings)) {
-        const buildingInfo = BUILDINGS_DATA[key];
-        if (buildingInfo?.housingCapacity) {
-            totalCapacity += building.count * buildingInfo.housingCapacity;
+    /**
+     * Carga la partida guardada si existe
+     */
+    load() {
+        try {
+            const saved = localStorage.getItem(this.SAVE_KEY);
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                // Fusión profunda para mantener referencias iniciales si faltan claves
+                this.state = { ...this.getInitialState(), ...parsed };
+            }
+        } catch (e) {
+            console.error('Error al cargar localStorage, usando estado por defecto:', e);
         }
     }
-    return totalCapacity;
+
+    /**
+     * Resetea el juego por completo
+     */
+    reset() {
+        localStorage.removeItem(this.SAVE_KEY);
+        this.state = this.getInitialState();
+        this.notifyUpdate();
+    }
+
+    /**
+     * Emite el evento global para sincronizar la interfaz de usuario
+     */
+    notifyUpdate() {
+        this.save();
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('state:updated', { detail: this.state }));
+        }
+    }
 }
 
-// Función para obtener la población total actual
-export function getTotalPopulation(state) {
-    const population = state.population;
-    if (Number.isFinite(Number(population.total)) && population.total > 0) {
-        return Number(population.total);
-    }
-    return population.unskilled + population.workers + population.technicians + population.professionals;
-}
+// Instancia única (Singleton) exportada para la aplicación
+export const gameState = new GameStateManager();
+export const state = gameState.state; // Compatibilidad hacia atrás
