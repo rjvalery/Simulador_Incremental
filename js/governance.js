@@ -56,6 +56,23 @@ export const POLICIES = Object.freeze({
     }
 });
 
+export function assignLeader(state, leaderId) {
+    if (!state) return false;
+
+    const leader = state.availableLeaders?.find(candidate => candidate.id === leaderId)
+        || LEADERS[leaderId];
+
+    if (!leader) {
+        console.error(`El líder con ID "${leaderId}" no existe.`);
+        return false;
+    }
+
+    state.assignedLeader = leader;
+    state.governance = state.governance || {};
+    state.governance.leader = leader.id;
+    return true;
+}
+
 export function ensureGovernance(state) {
     state.governance = state.governance || {};
     state.governance.unlocked = state.governance.unlocked === true;

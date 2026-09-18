@@ -498,12 +498,19 @@ export function renderPopulationControls(state) {
     const leaderSelect = governanceCard.querySelector('#leader-select');
     leaderSelect?.addEventListener('change', event => {
       const leaderKey = event.target.value;
-      state.governance.leader = leaderKey || null;
+      let changed = false;
       if (leaderKey) {
-        setLeader(state, leaderKey);
+        changed = setLeader(state, leaderKey);
+      } else {
+        state.governance.leader = null;
+        state.assignedLeader = null;
+        changed = true;
       }
-      renderUI(state);
-      window.dispatchEvent(new CustomEvent('state:updated'));
+
+      if (changed) {
+        renderUI(state);
+        window.dispatchEvent(new CustomEvent('state:updated'));
+      }
     });
 
     container.appendChild(governanceCard);

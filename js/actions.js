@@ -3,7 +3,7 @@
 import { canAfford, deductCost, refreshResourceCaps } from './resources.js';
 import { BUILDINGS_DATA, calculateBuildingCost, canBuildBuilding } from './buildings.js';
 import { calculateMaxHousing, ensureBuildingStates, ensurePopulationStates, ensureResourceStates } from './state.js';
-import { constructionCostMultiplier, governanceIsAvailable, LEADERS, manualHarvestMultiplier, POLICIES } from './governance.js';
+import { assignLeader, constructionCostMultiplier, governanceIsAvailable, LEADERS, manualHarvestMultiplier, POLICIES } from './governance.js';
 import { getTechnologyStatus, isTechnologyCompleted, researchTech } from './techs.js';
 
 function addLog(message, type = 'info') {
@@ -106,9 +106,8 @@ export function researchTechnology(state, techKey) {
 }
 
 export function setLeader(state, leaderKey) {
-    if (!governanceIsAvailable(state) || !LEADERS[leaderKey]) return false;
-    state.governance.leader = leaderKey;
-    addLog(`Lider designado: ${LEADERS[leaderKey].name}.`, 'success');
+    if (!governanceIsAvailable(state) || !assignLeader(state, leaderKey)) return false;
+    addLog(`Lider designado: ${state.assignedLeader.name}.`, 'success');
     return true;
 }
 
