@@ -8,7 +8,9 @@ export const state = {
         wood: { value: 174.52, max: 250 },
         stone: { value: 2, max: 200 },
         gold: { value: 0, max: 1000 },
-        science: { value: 25, max: 600 }
+        science: { value: 25, max: 600 },
+        iron: { value: 0, max: 50 },
+        coal: { value: 0, max: 50 }
     },
     population: {
         total: 5,
@@ -22,7 +24,15 @@ export const state = {
         sawmill: { count: 1, workers: 2 },
         warehouse: { count: 1 },
         library: { count: 0, workers: 0 },
-        townHall: { count: 0 }
+        townHall: { count: 0 },
+        mine: { count: 0, workers: 0 },
+        forge: { count: 0, workers: 0 },
+        barracks: { count: 0 }
+    },
+    military: {
+        recruits: 0,
+        archers: 0,
+        cavalry: 0
     },
     techs: {},
     unlockedTechs: {}
@@ -49,7 +59,9 @@ const RESOURCE_DEFAULTS = {
     wood: { name: 'Madera', max: 150 },
     stone: { name: 'Piedra', max: 100 },
     gold: { name: 'Oro', max: 1000 },
-    science: { name: 'Ciencia', max: 500 }
+    science: { name: 'Ciencia', max: 500 },
+    iron: { name: 'Hierro', max: 50 },
+    coal: { name: 'Carbón', max: 50 }
 };
 
 export function ensureResourceStates(state) {

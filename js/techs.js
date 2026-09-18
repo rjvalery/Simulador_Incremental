@@ -1,4 +1,5 @@
 export const TECHS_DATA = {
+    // --- ERA ANTIGUA ---
     writing: {
         id: 'writing',
         name: 'Escritura',
@@ -9,16 +10,46 @@ export const TECHS_DATA = {
     leadership: {
         id: 'leadership',
         name: 'Liderazgo',
-        cost: { science: 50 },
+        cost: { science: 40 },
         requires: ['writing'],
-        description: 'Habilita la Casa Comunal y la gestión centralizada de la aldea.'
+        description: 'Permite centralizar la gestión de la aldea y habilitar la Casa Comunal.'
     },
     laws: {
         id: 'laws',
         name: 'Leyes Básicas',
-        cost: { science: 100 },
+        cost: { science: 80 },
         requires: ['leadership'],
-        description: 'Permite la promulgación de decretos y políticas sociales.'
+        description: 'Establece decretos sociales y marca la transición hacia la Era Clásica.'
+    },
+
+    // --- ERA CLÁSICA ---
+    mining: {
+        id: 'mining',
+        name: 'Minería',
+        cost: { science: 120, wood: 80 },
+        requires: ['laws'],
+        description: 'Permite la extracción de Piedra y la construcción de Minas.'
+    },
+    metallurgy: {
+        id: 'metallurgy',
+        name: 'Metalurgia',
+        cost: { science: 180, stone: 100 },
+        requires: ['mining'],
+        description: 'Permite procesar Hierro y construir Forjas de refinamiento.'
+    },
+    tactics: {
+        id: 'tactics',
+        name: 'Táctica Militar',
+        cost: { science: 250, gold: 50 },
+        requires: ['metallurgy'],
+        description: 'Desbloquea el Cuartel y el entrenamiento de tropas.'
+    },
+    cartography: {
+        id: 'cartography',
+        name: 'Cartografía',
+        cost: { science: 350, gold: 100 },
+        requires: ['tactics'],
+        description: 'Desbloquea la exploración del Mapa Procedimental y la interacción con campamentos.'
     }
 };
 

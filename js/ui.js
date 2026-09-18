@@ -1,6 +1,8 @@
 import { TECHS_DATA, canResearch, researchTech, isTechnologyCompleted } from './techs.js';
 import { setLeader } from './actions.js';
 import { LEADERS, ensureGovernance } from './governance.js';
+import { UNITS_DATA, getMaxMilitaryCapacity, trainUnit } from './military.js';
+import { initMap, attackCamp, exploreCell, MAP_SIZE } from './map.js';
 
 export function addLog(message) {
   const logContainer = document.getElementById('game-log');
@@ -22,6 +24,8 @@ export function renderUI(gameState) {
   renderResourceMonitor(state);
   renderTechPanel(state);
   renderBuildingCards(state);
+  renderMilitaryPanel(state);
+  renderMapPanel(state);
   renderPopulationControls(state);
 }
 
@@ -88,6 +92,8 @@ function renderResourceMonitor(state) {
   const stoneEl = document.getElementById('res-stone');
   const goldEl = document.getElementById('res-gold');
   const scienceEl = document.getElementById('res-science');
+  const ironEl = document.getElementById('res-iron');
+  const coalEl = document.getElementById('res-coal');
   const popEl = document.getElementById('res-pop');
   const workersEl = document.getElementById('res-workers');
 
@@ -96,6 +102,8 @@ function renderResourceMonitor(state) {
   if (stoneEl) stoneEl.textContent = `${getVal(state.resources.stone).toFixed(0)} / ${getMax(state.resources.stone)}`;
   if (goldEl) goldEl.textContent = `${getVal(state.resources.gold).toFixed(0)} / ${getMax(state.resources.gold)}`;
   if (scienceEl) scienceEl.textContent = `${getVal(state.resources.science).toFixed(0)} / ${getMax(state.resources.science)}`;
+  if (ironEl) ironEl.textContent = `${getVal(state.resources.iron).toFixed(0)} / ${getMax(state.resources.iron)}`;
+  if (coalEl) coalEl.textContent = `${getVal(state.resources.coal).toFixed(0)} / ${getMax(state.resources.coal)}`;
   if (popEl) popEl.textContent = `${state.population.total} / ${state.population.max}`;
   if (workersEl) workersEl.textContent = `${state.population.workers} / ${state.population.total}`;
 }
@@ -122,7 +130,9 @@ export function renderTechPanel(state) {
         wood: 'Madera',
         stone: 'Piedra',
         science: 'Ciencia',
-        gold: 'Oro'
+        gold: 'Oro',
+        iron: 'Hierro',
+        coal: 'Carbón'
       };
       return `${amount} ${nameMap[resKey] || resKey}`;
     }).join(', ');
@@ -165,12 +175,18 @@ export function renderBuildingCards(state) {
   container.innerHTML = '';
 
   const buildingsData = [
+    // --- ERA ANTIGUA ---
     { id: 'shelter', name: 'Refugio', desc: 'Aumenta la capacidad de población (+2).', costWood: 17, costFood: 11, popBonus: 2 },
     { id: 'farm', name: 'Granja', desc: 'Produce alimento constante con obreros.', costWood: 46 },
     { id: 'sawmill', name: 'Aserradero', desc: 'Produce madera constante con obreros.', costWood: 23 },
-    { id: 'warehouse', name: 'Almacén', desc: 'Aumenta la capacidad de almacenamiento (+100 Alimento, +100 Madera, +50 Piedra).', costWood: 88, costStone: 28, storageBonus: { food: 100, wood: 100, stone: 50 } },
+    { id: 'warehouse', name: 'Almacén', desc: 'Aumenta la capacidad de almacenamiento.', costWood: 88, costStone: 28, storageBonus: { food: 100, wood: 100, stone: 50, iron: 25, coal: 25 } },
     { id: 'library', name: 'Biblioteca', desc: 'Produce puntos de Ciencia por segundo.', costWood: 100, costStone: 50, reqTech: 'writing' },
-    { id: 'communal_house', name: 'Casa Comunal', desc: 'Centro de mando para la gestión de la aldea y elección de un Líder.', costWood: 150, costStone: 80, reqTech: 'leadership' }
+    { id: 'communal_house', name: 'Casa Comunal', desc: 'Centro de mando para la gestión de la aldea y elección de un Líder.', costWood: 150, costStone: 80, reqTech: 'leadership' },
+
+    // --- ERA CLÁSICA ---
+    { id: 'mine', name: 'Mina', desc: 'Permite extraer Piedra, Carbón e Hierro con obreros.', costWood: 120, costStone: 60, reqTech: 'mining' },
+    { id: 'forge', name: 'Forja', desc: 'Convierte Carbón y Piedra en Hierro refinado.', costWood: 150, costStone: 100, reqTech: 'metallurgy' },
+    { id: 'barracks', name: 'Cuartel', desc: 'Base militar para entrenar y alojar tropas.', costWood: 200, costStone: 150, costIron: 30, reqTech: 'tactics' }
   ];
 
   buildingsData.forEach(b => {
@@ -181,11 +197,17 @@ export function renderBuildingCards(state) {
     const woodVal = state.resources.wood.value ?? state.resources.wood;
     const stoneVal = state.resources.stone.value ?? state.resources.stone;
     const foodVal = state.resources.food.value ?? state.resources.food;
+    const ironVal = state.resources.iron.value ?? state.resources.iron;
+    const coalVal = state.resources.coal.value ?? state.resources.coal;
+    const goldVal = state.resources.gold.value ?? state.resources.gold;
 
     let hasResources = true;
     if (b.costWood && woodVal < b.costWood) hasResources = false;
     if (b.costStone && stoneVal < b.costStone) hasResources = false;
     if (b.costFood && foodVal < b.costFood) hasResources = false;
+    if (b.costIron && ironVal < b.costIron) hasResources = false;
+    if (b.costCoal && coalVal < b.costCoal) hasResources = false;
+    if (b.costGold && goldVal < b.costGold) hasResources = false;
 
     const card = document.createElement('div');
     card.className = 'building-card';
@@ -194,6 +216,9 @@ export function renderBuildingCards(state) {
     if (b.costWood) costText += `${b.costWood} Madera `;
     if (b.costStone) costText += `${b.costStone} Piedra `;
     if (b.costFood) costText += `${b.costFood} Alimento `;
+    if (b.costIron) costText += `${b.costIron} Hierro `;
+    if (b.costCoal) costText += `${b.costCoal} Carbón `;
+    if (b.costGold) costText += `${b.costGold} Oro `;
 
     card.innerHTML = `
       <h4>${b.name} (Poseídos: ${count})</h4>
@@ -210,6 +235,9 @@ export function renderBuildingCards(state) {
         if (b.costWood) state.resources.wood.value -= b.costWood;
         if (b.costStone) state.resources.stone.value -= b.costStone;
         if (b.costFood) state.resources.food.value -= b.costFood;
+        if (b.costIron) state.resources.iron.value -= b.costIron;
+        if (b.costCoal) state.resources.coal.value -= b.costCoal;
+        if (b.costGold) state.resources.gold.value -= b.costGold;
 
         if (!state.buildings[b.id]) state.buildings[b.id] = { count: 0, workers: 0 };
         state.buildings[b.id].count += 1;
@@ -239,6 +267,111 @@ export function renderBuildingCards(state) {
     }
 
     container.appendChild(card);
+  });
+}
+
+export function renderMilitaryPanel(state) {
+  const container = document.getElementById('military-container');
+  if (!container) return;
+
+  if (!isTechnologyCompleted(state, 'tactics')) {
+    container.innerHTML = '<p class="text-muted">Investiga Táctica Militar para entrenar tropas.</p>';
+    return;
+  }
+
+  if (!state.buildings.barracks?.count) {
+    container.innerHTML = '<p class="text-muted">Construye un Cuartel para entrenar tropas.</p>';
+    return;
+  }
+
+  const military = state.military || {};
+  const currentCapacity = Object.keys(UNITS_DATA)
+    .reduce((total, unitId) => total + (military[unitId] || 0), 0);
+  const maxCapacity = getMaxMilitaryCapacity(state);
+
+  container.innerHTML = `
+    <h3>Gestión Militar (${currentCapacity}/${maxCapacity} Soldados)</h3>
+    <div class="military-units-grid">
+    ${Object.values(UNITS_DATA).map(unit => `
+      <div class="unit-card">
+        <h4>${unit.name} (Poseídos: ${military[unit.id] || 0})</h4>
+        <p>${unit.desc}</p>
+        <p><small>Atq: ${unit.stats.attack} | Def: ${unit.stats.defense} | HP: ${unit.stats.hp}</small></p>
+        <p><strong>Costo:</strong> ${Object.entries(unit.cost).map(([resourceKey, amount]) => `${amount} ${resourceKey}`).join(', ')}</p>
+        <button class="btn-train" data-unit="${unit.id}">Entrenar</button>
+      </div>
+    `).join('')}
+    </div>
+  `;
+
+  container.querySelectorAll('.btn-train').forEach(button => {
+    button.addEventListener('click', () => {
+      if (trainUnit(state, button.dataset.unit)) {
+        renderUI(state);
+      }
+    });
+  });
+}
+
+export function renderMapPanel(state) {
+  const container = document.getElementById('map-container');
+  if (!container) return;
+
+  if (!state.unlockedTechs?.cartography) {
+    container.innerHTML = '<p class="text-muted">Investiga <strong>Cartografía</strong> para desbloquear el Mapa de Exploración.</p>';
+    return;
+  }
+
+  initMap(state);
+
+  let html = `
+    <h3>Mapa de la Región</h3>
+    <div class="map-grid">
+  `;
+
+  for (let rowIndex = 0; rowIndex < MAP_SIZE; rowIndex++) {
+    for (let columnIndex = 0; columnIndex < MAP_SIZE; columnIndex++) {
+      const cell = state.mapData[rowIndex][columnIndex];
+
+      if (!cell.revealed) {
+        html += `<div class="map-tile fog" data-r="${rowIndex}" data-c="${columnIndex}" title="Casilla sin explorar (Click para explorar)">🌫️</div>`;
+      } else if (cell.type === 'player_village') {
+        html += '<div class="map-tile village" title="Nuestra Aldea">🏰</div>';
+      } else if (cell.type === 'barbarian_camp') {
+        const levelName = cell.enemy.level === 1 ? 'Campamento' : 'Fortín Bárbaro';
+        html += `<div class="map-tile enemy" data-r="${rowIndex}" data-c="${columnIndex}" title="${levelName} (Poder: ${cell.enemy.power})">🏕️</div>`;
+      } else if (cell.type === 'ruins') {
+        html += '<div class="map-tile ruins" title="Ruinas Saqueadas">🏛️</div>';
+      } else {
+        const icon = cell.biome === 'forest' ? '🌲'
+          : cell.biome === 'mountain' ? '⛰️'
+            : cell.biome === 'water' ? '🌊' : '🌾';
+        html += `<div class="map-tile biome-${cell.biome}">${icon}</div>`;
+      }
+    }
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
+
+  container.querySelectorAll('.map-tile').forEach(tile => {
+    tile.addEventListener('click', event => {
+      const clickedTile = event.currentTarget;
+      const rowIndex = Number.parseInt(clickedTile.getAttribute('data-r'), 10);
+      const columnIndex = Number.parseInt(clickedTile.getAttribute('data-c'), 10);
+
+      if (Number.isNaN(rowIndex) || Number.isNaN(columnIndex)) return;
+
+      const cell = state.mapData[rowIndex][columnIndex];
+      if (!cell.revealed) {
+        exploreCell(state, rowIndex, columnIndex);
+        renderUI(state);
+      } else if (cell.type === 'barbarian_camp'
+        && window.confirm(`¿Desplegar tropas para atacar el Campamento Bárbaro? (Poder Enemigo: ${cell.enemy.power})`)) {
+        attackCamp(state, rowIndex, columnIndex);
+        renderUI(state);
+      }
+    });
   });
 }
 

@@ -1,6 +1,8 @@
 import { state } from './state.js';
 import { renderUI, addLog } from './ui.js';
 import { productionMultiplier } from './governance.js';
+import { processMilitaryUpkeep } from './military.js';
+import { initMap, processEnemyAI } from './map.js';
 
 window.state = state;
 
@@ -33,6 +35,9 @@ function gameTick() {
     );
   }
 
+  processMilitaryUpkeep(state);
+  processEnemyAI(state);
+
   // 2. Crecimiento demográfico pasivo (Equilibrado a 25 de alimento)
   const foodAmount = state.resources.food.value ?? state.resources.food;
 
@@ -48,6 +53,7 @@ function gameTick() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  initMap(state);
   renderUI(state);
   addLog('Simulador de Juego iniciado correctamente.');
 
@@ -103,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const decodedData = JSON.parse(atob(ioTextarea.value.trim()));
         Object.assign(state, decodedData);
+        initMap(state);
         renderUI(state);
         addLog('Partida importada con éxito.');
         modal.style.display = 'none';
@@ -122,6 +129,8 @@ document.addEventListener('DOMContentLoaded', () => {
         state.resources.stone.value = 0;
         state.resources.gold.value = 0;
         state.resources.science.value = 0;
+        state.resources.iron.value = 0;
+        state.resources.coal.value = 0;
 
         state.population.total = 0;
         state.population.workers = 0;
@@ -131,6 +140,10 @@ document.addEventListener('DOMContentLoaded', () => {
           state.buildings[bId].count = 0;
           if (state.buildings[bId].workers) state.buildings[bId].workers = 0;
         });
+
+        state.military = { recruits: 0, archers: 0, cavalry: 0 };
+        state.mapData = [];
+        initMap(state);
 
         state.techs = {};
         state.unlockedTechs = {};
